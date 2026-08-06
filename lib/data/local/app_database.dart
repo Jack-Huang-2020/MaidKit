@@ -458,7 +458,17 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(servers, servers.serialConfig);
       }
       if (from < 23) {
-        await m.addColumn(servers, servers.sortOrder);
+        // Some development builds wrote a servers table that already
+        // contained sort_order while still reporting schema 22. Guard the
+        // ALTER so those databases upgrade instead of crashing on a
+        // duplicate column.
+        final hasSortOrder = await customSelect(
+          "SELECT 1 FROM pragma_table_info('servers') "
+          "WHERE name = 'sort_order'",
+        ).get();
+        if (hasSortOrder.isEmpty) {
+          await m.addColumn(servers, servers.sortOrder);
+        }
         // Preserve the current (creation-id) dashboard order for existing
         // servers; new servers are appended after the largest sort order.
         await customStatement(
