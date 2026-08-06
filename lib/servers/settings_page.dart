@@ -25,6 +25,7 @@ import 'package:maid_kit/shared/presentation/app_scaffold.dart';
 
 import 'database_backup_service.dart';
 import 'cloud_sync_service.dart';
+import 'connection_export_service.dart';
 import 'server_providers.dart';
 import 'tailscale_settings_section.dart';
 import 'terminal_adapter_preferences.dart';
@@ -886,6 +887,30 @@ class SettingsPage extends ConsumerWidget {
                   ],
                 ),
               ),
+              const SizedBox(height: 24),
+              _SettingsSection(
+                titleKey: 'settingsConnectionsTransfer',
+                padding: EdgeInsets.zero,
+                child: Column(
+                  children: [
+                    ListTile(
+                      contentPadding: _sectionTilePadding,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: _sectionTileBorderRadius(
+                          _SettingsTilePosition.only,
+                        ),
+                      ),
+                      leading: const Icon(Symbols.dns),
+                      title: const Text('settingsConnectionsExport').tr(),
+                      subtitle: const Text(
+                        'settingsConnectionsExportHint',
+                      ).tr(),
+                      trailing: const Icon(Symbols.chevron_right),
+                      onTap: () => _exportConnections(context, ref),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -1315,6 +1340,118 @@ class SettingsPage extends ConsumerWidget {
     }
   }
 
+  Future<void> _exportConnections(BuildContext context, WidgetRef ref) async {
+    final format = await showModalBottomSheet<_ConnectionsExportFormat>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      useRootNavigator: true,
+      builder: (sheetContext) => SheetScaffold(
+        titleText: 'settingsConnectionsExportTitle'.tr(),
+        heightFactor: 0.5,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          children: [
+            RadioGroup<_ConnectionsExportFormat>(
+              groupValue: _ConnectionsExportFormat.jsonRedacted,
+              onChanged: (value) {
+                if (value != null) Navigator.of(sheetContext).pop(value);
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  RadioListTile<_ConnectionsExportFormat>(
+                    value: _ConnectionsExportFormat.jsonRedacted,
+                    title: const Text(
+                      'settingsConnectionsFormatJsonRedacted',
+                    ).tr(),
+                    subtitle: const Text(
+                      'settingsConnectionsFormatJsonRedactedHint',
+                    ).tr(),
+                  ),
+                  RadioListTile<_ConnectionsExportFormat>(
+                    value: _ConnectionsExportFormat.jsonProtected,
+                    title: const Text(
+                      'settingsConnectionsFormatJsonProtected',
+                    ).tr(),
+                    subtitle: const Text(
+                      'settingsConnectionsFormatJsonProtectedHint',
+                    ).tr(),
+                  ),
+                  RadioListTile<_ConnectionsExportFormat>(
+                    value: _ConnectionsExportFormat.csv,
+                    title: const Text('settingsConnectionsFormatCsv').tr(),
+                    subtitle: const Text(
+                      'settingsConnectionsFormatCsvHint',
+                    ).tr(),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Spacer(),
+                TextButton(
+                  onPressed: () => Navigator.of(sheetContext).pop(),
+                  child: const Text('commonCancel').tr(),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+    if (format == null || !context.mounted) return;
+
+    final extension = switch (format) {
+      _ConnectionsExportFormat.csv => 'csv',
+      _ => 'json',
+    };
+    final fileName = switch (format) {
+      _ConnectionsExportFormat.csv => 'maidkit-connections.csv',
+      _ => 'maidkit-connections.json',
+    };
+    String? passphrase;
+    if (format == _ConnectionsExportFormat.jsonProtected) {
+      passphrase = await _connectionsPasswordSheet(context);
+      if (passphrase == null || !context.mounted) return;
+    }
+
+    final path = await FilePicker.saveFile(
+      dialogTitle: 'settingsConnectionsExportTitle'.tr(),
+      fileName: fileName,
+      type: FileType.custom,
+      allowedExtensions: [extension],
+    );
+    if (path == null || !context.mounted) return;
+
+    try {
+      final service = ConnectionExportService(
+        ref.read(databaseProvider),
+        ref.read(vaultServiceProvider),
+      );
+      final content = switch (format) {
+        _ConnectionsExportFormat.csv => await service.exportCsv(),
+        _ => await service.exportJson(passphrase: passphrase),
+      };
+      await File(path).writeAsString(content);
+      if (context.mounted) {
+        _showMessage('settingsConnectionsExportSuccess'.tr());
+      }
+    } on VaultLockedException {
+      if (context.mounted) {
+        _showMessage('settingsConnectionsVaultLocked'.tr());
+      }
+    } catch (error) {
+      if (context.mounted) {
+        _showMessage(
+          'settingsConnectionsExportError'.tr(args: [error.toString()]),
+        );
+      }
+    }
+  }
+
   Future<void> _createLocalVault(BuildContext context, WidgetRef ref) async {
     final name = await _chooseVaultNameSheet(context);
     if (name == null || !context.mounted) return;
@@ -1589,6 +1726,8 @@ class SettingsPage extends ConsumerWidget {
 
 enum _ImportDestination { newVault, replaceCurrent }
 
+enum _ConnectionsExportFormat { jsonRedacted, jsonProtected, csv }
+
 enum _VaultOnboardingChoice { local, cloud }
 
 enum _VaultTileAction { changeCloudBinding, rename, delete }
@@ -1713,6 +1852,20 @@ Future<String?> _syncPasswordSheet(BuildContext context) =>
         titleKey: 'settingsVaultSyncPasswordTitle',
         hintKey: 'settingsVaultSyncPasswordHint',
         actionKey: 'settingsVaultSyncNow',
+      ),
+    );
+
+Future<String?> _connectionsPasswordSheet(BuildContext context) =>
+    showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      useRootNavigator: true,
+      builder: (context) => const _BackupPasswordSheet(
+        confirm: true,
+        titleKey: 'settingsConnectionsPasswordTitle',
+        hintKey: 'settingsConnectionsPasswordHint',
+        actionKey: 'settingsConnectionsExportAction',
       ),
     );
 
