@@ -78,7 +78,7 @@ class GitHubRefreshTickNotifier extends Notifier<int> {
   void refresh() => state++;
 }
 
-enum GitHubSignInPhase { idle, awaitingUser, signedIn, failed }
+enum GitHubSignInPhase { idle, starting, awaitingUser, signedIn, failed }
 
 class GitHubSignInState {
   const GitHubSignInState({
@@ -103,8 +103,10 @@ final githubSignInProvider =
 /// verification page through the UI, and polls until the user authorizes.
 class GitHubSignInNotifier extends Notifier<GitHubSignInState> {
   Timer? _pollTimer;
+  int _pollInterval = 5;
   bool _cancelled = true;
   bool _polling = false;
+  bool _requesting = false;
 
   @override
   GitHubSignInState build() {
@@ -113,6 +115,10 @@ class GitHubSignInNotifier extends Notifier<GitHubSignInState> {
   }
 
   Future<void> start() async {
+    // One flow at a time: a second start while the previous request or poll
+    // is still in flight would spawn a duplicate device code and race the
+    // timers.
+    if (_requesting || _polling) return;
     final clientId = GithubDeviceAuth.configuredClientId;
     if (clientId.isEmpty) {
       state = const GitHubSignInState(
@@ -123,8 +129,13 @@ class GitHubSignInNotifier extends Notifier<GitHubSignInState> {
       );
       return;
     }
+    _requesting = true;
     _cancelled = false;
     _polling = false;
+    _pollTimer?.cancel();
+    // Surface the in-flight request as a loading state so the UI can show a
+    // spinner and keep the button disabled; also clears any previous error.
+    state = const GitHubSignInState(phase: GitHubSignInPhase.starting);
     final auth = GithubDeviceAuth(clientId: clientId);
     try {
       final code = await auth.requestDeviceCode();
@@ -134,6 +145,7 @@ class GitHubSignInNotifier extends Notifier<GitHubSignInState> {
         verificationUri: code.verificationUriComplete ?? code.verificationUri,
       );
       _pollTimer?.cancel();
+      _pollInterval = code.interval;
       _pollTimer = Timer.periodic(
         Duration(seconds: code.interval),
         (_) => _poll(auth, code),
@@ -143,6 +155,8 @@ class GitHubSignInNotifier extends Notifier<GitHubSignInState> {
         phase: GitHubSignInPhase.failed,
         error: error.toString(),
       );
+    } finally {
+      _requesting = false;
     }
   }
 
@@ -150,8 +164,23 @@ class GitHubSignInNotifier extends Notifier<GitHubSignInState> {
     if (_cancelled || _polling) return;
     _polling = true;
     try {
-      final token = await auth.pollAccessToken(code);
-      if (token == null) return; // still waiting for the user
+      final result = await auth.pollAccessToken(code);
+      final token = result.token;
+      if (token == null) {
+        // GitHub answers `slow_down` with an escalated interval when we poll
+        // too fast. Ignore it and GitHub never hands over the token, even
+        // after the user authorizes — reschedule with the demanded interval.
+        final interval = result.interval;
+        if (interval != null && interval > _pollInterval) {
+          _pollTimer?.cancel();
+          _pollInterval = interval;
+          _pollTimer = Timer.periodic(
+            Duration(seconds: interval),
+            (_) => _poll(auth, code),
+          );
+        }
+        return;
+      }
       Logger.root.info('[GitHub] Device flow authorized; fetching account.');
       _pollTimer?.cancel();
       final account = await GithubApi(token: token).currentUser();
@@ -193,6 +222,7 @@ class GitHubSignInNotifier extends Notifier<GitHubSignInState> {
   void cancel() {
     _cancelled = true;
     _polling = false;
+    _requesting = false;
     _pollTimer?.cancel();
     state = const GitHubSignInState();
   }

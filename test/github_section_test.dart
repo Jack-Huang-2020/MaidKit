@@ -23,6 +23,13 @@ class _AwaitingUserNotifier extends GitHubSignInNotifier {
   );
 }
 
+class _StartingNotifier extends GitHubSignInNotifier {
+  @override
+  GitHubSignInState build() => const GitHubSignInState(
+    phase: GitHubSignInPhase.starting,
+  );
+}
+
 /// Renders [GitHubSection] with every data source overridden, so the widget
 /// test never touches the database (drift's isolate executor deadlocks inside
 /// `testWidgets`' FakeAsync zone).
@@ -257,6 +264,45 @@ void main() {
     expect(find.text('githubSignInTitle'.tr()), findsOneWidget);
     expect(find.text('githubSignIn'.tr()), findsOneWidget);
     expect(find.text('githubTokenLocalHint'.tr()), findsOneWidget);
+  });
+
+  testWidgets('shows a disabled sign-in button with a spinner while starting', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      EasyLocalization(
+        supportedLocales: const [Locale('en', 'US'), Locale('zh', 'CN')],
+        path: 'assets/translations',
+        fallbackLocale: const Locale('en', 'US'),
+        child: ProviderScope(
+          overrides: [
+            githubTokenStoreProvider.overrideWithValue(
+              InMemoryGitHubTokenStorage(),
+            ),
+            githubConnectionsProvider.overrideWith(
+              (ref) => Stream.value(const []),
+            ),
+            githubSignInProvider.overrideWith(_StartingNotifier.new),
+          ],
+          child: MaterialApp(
+            locale: Locale('en', 'US'),
+            home: Scaffold(body: ListView(children: const [GitHubSection()])),
+          ),
+        ),
+      ),
+    );
+    // The spinner animates indefinitely, so bounded pumps instead of
+    // pumpAndSettle.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    final button = tester.widget<FilledButton>(
+      find.ancestor(
+        of: find.text('githubSignIn'.tr()),
+        matching: find.byType(FilledButton),
+      ),
+    );
+    expect(button.onPressed, isNull);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
 
   testWidgets('renders the runs feed and failure banner when signed in', (

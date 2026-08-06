@@ -75,10 +75,17 @@ class GithubDeviceAuth {
     }
   }
 
-  /// Polls for the access token. Returns the token once the user authorizes,
-  /// `null` while GitHub still waits (`authorization_pending` / `slow_down`),
-  /// and throws on `expired_token` / `access_denied`.
-  Future<String?> pollAccessToken(GitHubDeviceCode code) async {
+  /// Polls for the access token. Returns the token once the user authorizes
+  /// (as the record's `token`), a null token while GitHub still waits, and
+  /// throws on `expired_token` / `access_denied`.
+  ///
+  /// On `slow_down` GitHub demands a longer wait and returns the new polling
+  /// interval in `interval`; the caller must reschedule with it, or GitHub
+  /// keeps answering `slow_down` and the token never arrives even after the
+  /// user authorizes.
+  Future<({String? token, int? interval})> pollAccessToken(
+    GitHubDeviceCode code,
+  ) async {
     try {
       final response = await _dio.post<dynamic>(
         '/login/oauth/access_token',
@@ -103,8 +110,12 @@ class GithubDeviceAuth {
       if (error != null) {
         switch (error) {
           case 'authorization_pending':
+            return (token: null, interval: null);
           case 'slow_down':
-            return null;
+            return (
+              token: null,
+              interval: (data['interval'] as num?)?.toInt(),
+            );
           case 'expired_token':
             throw const DeviceFlowException(
               DeviceFlowError.expired,
@@ -129,7 +140,7 @@ class GithubDeviceAuth {
           'GitHub returned no access token.',
         );
       }
-      return token;
+      return (token: token, interval: null);
     } on DioException catch (error) {
       throw DeviceFlowException(
         DeviceFlowError.network,

@@ -130,7 +130,17 @@ class _SignedOutView extends ConsumerWidget {
                 ),
                 const SizedBox(height: 12),
               ],
-              if (!awaiting)
+              if (signIn.phase == GitHubSignInPhase.starting)
+                FilledButton.icon(
+                  onPressed: null,
+                  icon: const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  label: Text('githubSignIn'.tr()),
+                )
+              else if (!awaiting)
                 FilledButton.icon(
                   onPressed: () =>
                       ref.read(githubSignInProvider.notifier).start(),
@@ -206,13 +216,29 @@ class _DeviceCodeCard extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 12),
-          if (signIn.verificationUri != null)
-            OutlinedButton.icon(
-              onPressed: () => launchUrl(Uri.parse(signIn.verificationUri!)),
-              icon: const Icon(Symbols.open_in_new, size: 18),
-              label: Text('githubOpenBrowser'.tr()),
-            ),
-          const SizedBox(height: 8),
+          Row(
+            children: [
+              if (signIn.verificationUri != null) ...[
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () =>
+                        launchUrl(Uri.parse(signIn.verificationUri!)),
+                    icon: const Icon(Symbols.open_in_new, size: 18),
+                    label: Text('githubOpenBrowser'.tr()),
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () =>
+                      ref.read(githubSignInProvider.notifier).cancel(),
+                  child: Text('githubCancel'.tr()),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -231,11 +257,6 @@ class _DeviceCodeCard extends ConsumerWidget {
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 8),
-          TextButton(
-            onPressed: () => ref.read(githubSignInProvider.notifier).cancel(),
-            child: Text('githubCancel'.tr()),
           ),
         ],
       ),
