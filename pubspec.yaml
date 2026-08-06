@@ -51,6 +51,7 @@ dependencies:
   flutter_web_auth_2: ^5.0.3
   hooks_riverpod: ^3.4.2
   highlight: ^0.7.0
+  intl: ^0.20.2
   island_ui_foundation:
     git:
       url: https://src.solsynth.dev/SoSYS/Solian.git

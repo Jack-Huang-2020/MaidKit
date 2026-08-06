@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:cryptography/cryptography.dart';
 
@@ -42,6 +43,26 @@ class ConnectionImportResult {
   const ConnectionImportResult({required this.created});
 
   final int created;
+}
+
+/// The outcome of parsing a batch of picked connection files.
+class ConnectionFilesPreview {
+  const ConnectionFilesPreview({
+    required this.candidates,
+    this.firstError,
+    this.aborted = false,
+  });
+
+  final List<ImportCandidate> candidates;
+
+  /// The first non-fatal parse error (e.g. a wrong passphrase or an
+  /// unrecognized file) when some files failed but others parsed.
+  final Object? firstError;
+
+  /// True when the user cancelled the passphrase prompt; parsing stopped.
+  final bool aborted;
+
+  bool get isEmpty => candidates.isEmpty;
 }
 
 /// Imports connections from MaidKit's own JSON/CSV exports (see
@@ -156,6 +177,72 @@ class ConnectionImportService {
       return previewCsv(content);
     }
     return previewThirdParty(content, baseDirectory: baseDirectory);
+  }
+
+  /// Parses a batch of picked files with [previewAny], prompting once for a
+  /// passphrase via [requestPassphrase] when a protected MaidKit JSON needs
+  /// one. A null result from [requestPassphrase] (user cancelled) aborts the
+  /// batch. Wrong passphrases and unreadable or unrecognized files are
+  /// recorded in [ConnectionFilesPreview.firstError]; files that parse still
+  /// contribute candidates.
+  Future<ConnectionFilesPreview> previewFiles(
+    List<String> paths, {
+    Future<String?> Function()? requestPassphrase,
+  }) async {
+    final candidates = <ImportCandidate>[];
+    String? passphrase;
+    Object? firstError;
+
+    for (final path in paths) {
+      final String content;
+      try {
+        content = await File(path).readAsString();
+      } catch (error) {
+        firstError ??= error;
+        continue;
+      }
+      final baseDirectory = File(path).parent.path;
+      try {
+        candidates.addAll(
+          await previewAny(
+            content,
+            baseDirectory: baseDirectory,
+            passphrase: passphrase,
+          ),
+        );
+      } on ConnectionSecretsLockedException {
+        if (passphrase != null) {
+          firstError ??= const ConnectionSecretsLockedException();
+          continue;
+        }
+        final entered = await requestPassphrase?.call();
+        if (entered == null) {
+          return ConnectionFilesPreview(candidates: candidates, aborted: true);
+        }
+        passphrase = entered;
+        try {
+          candidates.addAll(
+            await previewAny(
+              content,
+              baseDirectory: baseDirectory,
+              passphrase: passphrase,
+            ),
+          );
+        } on ConnectionSecretsPassphraseException {
+          firstError ??= const ConnectionSecretsPassphraseException();
+        } on Exception catch (error) {
+          firstError ??= error;
+        }
+      } on ConnectionSecretsPassphraseException {
+        firstError ??= const ConnectionSecretsPassphraseException();
+      } on Exception catch (error) {
+        firstError ??= error;
+      }
+    }
+    return ConnectionFilesPreview(
+      candidates: candidates,
+      firstError: firstError,
+    );
   }
 
   /// Parses a third-party client file (OpenSSH config, FinalShell, XShell,

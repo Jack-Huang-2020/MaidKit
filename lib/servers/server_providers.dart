@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:system_fonts/system_fonts.dart';
@@ -41,6 +42,25 @@ import 'terminal_color_scheme.dart';
 import 'startup_connection_preferences.dart';
 import 'vault_service.dart';
 import 'vault_file_storage.dart';
+
+/// The current vault's label (or file name), sanitized for use in exported
+/// file names. Falls back to "vault" when no vault is active or the label is
+/// empty.
+String exportFileNamePrefix(WidgetRef ref) {
+  final path = ref.read(activeVaultFileProvider);
+  final label = path == null
+      ? null
+      : ref.read(vaultLabelsProvider)[path] ??
+            ref.read(vaultFileStorageProvider).fileName(path);
+  final sanitized = (label ?? 'vault')
+      .replaceAll(RegExp(r'[^A-Za-z0-9._-]+'), '-')
+      .replaceAll(RegExp(r'^-+|-+$'), '');
+  return sanitized.isEmpty ? 'vault' : sanitized;
+}
+
+/// Local timestamp for exported file names, e.g. `20260806-143000`.
+String exportTimestamp() =>
+    DateFormat('yyyyMMdd-HHmmss').format(DateTime.now());
 
 final vaultFileStorageProvider = Provider<VaultFileStorage>(
   (ref) => VaultFileStorage(),

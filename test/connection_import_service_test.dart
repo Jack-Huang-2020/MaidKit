@@ -345,4 +345,135 @@ void main() {
       );
     });
   });
+
+  group('ConnectionImportService previewFiles', () {
+    late AppDatabase database;
+    late VaultService vault;
+    late ServerRepository repository;
+    late ConnectionExportService exportService;
+    late ConnectionImportService importService;
+    late Directory directory;
+
+    setUp(() async {
+      directory = Directory.systemTemp.createTempSync('preview_files_test');
+      database = AppDatabase(filePath: '${directory.path}/test.sqlite');
+      vault = VaultService(database, secureStorage: _MemoryStorage());
+      await vault.create('vault-password');
+      repository = ServerRepository(database, vault);
+      exportService = ConnectionExportService(database, vault);
+      importService = ConnectionImportService(database, vault);
+    });
+
+    tearDown(() async {
+      await database.close();
+      if (directory.existsSync()) directory.deleteSync(recursive: true);
+    });
+
+    File writeFile(String name, String content) {
+      final file = File('${directory.path}/$name');
+      file.writeAsStringSync(content);
+      return file;
+    }
+
+    Future<void> insertServer() => repository.create(
+      ServerDraft(
+        name: 'prod-db',
+        host: '10.0.0.1',
+        port: 22,
+        username: 'root',
+        credential: ServerCredential.password('hunter2'),
+      ),
+    );
+
+    test('parses multiple files of mixed formats', () async {
+      final finalshell = writeFile(
+        'conn.json',
+        jsonEncode({
+          'name': 'fs-host',
+          'host': '10.0.0.1',
+          'port': 22,
+          'user_name': 'root',
+          'password': 'plain not base64',
+        }),
+      );
+      final sshConfig = writeFile(
+        'config',
+        'Host web\n  HostName 10.0.0.2\n  User alice\n',
+      );
+
+      final preview = await importService.previewFiles([
+        finalshell.path,
+        sshConfig.path,
+      ]);
+      expect(preview.aborted, isFalse);
+      expect(preview.isEmpty, isFalse);
+      expect(preview.candidates, hasLength(2));
+      expect(
+        preview.candidates.map((c) => c.connection.host),
+        containsAll(['10.0.0.1', '10.0.0.2']),
+      );
+    });
+
+    test('prompts for the passphrase once for a protected export', () async {
+      await insertServer();
+      final protected = await exportService.exportJson(
+        passphrase: 'export-pass',
+      );
+      final file = writeFile('protected.json', protected);
+      var prompts = 0;
+
+      final preview = await importService.previewFiles(
+        [file.path],
+        requestPassphrase: () async {
+          prompts += 1;
+          return 'export-pass';
+        },
+      );
+      expect(prompts, 1);
+      expect(preview.candidates.single.connection.credential, isNotNull);
+    });
+
+    test('aborts when the passphrase prompt is cancelled', () async {
+      await insertServer();
+      final protected = await exportService.exportJson(
+        passphrase: 'export-pass',
+      );
+      final file = writeFile('protected.json', protected);
+
+      final preview = await importService.previewFiles([
+        file.path,
+      ], requestPassphrase: () async => null);
+      expect(preview.aborted, isTrue);
+      expect(preview.candidates, isEmpty);
+    });
+
+    test('records a wrong passphrase as the first error', () async {
+      await insertServer();
+      final protected = await exportService.exportJson(
+        passphrase: 'export-pass',
+      );
+      final file = writeFile('protected.json', protected);
+
+      final preview = await importService.previewFiles([
+        file.path,
+      ], requestPassphrase: () async => 'wrong');
+      expect(preview.aborted, isFalse);
+      expect(preview.candidates, isEmpty);
+      expect(preview.firstError, isA<ConnectionSecretsPassphraseException>());
+    });
+
+    test('keeps good files despite an unrecognized one', () async {
+      final good = writeFile(
+        'good.csv',
+        'name,host,port,username,authType,tags,connectionType\n'
+            'box,10.0.0.9,22,admin,,,ssh\n',
+      );
+      final bad = writeFile('garbage.txt', 'not a connection file');
+
+      final preview = await importService.previewFiles([bad.path, good.path]);
+      expect(preview.candidates, hasLength(1));
+      expect(preview.candidates.single.connection.host, '10.0.0.9');
+      expect(preview.firstError, isA<FormatException>());
+    });
+  });
 }

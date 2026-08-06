@@ -27,6 +27,7 @@ import 'database_backup_service.dart';
 import 'cloud_sync_service.dart';
 import 'connection_export_service.dart';
 import 'connection_import_service.dart';
+import 'connection_import_sheet.dart';
 import 'server_providers.dart';
 import 'tailscale_settings_section.dart';
 import 'terminal_adapter_preferences.dart';
@@ -1190,7 +1191,7 @@ class SettingsPage extends ConsumerWidget {
 
     final path = await FilePicker.saveFile(
       dialogTitle: 'settingsExportData'.tr(),
-      fileName: 'maidkit-backup.mkb',
+      fileName: 'maidkit-${exportFileNamePrefix(ref)}-${exportTimestamp()}.mkb',
       type: FileType.custom,
       allowedExtensions: const ['mkb'],
     );
@@ -1424,10 +1425,8 @@ class SettingsPage extends ConsumerWidget {
       _ConnectionsExportFormat.csv => 'csv',
       _ => 'json',
     };
-    final fileName = switch (format) {
-      _ConnectionsExportFormat.csv => 'maidkit-connections.csv',
-      _ => 'maidkit-connections.json',
-    };
+    final fileName =
+        'maidkit-connections-${exportFileNamePrefix(ref)}-${exportTimestamp()}.$extension';
     String? passphrase;
     if (format == _ConnectionsExportFormat.jsonProtected) {
       passphrase = await _connectionsPasswordSheet(context);
@@ -1487,71 +1486,25 @@ class SettingsPage extends ConsumerWidget {
       ref.read(databaseProvider),
       ref.read(vaultServiceProvider),
     );
-    final candidates = <ImportCandidate>[];
-    String? passphrase;
-    Object? firstError;
+    final preview = await service.previewFiles(
+      paths,
+      requestPassphrase: () => _connectionsImportPasswordSheet(context),
+    );
+    if (!context.mounted || preview.aborted) return;
 
-    for (final path in paths) {
-      final String content;
-      try {
-        content = await File(path).readAsString();
-      } catch (error) {
-        firstError ??= error;
-        continue;
-      }
-      if (!context.mounted) return;
-      try {
-        candidates.addAll(
-          await service.previewAny(
-            content,
-            baseDirectory: File(path).parent.path,
-            passphrase: passphrase,
+    if (preview.isEmpty) {
+      if (preview.firstError is ConnectionSecretsPassphraseException) {
+        _showMessage('settingsConnectionsImportWrongPassphrase'.tr());
+      } else {
+        _showMessage(
+          'settingsConnectionsImportError'.tr(
+            args: [
+              preview.firstError?.toString() ??
+                  'settingsConnectionsImportEmpty'.tr(),
+            ],
           ),
         );
-      } on ConnectionSecretsLockedException {
-        if (passphrase != null) {
-          firstError ??= const ConnectionSecretsLockedException();
-          continue;
-        }
-        if (!context.mounted) return;
-        final entered = await _connectionsImportPasswordSheet(context);
-        if (entered == null || !context.mounted) return;
-        passphrase = entered;
-        try {
-          candidates.addAll(
-            await service.previewAny(
-              content,
-              baseDirectory: File(path).parent.path,
-              passphrase: passphrase,
-            ),
-          );
-        } on ConnectionSecretsPassphraseException {
-          if (context.mounted) {
-            _showMessage('settingsConnectionsImportWrongPassphrase'.tr());
-          }
-          return;
-        } on Exception catch (error) {
-          firstError ??= error;
-        }
-      } on ConnectionSecretsPassphraseException {
-        if (context.mounted) {
-          _showMessage('settingsConnectionsImportWrongPassphrase'.tr());
-        }
-        return;
-      } on Exception catch (error) {
-        firstError ??= error;
       }
-    }
-    if (!context.mounted) return;
-
-    if (candidates.isEmpty) {
-      _showMessage(
-        'settingsConnectionsImportError'.tr(
-          args: [
-            firstError?.toString() ?? 'settingsConnectionsImportEmpty'.tr(),
-          ],
-        ),
-      );
       return;
     }
 
@@ -1561,7 +1514,7 @@ class SettingsPage extends ConsumerWidget {
       useSafeArea: true,
       useRootNavigator: true,
       builder: (sheetContext) =>
-          _ConnectionImportPreviewSheet(candidates: candidates),
+          ConnectionImportPreviewSheet(candidates: preview.candidates),
     );
     if (selected == null || selected.isEmpty || !context.mounted) return;
 
@@ -2469,107 +2422,6 @@ class _SettingsSection extends StatelessWidget {
         ),
       ],
     );
-  }
-}
-
-/// Review sheet for parsed connections: checkboxes per server, duplicates
-/// unchecked by default, credential-less rows flagged. Pops with the selected
-/// candidates or null when cancelled.
-class _ConnectionImportPreviewSheet extends StatefulWidget {
-  const _ConnectionImportPreviewSheet({required this.candidates});
-
-  final List<ImportCandidate> candidates;
-
-  @override
-  State<_ConnectionImportPreviewSheet> createState() =>
-      _ConnectionImportPreviewSheetState();
-}
-
-class _ConnectionImportPreviewSheetState
-    extends State<_ConnectionImportPreviewSheet> {
-  late final Set<int> _selected = {
-    for (final (index, candidate) in widget.candidates.indexed)
-      if (!candidate.isDuplicate) index,
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    final candidates = widget.candidates;
-    return SheetScaffold(
-      titleText: 'settingsConnectionsImportPreviewTitle'.tr(),
-      heightFactor: 0.75,
-      child: candidates.isEmpty
-          ? ListView(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-              children: [const Text('settingsConnectionsImportEmpty').tr()],
-            )
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-              children: [
-                const Text('settingsConnectionsImportPreviewHint').tr(),
-                const SizedBox(height: 12),
-                for (final (index, candidate) in candidates.indexed)
-                  CheckboxListTile(
-                    value: _selected.contains(index),
-                    onChanged: (value) => setState(() {
-                      if (value == true) {
-                        _selected.add(index);
-                      } else {
-                        _selected.remove(index);
-                      }
-                    }),
-                    controlAffinity: ListTileControlAffinity.leading,
-                    secondary: Icon(
-                      candidate.connection.credential == null
-                          ? Symbols.key_off
-                          : Symbols.key,
-                    ),
-                    title: Text(candidate.connection.name),
-                    subtitle: _candidateSubtitle(candidate),
-                    isThreeLine: true,
-                  ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Text(
-                      'settingsConnectionsImportSelected'.tr(
-                        args: ['${_selected.length}'],
-                      ),
-                    ),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('commonCancel').tr(),
-                    ),
-                    const SizedBox(width: 8),
-                    FilledButton(
-                      onPressed: _selected.isEmpty
-                          ? null
-                          : () => Navigator.of(context).pop([
-                              for (final index in _selected) candidates[index],
-                            ]),
-                      child: const Text('settingsConnectionsImportAction').tr(),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-    );
-  }
-
-  List<String> _candidateWarnings(ImportCandidate candidate) => [
-    if (candidate.isDuplicate) 'settingsConnectionsImportDuplicate'.tr(),
-    if (candidate.connection.credential == null)
-      'settingsConnectionsImportNoCredential'.tr(),
-  ];
-
-  Widget _candidateSubtitle(ImportCandidate candidate) {
-    final connection = candidate.connection;
-    final address =
-        '${connection.username.isEmpty ? '?' : connection.username}'
-        '@${connection.host}:${connection.port}';
-    final details = [connection.source, ..._candidateWarnings(candidate)];
-    return Text('$address\n${details.join(' • ')}');
   }
 }
 
