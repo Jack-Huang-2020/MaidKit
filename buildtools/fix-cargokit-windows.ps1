@@ -12,6 +12,9 @@
 # Idempotent: safe to run on every `flutter pub get` / build.
 $ErrorActionPreference = 'Stop'
 
+Write-Host "PUB_CACHE=$env:PUB_CACHE"
+Write-Host "LOCALAPPDATA=$env:LOCALAPPDATA"
+
 $target = '$item = Get-Item $realPath'
 $fixedLine = '$item = Get-Item $realPath -Force'
 
