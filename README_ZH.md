@@ -13,6 +13,10 @@
   <a href="https://solsynth.dev/zh/products/maid-kit#download"><img src="https://img.shields.io/badge/download-solsynth.dev-blue" alt="Download"></a>
 </p>
 
+<p align="center">
+  <a href="README.md">English</a> · 简体中文
+</p>
+
 ---
 
 MaidKit 是小羊在给服务器当女仆的时候（维护服务器）用到的工具合集。旨在提供一个非侵入式（100% 基于 SSH，不在服务器上安装任何软件，增加安全风险）更加方便的维护服务器。
@@ -38,10 +42,10 @@ MaidKit 是小羊在给服务器当女仆的时候（维护服务器）用到的
 
 | 功能 | 说明 |
 |------|------|
-| 仪表盘 | 服务器卡片网格，实时显示状态、负载、内存和运行时间 |
+| 仪表盘 | 服务器卡片网格，实时显示状态、负载、内存和运行时间；可通过右键菜单排序、分组、打标签，并配置环境变量 |
 | 活动监控 | 实时性能图表（CPU、内存、网络、磁盘） |
-| 终端 | 支持分屏、拖拽标签页和命令面板的完整 SSH 终端 |
-| 文件管理 | 双窗格 SFTP 浏览器，支持拖拽传输和内置编辑器 |
+| 终端 | 支持分屏、拖拽标签页、命令面板和终端配色方案的完整 SSH 终端 |
+| 文件管理 | 双窗格 SFTP 浏览器，支持拖拽传输、内置编辑器和键盘快捷键（复制/剪切/粘贴、重命名、刷新、搜索、删除） |
 | 进程管理 | 查看和终止运行中的进程 |
 | 服务管理 | Systemd 单元管理（启动/停止/启用/禁用） |
 | Web 服务器 | nginx 和 Caddy 配置管理 |
@@ -49,12 +53,14 @@ MaidKit 是小羊在给服务器当女仆的时候（维护服务器）用到的
 | 软件包 | 软件包管理（apt、dnf 等） |
 | 防火墙 | UFW、firewalld、nftables 和 iptables 管理 |
 | 端口转发 | 本地和远程隧道配置 |
+| 代理 | 通过每台服务器独立的 HTTP CONNECT 或 SOCKS5 代理连接主机 |
+| Tailscale | 通过内置节点连接你的 tailnet，无需安装 Tailscale 应用 |
 
 ### 容器管理
 
 - Docker 和 Podman 容器管理
 - 启动、停止、重启、暂停、终止和删除容器
-- Compose 项目分组
+- Compose 项目分组，带详情视图（各服务状态、合并日志、生命周期操作）
 - 容器镜像管理
 - 运行时安装辅助
 
@@ -70,21 +76,43 @@ MaidKit 是小羊在给服务器当女仆的时候（维护服务器）用到的
 - 在一台或多台已连接的服务器上执行
 - 流式输出与进度追踪
 
+### Agent
+
+- 与能通过工具操作服务器的 AI Agent 聊天
+- 自带 AI 提供商，或使用 Solar Network AI
+- MCP 服务器和可复用技能扩展 Agent 的工具集
+- 拟执行的操作需先经过批准（审查模式）
+- 对话历史保存在本机，独立于凭证库
+
+### GitHub
+
+- 通过设备码流程登录
+- 置顶仓库，跟踪工作流运行、拉取请求和发布
+- GitHub 工具可供 Agent 使用
+
+### 本地 MCP 服务器
+
+- 通过本机的 Model Context Protocol 服务器，将 MaidKit 的 SSH 服务器、脚本片段和技能暴露给其他 Agent
+- 可从 Claude Desktop 或任意 MCP 客户端连接
+
 ### 安全
 
 - AES-GCM 256 位加密凭证库
 - PBKDF2 密钥派生（310,000 次迭代）
 - 生物识别解锁支持
+- 可选的按凭证库云同步（Solar Network 加密数据块）
 - 加密备份归档（.mkb）
 
 ### 设置
 
-- 主题（系统/浅色/深色）
+- 主题（系统/浅色/深色）、强调色和工作区背景图
 - 语言（English / 简体中文）
-- 终端渲染器选择（Ghostty libghostty-vt 或 xterm）
+- 终端渲染器选择（Ghostty libghostty-vt 或 xterm）、字体和配色方案
 - 启动时自动连接
+- 屏幕共享或录屏时隐藏服务器地址
 - 指标刷新间隔
-- 数据导出和导入
+- Tailscale 登录与连接设置
+- 按凭证库云同步、服务器连接的导入和导出
 
 ---
 
@@ -120,6 +148,17 @@ flutter run
 # 构建发布版本
 flutter build <platform>
 ```
+
+### Linux AppImage
+
+构建发布包后，可打包为自包含的 Linux AppImage：
+
+```bash
+flutter build linux
+bash buildtools/build-appimage.sh
+```
+
+该脚本会将 x64 发布包与桌面入口和运行辅助文件一起打包为 `MaidKit-x86_64.AppImage`。
 
 ### 开发
 
@@ -164,6 +203,8 @@ flutter test
 | **SSH** | dartssh2 |
 | **加密** | Cryptography (AES-GCM, PBKDF2) |
 | **终端** | libghostty-vt / xterm |
+| **Tailscale** | tailscale（内置节点，macOS/Linux） |
+| **MCP** | Model Context Protocol 客户端 + 本地服务器 |
 | **桌面** | window_manager + island_ui_foundation |
 
 ---

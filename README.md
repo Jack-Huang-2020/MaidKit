@@ -13,6 +13,10 @@
   <a href="https://solsynth.dev/zh/products/maid-kit#download"><img src="https://img.shields.io/badge/download-solsynth.dev-blue" alt="Download"></a>
 </p>
 
+<p align="center">
+  English · <a href="README_ZH.md">简体中文</a>
+</p>
+
 ---
 
 MaidKit is a collection of tools used by LittleSheep when acting as a "maid" for servers (i.e., performing server maintenance). The goal is to provide a more convenient way to maintain servers that is non-intrusive — being 100% SSH-based, without installing any software on the server or increasing security risks.
@@ -38,10 +42,10 @@ Built with Flutter, MaidKit runs on desktop and mobile platforms alike. Inspired
 
 | Feature | Description |
 |---------|-------------|
-| Dashboard | Grid of server cards with live status, load, memory, and uptime |
+| Dashboard | Grid of server cards with live status, load, memory, and uptime; reorder via context menu, organize into groups, tag, and customize with environment variables |
 | Activity | Real-time performance charts (CPU, memory, network, disk) |
-| Terminal | Full SSH terminal with split panes, drag-and-drop tabs, and command palette |
-| File Management | Dual-pane SFTP browser with drag-and-drop transfers and in-app editor |
+| Terminal | Full SSH terminal with split panes, drag-and-drop tabs, command palette, and terminal color schemes |
+| File Management | Dual-pane SFTP browser with drag-and-drop transfers, in-app editor, and keyboard shortcuts (copy/cut/paste, rename, refresh, search, delete) |
 | Processes | List and kill running processes |
 | Services | Systemd unit management (start/stop/enable/disable) |
 | Web Servers | nginx and Caddy configuration management |
@@ -49,12 +53,14 @@ Built with Flutter, MaidKit runs on desktop and mobile platforms alike. Inspired
 | Packages | Package management (apt, dnf, and more) |
 | Firewall | UFW, firewalld, nftables, and iptables management |
 | Port Forwarding | Local and remote tunnel configuration |
+| Proxy | Reach hosts through a per-server HTTP CONNECT or SOCKS5 proxy |
+| Tailscale | Connect over your tailnet with an embedded node — no Tailscale app required |
 
 ### Containers
 
 - Docker and Podman container management
 - Start, stop, restart, pause, kill, and remove containers
-- Compose project grouping
+- Compose project grouping with detail view (per-service status, merged logs, lifecycle actions)
 - Container image management
 - Runtime installation assistance
 
@@ -70,21 +76,43 @@ Built with Flutter, MaidKit runs on desktop and mobile platforms alike. Inspired
 - Execute on one or more connected servers
 - Streaming output with progress tracking
 
+### Agent
+
+- Chat with an AI agent that can operate your servers through tools
+- Bring your own AI provider or use Solar Network AI
+- MCP servers and reusable skills extend the agent's toolset
+- Proposed actions require approval (review mode) before they run
+- Conversation history is stored on-device, outside the vault
+
+### GitHub
+
+- Sign in with device-flow authorization
+- Pin repositories and follow workflow runs, pull requests, and releases
+- GitHub tools are available to the agent
+
+### Local MCP Server
+
+- Expose MaidKit's SSH servers, snippets, and skills to other agents on this machine through a local Model Context Protocol server
+- Connect from Claude Desktop or any MCP client
+
 ### Security
 
 - AES-GCM 256-bit encrypted credential vault
 - PBKDF2 key derivation (310,000 iterations)
 - Biometric unlock support
+- Optional per-vault cloud sync over encrypted blobs (Solar Network)
 - Encrypted backup archives (.mkb)
 
 ### Settings
 
-- Theme (system/light/dark)
+- Theme (system/light/dark), accent color, and workspace background image
 - Language (English / 简体中文)
-- Terminal renderer selection (Ghostty libghostty-vt or xterm)
+- Terminal renderer selection (Ghostty libghostty-vt or xterm), font, and color scheme
 - Connect on startup
+- Hide server addresses when screen sharing or recording
 - Metrics refresh intervals
-- Data export and import
+- Tailscale sign-in and connection settings
+- Cloud sync per vault, import and export of server connections
 
 ---
 
@@ -125,6 +153,18 @@ flutter run
 # Build release version
 flutter build <platform>
 ```
+
+### Linux AppImage
+
+Bundle a self-contained AppImage for Linux after building the release bundle:
+
+```bash
+flutter build linux
+bash buildtools/build-appimage.sh
+```
+
+The script packs the x64 release bundle with the desktop entry and run helpers
+into `MaidKit-x86_64.AppImage`.
 
 ### iOS App Store Archive
 
@@ -185,6 +225,8 @@ See [docs/architecture.md](./docs/architecture.md) for the full architecture gui
 | **SSH** | dartssh2 |
 | **Encryption** | cryptography (AES-GCM, PBKDF2) |
 | **Terminal** | libghostty-vt / xterm |
+| **Tailscale** | tailscale (embedded node, macOS/Linux) |
+| **MCP** | Model Context Protocol client + local server |
 | **Desktop** | window_manager + island_ui_foundation |
 
 ---
