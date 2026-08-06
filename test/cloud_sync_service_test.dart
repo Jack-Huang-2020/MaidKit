@@ -73,7 +73,9 @@ class _CannedAdapter implements HttpClientAdapter {
 ResponseBody _json(Object body, int status) => ResponseBody.fromString(
   jsonEncode(body),
   status,
-  headers: {Headers.contentTypeHeader: [Headers.jsonContentType]},
+  headers: {
+    Headers.contentTypeHeader: [Headers.jsonContentType],
+  },
 );
 
 void main() {
@@ -83,23 +85,23 @@ void main() {
     // Stub the native OIDC browser flow: echo the state back in a callback
     // URL so the PKCE state check inside the service passes.
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(
-          const MethodChannel('flutter_web_auth_2'),
-          (call) async {
-            if (call.method != 'authenticate') return null;
-            final arguments = Map<String, dynamic>.from(
-              call.arguments as Map,
-            );
-            final url = Uri.parse(arguments['url'] as String);
-            final state = url.queryParameters['state']!;
-            return 'maidkit://oauth/callback?code=test-code&state=$state';
-          },
-        );
+        .setMockMethodCallHandler(const MethodChannel('flutter_web_auth_2'), (
+          call,
+        ) async {
+          if (call.method != 'authenticate') return null;
+          final arguments = Map<String, dynamic>.from(call.arguments as Map);
+          final url = Uri.parse(arguments['url'] as String);
+          final state = url.queryParameters['state']!;
+          return 'maidkit://oauth/callback?code=test-code&state=$state';
+        });
   });
 
   tearDown(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(const MethodChannel('flutter_web_auth_2'), null);
+        .setMockMethodCallHandler(
+          const MethodChannel('flutter_web_auth_2'),
+          null,
+        );
   });
 
   test('re-signs in when the stored session is rejected with 401', () async {
@@ -134,7 +136,10 @@ void main() {
             ], 200);
           case '/token':
             tokenExchanges++;
-            return _json({'access_token': 'fresh-token', 'expires_in': 3600}, 200);
+            return _json({
+              'access_token': 'fresh-token',
+              'expires_in': 3600,
+            }, 200);
           default:
             return _json({}, 404);
         }
@@ -179,7 +184,10 @@ void main() {
             ], 200);
           case '/token':
             tokenExchanges++;
-            return _json({'access_token': 'fresh-token', 'expires_in': 3600}, 200);
+            return _json({
+              'access_token': 'fresh-token',
+              'expires_in': 3600,
+            }, 200);
           default:
             return _json({}, 404);
         }
@@ -210,7 +218,10 @@ void main() {
           case '/valve/workspaces':
             return _json({'error': 'server error'}, 500);
           case '/token':
-            return _json({'access_token': 'fresh-token', 'expires_in': 3600}, 200);
+            return _json({
+              'access_token': 'fresh-token',
+              'expires_in': 3600,
+            }, 200);
           default:
             return _json({}, 404);
         }
@@ -239,5 +250,45 @@ void main() {
         ),
       ),
     );
+  });
+
+  test('loads the current account from the Stargate route', () async {
+    final storage = _MemoryStorage();
+    final requestedPaths = <String>[];
+    final dio = Dio()
+      ..httpClientAdapter = _CannedAdapter((options) async {
+        requestedPaths.add(options.uri.path);
+        switch (options.uri.path) {
+          case '/stargate/accounts/me':
+            return _json({
+              'name': 'littlesheep',
+              'nick': 'Little Sheep',
+              'profile': {
+                'picture': {'id': 'pic-1'},
+              },
+            }, 200);
+          default:
+            return _json({}, 404);
+        }
+      });
+    // A session that is not yet expired so no refresh or re-auth is attempted.
+    storage.values[_sessionKey] = jsonEncode({
+      'access_token': 'valid-token',
+      'expires_at': DateTime.now()
+          .add(const Duration(days: 1))
+          .toUtc()
+          .toIso8601String(),
+    });
+
+    final service = CloudSyncService(
+      vaultId: 'test-vault',
+      secureStorage: storage,
+      dio: dio,
+    );
+
+    final user = await service.currentUser();
+
+    expect(user?.name, 'Little Sheep');
+    expect(requestedPaths, ['/stargate/accounts/me']);
   });
 }

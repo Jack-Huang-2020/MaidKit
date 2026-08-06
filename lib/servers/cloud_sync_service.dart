@@ -227,7 +227,9 @@ class CloudSyncService {
   Future<CloudUser?> currentUser() async {
     final session = await _validSession();
     if (session == null) return null;
-    final response = await _authorizedGet('/passport/accounts/me', session);
+    // The accounts profile domain moved from Passport to Stargate; Blade
+    // converts the /stargate service prefix to /api at the gateway.
+    final response = await _authorizedGet('/stargate/accounts/me', session);
     final data = response.data;
     return data is Map
         ? CloudUser.fromJson(Map<String, dynamic>.from(data))
