@@ -116,7 +116,7 @@ class ConnectionExportService {
           '${server.port}',
           _csvField(server.username),
           _csvField(credentialsById[server.credentialId]?.credentialType ?? ''),
-          _csvField(decodeStringList(server.tags).join(',')),
+          _csvField(decodeStringList(server.tags).map(_escapeTag).join(',')),
           server.connectionType,
         ], ',')
         ..writeln();
@@ -232,3 +232,8 @@ String _csvField(String value) {
   }
   return value;
 }
+
+/// Escapes a tag for the comma-joined CSV column so tags containing commas
+/// or backslashes round-trip losslessly.
+String _escapeTag(String tag) =>
+    tag.replaceAll(r'\', r'\\').replaceAll(',', r'\,');

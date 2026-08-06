@@ -26,6 +26,7 @@ import 'package:maid_kit/shared/presentation/app_scaffold.dart';
 import 'database_backup_service.dart';
 import 'cloud_sync_service.dart';
 import 'connection_export_service.dart';
+import 'connection_import_service.dart';
 import 'server_providers.dart';
 import 'tailscale_settings_section.dart';
 import 'terminal_adapter_preferences.dart';
@@ -897,7 +898,7 @@ class SettingsPage extends ConsumerWidget {
                       contentPadding: _sectionTilePadding,
                       shape: RoundedRectangleBorder(
                         borderRadius: _sectionTileBorderRadius(
-                          _SettingsTilePosition.only,
+                          _SettingsTilePosition.first,
                         ),
                       ),
                       leading: const Icon(Symbols.dns),
@@ -907,6 +908,21 @@ class SettingsPage extends ConsumerWidget {
                       ).tr(),
                       trailing: const Icon(Symbols.chevron_right),
                       onTap: () => _exportConnections(context, ref),
+                    ),
+                    ListTile(
+                      contentPadding: _sectionTilePadding,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: _sectionTileBorderRadius(
+                          _SettingsTilePosition.last,
+                        ),
+                      ),
+                      leading: const Icon(Symbols.upload_file),
+                      title: const Text('settingsConnectionsImport').tr(),
+                      subtitle: const Text(
+                        'settingsConnectionsImportHint',
+                      ).tr(),
+                      trailing: const Icon(Symbols.chevron_right),
+                      onTap: () => _importConnections(context, ref),
                     ),
                   ],
                 ),
@@ -1452,6 +1468,99 @@ class SettingsPage extends ConsumerWidget {
     }
   }
 
+  Future<void> _importConnections(BuildContext context, WidgetRef ref) async {
+    final selection = await FilePicker.pickFiles(
+      dialogTitle: 'settingsConnectionsImportTitle'.tr(),
+      type: FileType.custom,
+      allowedExtensions: const ['json', 'csv'],
+    );
+    final path = selection?.files.singleOrNull?.path;
+    if (path == null || !context.mounted) return;
+
+    final String content;
+    try {
+      content = await File(path).readAsString();
+    } catch (error) {
+      if (context.mounted) {
+        _showMessage(
+          'settingsConnectionsImportError'.tr(args: [error.toString()]),
+        );
+      }
+      return;
+    }
+    if (!context.mounted) return;
+
+    final service = ConnectionImportService(
+      ref.read(databaseProvider),
+      ref.read(vaultServiceProvider),
+    );
+    final isJson = content.trimLeft().startsWith('{');
+
+    List<ImportCandidate> candidates;
+    try {
+      candidates = isJson
+          ? await service.previewJson(content)
+          : await service.previewCsv(content);
+    } on ConnectionSecretsLockedException {
+      if (!context.mounted) return;
+      final passphrase = await _connectionsImportPasswordSheet(context);
+      if (passphrase == null || !context.mounted) return;
+      try {
+        candidates = await service.previewJson(content, passphrase: passphrase);
+      } on ConnectionSecretsPassphraseException {
+        if (context.mounted) {
+          _showMessage('settingsConnectionsImportWrongPassphrase'.tr());
+        }
+        return;
+      } on Exception catch (error) {
+        if (context.mounted) {
+          _showMessage(
+            'settingsConnectionsImportError'.tr(args: [error.toString()]),
+          );
+        }
+        return;
+      }
+    } on ConnectionSecretsPassphraseException {
+      if (context.mounted) {
+        _showMessage('settingsConnectionsImportWrongPassphrase'.tr());
+      }
+      return;
+    } on Exception catch (error) {
+      if (context.mounted) {
+        _showMessage(
+          'settingsConnectionsImportError'.tr(args: [error.toString()]),
+        );
+      }
+      return;
+    }
+    if (!context.mounted) return;
+
+    final selected = await showModalBottomSheet<List<ImportCandidate>>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      useRootNavigator: true,
+      builder: (sheetContext) =>
+          _ConnectionImportPreviewSheet(candidates: candidates),
+    );
+    if (selected == null || selected.isEmpty || !context.mounted) return;
+
+    try {
+      final result = await service.import(selected);
+      if (context.mounted) {
+        _showMessage(
+          'settingsConnectionsImportSuccess'.tr(args: ['${result.created}']),
+        );
+      }
+    } on Exception catch (error) {
+      if (context.mounted) {
+        _showMessage(
+          'settingsConnectionsImportError'.tr(args: [error.toString()]),
+        );
+      }
+    }
+  }
+
   Future<void> _createLocalVault(BuildContext context, WidgetRef ref) async {
     final name = await _chooseVaultNameSheet(context);
     if (name == null || !context.mounted) return;
@@ -1866,6 +1975,20 @@ Future<String?> _connectionsPasswordSheet(BuildContext context) =>
         titleKey: 'settingsConnectionsPasswordTitle',
         hintKey: 'settingsConnectionsPasswordHint',
         actionKey: 'settingsConnectionsExportAction',
+      ),
+    );
+
+Future<String?> _connectionsImportPasswordSheet(BuildContext context) =>
+    showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      useRootNavigator: true,
+      builder: (context) => const _BackupPasswordSheet(
+        confirm: false,
+        titleKey: 'settingsConnectionsImportPasswordTitle',
+        hintKey: 'settingsConnectionsImportPasswordHint',
+        actionKey: 'settingsConnectionsImportAction',
       ),
     );
 
@@ -2325,6 +2448,109 @@ class _SettingsSection extends StatelessWidget {
           child: Padding(padding: padding, child: child),
         ),
       ],
+    );
+  }
+}
+
+/// Review sheet for parsed connections: checkboxes per server, duplicates
+/// unchecked by default, credential-less rows flagged. Pops with the selected
+/// candidates or null when cancelled.
+class _ConnectionImportPreviewSheet extends StatefulWidget {
+  const _ConnectionImportPreviewSheet({required this.candidates});
+
+  final List<ImportCandidate> candidates;
+
+  @override
+  State<_ConnectionImportPreviewSheet> createState() =>
+      _ConnectionImportPreviewSheetState();
+}
+
+class _ConnectionImportPreviewSheetState
+    extends State<_ConnectionImportPreviewSheet> {
+  late final Set<int> _selected = {
+    for (final (index, candidate) in widget.candidates.indexed)
+      if (!candidate.isDuplicate) index,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final candidates = widget.candidates;
+    return SheetScaffold(
+      titleText: 'settingsConnectionsImportPreviewTitle'.tr(),
+      heightFactor: 0.75,
+      child: candidates.isEmpty
+          ? ListView(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+              children: [const Text('settingsConnectionsImportEmpty').tr()],
+            )
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+              children: [
+                const Text('settingsConnectionsImportPreviewHint').tr(),
+                const SizedBox(height: 12),
+                for (final (index, candidate) in candidates.indexed)
+                  CheckboxListTile(
+                    value: _selected.contains(index),
+                    onChanged: (value) => setState(() {
+                      if (value == true) {
+                        _selected.add(index);
+                      } else {
+                        _selected.remove(index);
+                      }
+                    }),
+                    controlAffinity: ListTileControlAffinity.leading,
+                    secondary: Icon(
+                      candidate.connection.credential == null
+                          ? Symbols.key_off
+                          : Symbols.key,
+                    ),
+                    title: Text(candidate.connection.name),
+                    subtitle: _candidateSubtitle(candidate),
+                    isThreeLine: _candidateWarnings(candidate).isNotEmpty,
+                  ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Text(
+                      'settingsConnectionsImportSelected'.tr(
+                        args: ['${_selected.length}'],
+                      ),
+                    ),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('commonCancel').tr(),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      onPressed: _selected.isEmpty
+                          ? null
+                          : () => Navigator.of(context).pop([
+                              for (final index in _selected) candidates[index],
+                            ]),
+                      child: const Text('settingsConnectionsImportAction').tr(),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+    );
+  }
+
+  List<String> _candidateWarnings(ImportCandidate candidate) => [
+    if (candidate.isDuplicate) 'settingsConnectionsImportDuplicate'.tr(),
+    if (candidate.connection.credential == null)
+      'settingsConnectionsImportNoCredential'.tr(),
+  ];
+
+  Widget _candidateSubtitle(ImportCandidate candidate) {
+    final connection = candidate.connection;
+    final address =
+        '${connection.username.isEmpty ? '?' : connection.username}'
+        '@${connection.host}:${connection.port}';
+    final warnings = _candidateWarnings(candidate);
+    return Text(
+      warnings.isEmpty ? address : '$address\n${warnings.join(' • ')}',
     );
   }
 }

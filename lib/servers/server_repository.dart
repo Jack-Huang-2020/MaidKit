@@ -228,12 +228,12 @@ class ServerRepository {
         )..where((table) => table.id.equals(credential.id))).go();
       });
 
-  Future<int> _credentialIdForDraft(ServerDraft draft, DateTime now) async {
+  Future<int?> _credentialIdForDraft(ServerDraft draft, DateTime now) async {
     if (draft.credentialId case final id?) return id;
     final credential = draft.credential;
-    if (credential == null) {
-      throw ArgumentError('Choose an existing credential or create a new one.');
-    }
+    // Credential-less servers are allowed (e.g. imported redacted connection
+    // lists); the user assigns a credential later in the edit form.
+    if (credential == null) return null;
     final encrypted = await _vault.encrypt(
       credential.encode(),
       context: 'server-credential',

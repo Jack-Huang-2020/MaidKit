@@ -279,7 +279,7 @@ void main() {
       expect(lines, hasLength(2));
       expect(
         lines[1],
-        '"prod, ""east""",10.0.0.2,22,admin,password,"a,1,b",ssh',
+        '"prod, ""east""",10.0.0.2,22,admin,password,"a\\,1,b",ssh',
       );
     });
 
