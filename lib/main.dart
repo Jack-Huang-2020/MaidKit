@@ -83,7 +83,11 @@ Future<void> main(List<String> args) async {
         privacySettingsProvider.overrideWithValue(privacyPreferences),
       ],
       child: EasyLocalization(
-        supportedLocales: const [Locale('en', 'US'), Locale('zh', 'CN')],
+        supportedLocales: const [
+          Locale('en', 'US'),
+          Locale('zh', 'CN'),
+          Locale('zh', 'TW'),
+        ],
         path: 'assets/translations',
         fallbackLocale: const Locale('en', 'US'),
         useFallbackTranslations: true,

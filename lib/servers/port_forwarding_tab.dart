@@ -259,12 +259,10 @@ class _ForwardTile extends ConsumerWidget {
           : Symbols.dns,
     ),
     title: Text('${forward.directionLabel} · ${forward.summary}'),
-    subtitle: Text('portForwardingRunningOn').tr(
-      args: [
-        forward.direction == PortForwardDirection.local
-            ? 'this computer'
-            : forward.serverName,
-      ],
+    subtitle: Text(
+      forward.direction == PortForwardDirection.local
+          ? 'portForwardingRunningOnThisComputer'.tr()
+          : 'portForwardingRunningOn'.tr(args: [forward.serverName]),
     ),
     trailing: IconButton(
       tooltip: 'portForwardingStop'.tr(),

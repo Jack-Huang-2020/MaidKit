@@ -857,6 +857,7 @@
   "portForwardingRemote": "Server listener",
   "portForwardingRemoteDesc": "Listen on the server and send connections through SSH to this computer network.",
   "portForwardingRunningOn": "Running on {}",
+  "portForwardingRunningOnThisComputer": "Running on this computer",
   "portForwardingServerListens": "Server listens",
   "portForwardingServerTarget": "Server network target",
   "portForwardingStart": "Start forwarding",

@@ -2734,6 +2734,8 @@ String _languageDisplayName(Locale locale) {
       return 'English (US)';
     case 'zh-CN':
       return '简体中文';
+    case 'zh-TW':
+      return '繁體中文';
     default:
       return '${locale.languageCode}-${locale.countryCode}';
   }
