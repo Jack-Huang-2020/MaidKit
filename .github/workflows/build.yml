@@ -34,6 +34,11 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      # cargokit's resolve_symlinks.ps1 fails on hidden/system path segments
+      # (e.g. C:\Users\runneradmin\AppData). See buildtools/fix-cargokit-windows.ps1
+      # and https://github.com/irondash/cargokit/pull/119
+      - name: Patch cargokit resolve_symlinks.ps1 for hidden AppData
+        run: powershell -ExecutionPolicy Bypass -File buildtools/fix-cargokit-windows.ps1
       - run: dart run build_runner build --delete-conflicting-outputs
       - run: flutter build windows --release
       - name: Extract Version
