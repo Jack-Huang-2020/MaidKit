@@ -21,6 +21,10 @@ jobs:
   build-windows:
     if: github.event_name == 'push' || github.event.inputs.platform == 'all' || github.event.inputs.platform == 'windows'
     runs-on: windows-latest
+    # Default pub cache lives under C:\Users\runneradmin\AppData (hidden attr),
+    # which breaks cargokit's Get-Item. Put it somewhere hidden-free.
+    env:
+      PUB_CACHE: D:\pub-cache
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
