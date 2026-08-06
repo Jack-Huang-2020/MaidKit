@@ -1471,69 +1471,89 @@ class SettingsPage extends ConsumerWidget {
   Future<void> _importConnections(BuildContext context, WidgetRef ref) async {
     final selection = await FilePicker.pickFiles(
       dialogTitle: 'settingsConnectionsImportTitle'.tr(),
-      type: FileType.custom,
-      allowedExtensions: const ['json', 'csv'],
+      type: FileType.any,
+      allowMultiple: true,
     );
-    final path = selection?.files.singleOrNull?.path;
-    if (path == null || !context.mounted) return;
-
-    final String content;
-    try {
-      content = await File(path).readAsString();
-    } catch (error) {
-      if (context.mounted) {
-        _showMessage(
-          'settingsConnectionsImportError'.tr(args: [error.toString()]),
-        );
-      }
-      return;
-    }
-    if (!context.mounted) return;
+    final paths =
+        selection?.files
+            .map((file) => file.path)
+            .whereType<String>()
+            .where((path) => path.isNotEmpty)
+            .toList() ??
+        const [];
+    if (paths.isEmpty || !context.mounted) return;
 
     final service = ConnectionImportService(
       ref.read(databaseProvider),
       ref.read(vaultServiceProvider),
     );
-    final isJson = content.trimLeft().startsWith('{');
+    final candidates = <ImportCandidate>[];
+    String? passphrase;
+    Object? firstError;
 
-    List<ImportCandidate> candidates;
-    try {
-      candidates = isJson
-          ? await service.previewJson(content)
-          : await service.previewCsv(content);
-    } on ConnectionSecretsLockedException {
-      if (!context.mounted) return;
-      final passphrase = await _connectionsImportPasswordSheet(context);
-      if (passphrase == null || !context.mounted) return;
+    for (final path in paths) {
+      final String content;
       try {
-        candidates = await service.previewJson(content, passphrase: passphrase);
+        content = await File(path).readAsString();
+      } catch (error) {
+        firstError ??= error;
+        continue;
+      }
+      if (!context.mounted) return;
+      try {
+        candidates.addAll(
+          await service.previewAny(
+            content,
+            baseDirectory: File(path).parent.path,
+            passphrase: passphrase,
+          ),
+        );
+      } on ConnectionSecretsLockedException {
+        if (passphrase != null) {
+          firstError ??= const ConnectionSecretsLockedException();
+          continue;
+        }
+        if (!context.mounted) return;
+        final entered = await _connectionsImportPasswordSheet(context);
+        if (entered == null || !context.mounted) return;
+        passphrase = entered;
+        try {
+          candidates.addAll(
+            await service.previewAny(
+              content,
+              baseDirectory: File(path).parent.path,
+              passphrase: passphrase,
+            ),
+          );
+        } on ConnectionSecretsPassphraseException {
+          if (context.mounted) {
+            _showMessage('settingsConnectionsImportWrongPassphrase'.tr());
+          }
+          return;
+        } on Exception catch (error) {
+          firstError ??= error;
+        }
       } on ConnectionSecretsPassphraseException {
         if (context.mounted) {
           _showMessage('settingsConnectionsImportWrongPassphrase'.tr());
         }
         return;
       } on Exception catch (error) {
-        if (context.mounted) {
-          _showMessage(
-            'settingsConnectionsImportError'.tr(args: [error.toString()]),
-          );
-        }
-        return;
+        firstError ??= error;
       }
-    } on ConnectionSecretsPassphraseException {
-      if (context.mounted) {
-        _showMessage('settingsConnectionsImportWrongPassphrase'.tr());
-      }
-      return;
-    } on Exception catch (error) {
-      if (context.mounted) {
-        _showMessage(
-          'settingsConnectionsImportError'.tr(args: [error.toString()]),
-        );
-      }
-      return;
     }
     if (!context.mounted) return;
+
+    if (candidates.isEmpty) {
+      _showMessage(
+        'settingsConnectionsImportError'.tr(
+          args: [
+            firstError?.toString() ?? 'settingsConnectionsImportEmpty'.tr(),
+          ],
+        ),
+      );
+      return;
+    }
 
     final selected = await showModalBottomSheet<List<ImportCandidate>>(
       context: context,
@@ -2506,7 +2526,7 @@ class _ConnectionImportPreviewSheetState
                     ),
                     title: Text(candidate.connection.name),
                     subtitle: _candidateSubtitle(candidate),
-                    isThreeLine: _candidateWarnings(candidate).isNotEmpty,
+                    isThreeLine: true,
                   ),
                 const SizedBox(height: 20),
                 Row(
@@ -2548,10 +2568,8 @@ class _ConnectionImportPreviewSheetState
     final address =
         '${connection.username.isEmpty ? '?' : connection.username}'
         '@${connection.host}:${connection.port}';
-    final warnings = _candidateWarnings(candidate);
-    return Text(
-      warnings.isEmpty ? address : '$address\n${warnings.join(' • ')}',
-    );
+    final details = [connection.source, ..._candidateWarnings(candidate)];
+    return Text('$address\n${details.join(' • ')}');
   }
 }
 

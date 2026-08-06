@@ -5,6 +5,7 @@ import 'package:cryptography/cryptography.dart';
 import 'package:maid_kit/data/local/app_database.dart';
 
 import 'connection_export_service.dart';
+import 'connection_import_adapters.dart';
 import 'server_models.dart';
 import 'server_repository.dart';
 import 'vault_service.dart';
@@ -24,38 +25,6 @@ class ConnectionSecretsPassphraseException implements Exception {
 
   @override
   String toString() => 'The passphrase is incorrect.';
-}
-
-/// A parsed server connection ready for review before import.
-class ImportedConnection {
-  const ImportedConnection({
-    required this.name,
-    required this.host,
-    required this.port,
-    required this.username,
-    required this.connectionType,
-    this.credential,
-    this.proxy,
-    this.environment = const {},
-    this.tags = const [],
-    this.serialConfig,
-  });
-
-  final String name;
-  final String host;
-  final int port;
-  final String username;
-  final ServerConnectionType connectionType;
-
-  /// Null when the source was redacted; the user assigns a credential after
-  /// import.
-  final ServerCredential? credential;
-
-  /// Proxy with password already decrypted from the secrets block.
-  final ServerProxy? proxy;
-  final Map<String, String> environment;
-  final List<String> tags;
-  final SerialConfig? serialConfig;
 }
 
 /// One row of the import preview. [existing] is set when a non-deleted server
@@ -161,6 +130,54 @@ class ConnectionImportService {
       );
     }
     return candidates;
+  }
+
+  /// Routes [content] to the right parser: MaidKit JSON (redacted or
+  /// protected), MaidKit CSV, or a third-party client via
+  /// [detectThirdPartyAdapter]. [baseDirectory] is the folder of the picked
+  /// file, used to resolve relative private-key paths.
+  ///
+  /// Throws [ConnectionSecretsLockedException] when a protected MaidKit JSON
+  /// needs a passphrase.
+  Future<List<ImportCandidate>> previewAny(
+    String content, {
+    String? baseDirectory,
+    String? passphrase,
+  }) async {
+    if (content.trimLeft().startsWith('{')) {
+      try {
+        return await previewJson(content, passphrase: passphrase);
+      } on FormatException {
+        // Not a MaidKit JSON document; fall through to the other formats.
+      }
+    }
+    final rows = _parseCsv(content);
+    if (rows.isNotEmpty && _matchesHeader(rows.first)) {
+      return previewCsv(content);
+    }
+    return previewThirdParty(content, baseDirectory: baseDirectory);
+  }
+
+  /// Parses a third-party client file (OpenSSH config, FinalShell, XShell,
+  /// SecureCRT, MobaXterm, PuTTY) and matches candidates against existing
+  /// servers. Throws [FormatException] when the format is unrecognized.
+  Future<List<ImportCandidate>> previewThirdParty(
+    String content, {
+    String? baseDirectory,
+  }) async {
+    final adapter = detectThirdPartyAdapter(content);
+    if (adapter == null) {
+      throw const FormatException('Unrecognized connection file.');
+    }
+    final existing = await _activeServers();
+    final connections = adapter.parse(content, baseDirectory: baseDirectory);
+    return [
+      for (final connection in connections)
+        ImportCandidate(
+          connection: connection,
+          existing: _findExisting(existing, connection),
+        ),
+    ];
   }
 
   /// Creates the selected candidates inside one transaction.

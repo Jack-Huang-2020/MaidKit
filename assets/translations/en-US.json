@@ -1129,7 +1129,7 @@
   "settingsConnectionsImportDuplicate": "Already exists",
   "settingsConnectionsImportEmpty": "No connections found in this file.",
   "settingsConnectionsImportError": "Could not import connections: {}",
-  "settingsConnectionsImportHint": "Restore connections from a MaidKit JSON or CSV export.",
+  "settingsConnectionsImportHint": "Restore connections from MaidKit exports or other SSH clients (OpenSSH, FinalShell, XShell, SecureCRT, MobaXterm, PuTTY).",
   "settingsConnectionsImportNoCredential": "No credential — add one after import",
   "settingsConnectionsImportPasswordHint": "This export contains encrypted secrets. Enter the passphrase used when exporting.",
   "settingsConnectionsImportPasswordTitle": "Unlock export secrets",
