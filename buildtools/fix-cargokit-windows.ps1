@@ -1,13 +1,18 @@
-# Patches cargokit's resolve_symlinks.ps1 so Windows builds work when the
-# path passes through hidden/system folders (e.g. C:\Users\<user>\AppData,
-# the default pub cache location).
+# Patches packages in the pub cache so Windows builds work:
 #
-# Upstream bug: `Get-Item` without `-Force` throws ObjectNotFound on path
-# segments carrying Hidden/System attributes, even though they exist, so
-# super_native_extensions' cargokit cmake step fails with:
-#   Get-Item : Could not find item C:\Users\runneradmin\AppData.
-# Fix: https://github.com/irondash/cargokit/pull/119 (open, unmerged as of
-# super_native_extensions 0.9.1). Remove this script once upstream ships it.
+# 1. cargokit's resolve_symlinks.ps1 (super_native_extensions): `Get-Item`
+#    without `-Force` throws ObjectNotFound on hidden/system path segments
+#    (e.g. C:\Users\<user>\AppData, the default pub cache location).
+#    Fix: https://github.com/irondash/cargokit/pull/119 (open, unmerged as of
+#    super_native_extensions 0.9.1).
+# 2. tailscale's hook/build.dart: Flutter's native-assets hook runner executes
+#    hooks with a stripped environment (no GOCACHE, no LocalAppData), so
+#    `go build -buildmode=c-shared` fails with:
+#      build cache is required, but could not be located:
+#      GOCACHE is not defined and %LocalAppData% is not defined
+#    We inject an explicit GOCACHE into the environment the hook passes to go.
+#
+# Remove this script once upstream ships both fixes.
 #
 # Idempotent: safe to run on every `flutter pub get` / build.
 $ErrorActionPreference = 'Stop'
@@ -15,51 +20,80 @@ $ErrorActionPreference = 'Stop'
 Write-Host "PUB_CACHE=$env:PUB_CACHE"
 Write-Host "LOCALAPPDATA=$env:LOCALAPPDATA"
 
-$target = '$item = Get-Item $realPath'
-$fixedLine = '$item = Get-Item $realPath -Force'
+$pubCache = if ($env:PUB_CACHE) { $env:PUB_CACHE } else { Join-Path $env:LOCALAPPDATA 'Pub\Cache' }
+$hostedDir = Join-Path $pubCache 'hosted\pub.dev'
 
-function Patch-Script([string]$script) {
-    if (-not (Test-Path -LiteralPath $script)) { return 0 }
+$script:found = 0
+$script:patched = 0
+
+function Patch-CargokitScript([string]$script) {
+    if (-not (Test-Path -LiteralPath $script)) { return }
+    $script:found++
     $content = Get-Content -LiteralPath $script -Raw
-    if ($content.Contains($target) -and -not $content.Contains($fixedLine)) {
+    $target = '$item = Get-Item $realPath'
+    $fixedLine = '$item = Get-Item $realPath -Force'
+    if ($content.Contains($fixedLine)) {
+        Write-Host "OK (already patched): $script"
+    } elseif ($content.Contains($target)) {
         Set-Content -LiteralPath $script -Value $content.Replace($target, $fixedLine) -NoNewline -Encoding ASCII
+        $script:patched++
         Write-Host "Patched: $script"
     } else {
-        Write-Host "OK (no change needed): $script"
+        Write-Host "WARN (cargokit layout changed?): $script"
     }
     $line = Get-Content -LiteralPath $script | Where-Object { $_ -like '*Get-Item $realPath*' }
     Write-Host "  Get-Item line: $line"
-    return 1
 }
 
-$total = 0
-$patched = 0
+function Patch-TailscaleHook([string]$script) {
+    if (-not (Test-Path -LiteralPath $script)) { return }
+    $script:found++
+    $content = Get-Content -LiteralPath $script -Raw
+    if ($content.Contains("env['GOCACHE']")) {
+        Write-Host "OK (already patched): $script"
+        return
+    }
+    $target = '      final result = await Process.run('
+    $insert = "      env['GOCACHE'] = p.join(input.outputDirectory.toFilePath(), 'go-build');`n"
+    if ($content.Contains($target)) {
+        Set-Content -LiteralPath $script -Value $content.Replace($target, $insert + $target) -NoNewline -Encoding ASCII
+        $script:patched++
+        Write-Host "Patched: $script"
+    } else {
+        Write-Host "WARN (tailscale hook layout changed?): $script"
+    }
+    $line = Get-Content -LiteralPath $script | Where-Object { $_ -like '*GOCACHE*' }
+    Write-Host "  GOCACHE line: $line"
+}
 
-# 1. The exact file cmake executes, via the plugin symlink Flutter created
-#    during `flutter pub get` (covers both junction and copy layouts).
+# 1. cargokit resolve_symlinks.ps1 - the exact file cmake executes, via the
+#    plugin symlink Flutter created during `flutter pub get` (junction or copy).
 $ephemeral = Join-Path $PWD 'windows\flutter\ephemeral\.plugin_symlinks\super_native_extensions\cargokit\cmake\resolve_symlinks.ps1'
 if (Test-Path -LiteralPath $ephemeral) {
-    $total += 1
-    $patched += Patch-Script $ephemeral
+    Patch-CargokitScript $ephemeral
 }
 
-# 2. Any copies in the pub cache (custom PUB_CACHE locations).
-$pubCache = if ($env:PUB_CACHE) { $env:PUB_CACHE } else { Join-Path $env:LOCALAPPDATA 'Pub\Cache' }
-$hostedDir = Join-Path $pubCache 'hosted\pub.dev'
+# 2. cargokit copies in the pub cache (custom PUB_CACHE locations).
 if (Test-Path -LiteralPath $hostedDir) {
     Get-ChildItem -LiteralPath $hostedDir -Directory |
         Where-Object { $_.Name -like 'super_native_extensions-*' } |
         ForEach-Object {
-            $script = Join-Path $_.FullName 'cargokit\cmake\resolve_symlinks.ps1'
-            if (Test-Path -LiteralPath $script) {
-                $total += 1
-                $patched += Patch-Script $script
-            }
+            Patch-CargokitScript (Join-Path $_.FullName 'cargokit\cmake\resolve_symlinks.ps1')
         }
 }
 
-Write-Host "cargokit scripts checked: $total, patched: $patched"
-if ($total -eq 0) {
-    Write-Error "Could not find any cargokit resolve_symlinks.ps1 to patch. The Windows build will likely fail with the hidden-AppData error."
+# 3. tailscale native build hook (go build needs GOCACHE in the stripped
+#    hooks-runner environment).
+if (Test-Path -LiteralPath $hostedDir) {
+    Get-ChildItem -LiteralPath $hostedDir -Directory |
+        Where-Object { $_.Name -like 'tailscale-*' } |
+        ForEach-Object {
+            Patch-TailscaleHook (Join-Path $_.FullName 'hook\build.dart')
+        }
+}
+
+Write-Host "scripts checked: $script:found, patched: $script:patched"
+if ($script:found -eq 0) {
+    Write-Error "Could not find any cargokit/tailscale scripts to patch. The Windows build will likely fail."
     exit 1
 }
