@@ -32,6 +32,10 @@ enum _ClipboardMode { copy, cut }
 
 enum _ArchiveFormat { zip, tarGzip }
 
+/// Fixed row height of the file lists (matches `_FileRow`'s intrinsic
+/// height) so keyboard navigation can scroll items into view precisely.
+const double _kFileRowExtent = 44.0;
+
 class _TransferCancelled implements Exception {
   const _TransferCancelled();
 }
@@ -172,6 +176,9 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
   late final TextEditingController _remotePathController;
   late final FocusNode _remotePathFocusNode;
   late final FocusNode _shortcutFocusNode;
+  final ScrollController _localListController = ScrollController();
+  final ScrollController _leftRemoteListController = ScrollController();
+  final ScrollController _rightRemoteListController = ScrollController();
 
   Set<String> _selectedLocalPaths = {};
   Set<String> _selectedRemotePaths = {};
@@ -356,6 +363,9 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
     _remotePathController.dispose();
     _remotePathFocusNode.dispose();
     _shortcutFocusNode.dispose();
+    _localListController.dispose();
+    _leftRemoteListController.dispose();
+    _rightRemoteListController.dispose();
     _leftSearchController.dispose();
     _rightSearchController.dispose();
     _leftSearchFocusNode.dispose();
@@ -759,39 +769,49 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
     final focusNode = isLocal ? _leftSearchFocusNode : _rightSearchFocusNode;
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
-      child: TextField(
-        controller: controller,
-        focusNode: focusNode,
-        style: Theme.of(context).textTheme.bodySmall,
-        textInputAction: TextInputAction.search,
-        onChanged: (_) => setState(() {
-          if (isLocal) {
-            _localAnchorIndex = null;
-          } else {
-            _remoteAnchorIndex = null;
+      child: Focus(
+        onKeyEvent: (node, event) {
+          if (event is KeyDownEvent &&
+              event.logicalKey == LogicalKeyboardKey.escape) {
+            _toggleSearch(side);
+            return KeyEventResult.handled;
           }
-        }),
-        decoration: InputDecoration(
-          hintText: 'fileManagerSearch'.tr(),
-          isDense: true,
-          prefixIcon: const Icon(Symbols.search, size: 16),
-          suffixIcon: controller.text.isEmpty
-              ? null
-              : IconButton(
-                  tooltip: 'fileManagerClearSearch'.tr(),
-                  visualDensity: VisualDensity.compact,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 28,
-                    minHeight: 28,
+          return KeyEventResult.ignored;
+        },
+        child: TextField(
+          controller: controller,
+          focusNode: focusNode,
+          style: Theme.of(context).textTheme.bodySmall,
+          textInputAction: TextInputAction.search,
+          onChanged: (_) => setState(() {
+            if (isLocal) {
+              _localAnchorIndex = null;
+            } else {
+              _remoteAnchorIndex = null;
+            }
+          }),
+          decoration: InputDecoration(
+            hintText: 'fileManagerSearch'.tr(),
+            isDense: true,
+            prefixIcon: const Icon(Symbols.search, size: 16),
+            suffixIcon: controller.text.isEmpty
+                ? null
+                : IconButton(
+                    tooltip: 'fileManagerClearSearch'.tr(),
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 28,
+                      minHeight: 28,
+                    ),
+                    icon: const Icon(Symbols.close, size: 16),
+                    onPressed: () => setState(() => controller.clear()),
                   ),
-                  icon: const Icon(Symbols.close, size: 16),
-                  onPressed: () => setState(() => controller.clear()),
-                ),
-          border: const OutlineInputBorder(),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 8,
-            vertical: 6,
+            border: const OutlineInputBorder(),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 8,
+              vertical: 6,
+            ),
           ),
         ),
       ),
@@ -2898,6 +2918,227 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
         primary.context!.findAncestorWidgetOfExactType<EditableText>() != null;
   }
 
+  /// True when the local pane is rendered and can receive focus.
+  bool get _canFocusLocalPane => !_isMobileLayout && !_localCollapsed;
+
+  int _displayedLength(_FileSide side) {
+    if (side == _FileSide.local) {
+      return _leftIsRemote
+          ? _displayedLeftRemoteEntries.length
+          : _displayedLocalEntries.length;
+    }
+    return _displayedRemoteEntries.length;
+  }
+
+  /// Index of the selection anchor (or first selected entry) within the
+  /// displayed entries of [side], or null when nothing is selected.
+  int? _selectionIndex(_FileSide side) {
+    if (side == _FileSide.local) {
+      final anchor = _localAnchorIndex;
+      if (anchor != null && anchor >= 0 && anchor < _displayedLength(side)) {
+        return anchor;
+      }
+      if (_leftIsRemote) {
+        for (var i = 0; i < _displayedLeftRemoteEntries.length; i++) {
+          final path = _joinRemotePath(
+            _leftRemotePath,
+            _displayedLeftRemoteEntries[i].filename,
+          );
+          if (_selectedLocalPaths.contains(path)) return i;
+        }
+      } else {
+        for (var i = 0; i < _displayedLocalEntries.length; i++) {
+          if (_selectedLocalPaths.contains(_displayedLocalEntries[i].path)) {
+            return i;
+          }
+        }
+      }
+      return null;
+    }
+    final anchor = _remoteAnchorIndex;
+    if (anchor != null &&
+        anchor >= 0 &&
+        anchor < _displayedRemoteEntries.length) {
+      return anchor;
+    }
+    for (var i = 0; i < _displayedRemoteEntries.length; i++) {
+      final path = _joinRemotePath(
+        _remotePath,
+        _displayedRemoteEntries[i].filename,
+      );
+      if (_selectedRemotePaths.contains(path)) return i;
+    }
+    return null;
+  }
+
+  void _selectIndex(_FileSide side, int index, {bool range = false}) {
+    if (side == _FileSide.local) {
+      if (_leftIsRemote) {
+        final displayed = _displayedLeftRemoteEntries;
+        if (index < 0 || index >= displayed.length) return;
+        _selectLeftRemote(displayed[index], index: index, range: range);
+      } else {
+        final displayed = _displayedLocalEntries;
+        if (index < 0 || index >= displayed.length) return;
+        _selectLocal(displayed[index], index: index, range: range);
+      }
+      return;
+    }
+    final displayed = _displayedRemoteEntries;
+    if (index < 0 || index >= displayed.length) return;
+    _selectRemote(displayed[index], index: index, range: range);
+  }
+
+  void _moveSelectionInSide(int delta, {required bool range}) {
+    _requestShortcutFocus();
+    final side = _focusedSide ?? _FileSide.remote;
+    final length = _displayedLength(side);
+    if (length == 0) return;
+    final current = _selectionIndex(side);
+    if (current == null) {
+      final index = delta > 0 ? 0 : length - 1;
+      _selectIndex(side, index);
+      _scrollToIndex(side, index);
+      return;
+    }
+    var index = current + delta;
+    if (index < 0) index = 0;
+    if (index >= length) index = length - 1;
+    if (!range && index == current) return;
+    _selectIndex(side, index, range: range);
+    _scrollToIndex(side, index);
+  }
+
+  void _selectBoundary({required bool first}) {
+    _requestShortcutFocus();
+    final side = _focusedSide ?? _FileSide.remote;
+    final length = _displayedLength(side);
+    if (length == 0) return;
+    final index = first ? 0 : length - 1;
+    _selectIndex(side, index);
+    _scrollToIndex(side, index);
+  }
+
+  void _scrollToIndex(_FileSide side, int index) {
+    final controller = side == _FileSide.local
+        ? (_leftIsRemote ? _leftRemoteListController : _localListController)
+        : _rightRemoteListController;
+    if (!controller.hasClients) return;
+    final position = controller.position;
+    final top = index * _kFileRowExtent;
+    final bottom = top + _kFileRowExtent;
+    final viewport = position.viewportDimension;
+    if (top < position.pixels) {
+      position.jumpTo(top < 0 ? 0 : top);
+    } else if (bottom > position.pixels + viewport) {
+      position.jumpTo((bottom - viewport).clamp(0.0, position.maxScrollExtent));
+    }
+  }
+
+  void _goUpFocusedSide() {
+    _requestShortcutFocus();
+    if (_focusedSide == _FileSide.local) {
+      if (_leftIsRemote) {
+        if (_leftRemotePath == '/') return;
+        setState(() {
+          _leftRemotePath = _parentRemotePath(_leftRemotePath);
+          _selectedLocalPaths = {};
+          _localAnchorIndex = null;
+          _focusedSide = _FileSide.local;
+        });
+        unawaited(_refreshLeftRemote());
+      } else {
+        unawaited(_goUpLocal());
+      }
+      return;
+    }
+    unawaited(_goUpRemote());
+  }
+
+  void _openLeftRemotePath(String path) {
+    setState(() {
+      _leftRemotePath = path;
+      _selectedLocalPaths = {};
+      _localAnchorIndex = null;
+      _focusedSide = _FileSide.local;
+    });
+    unawaited(_refreshLeftRemote());
+  }
+
+  void _openFocusedSelection() {
+    _requestShortcutFocus();
+    final side = _focusedSide;
+    if (side == null) return;
+    final entries = _entriesForSelection(side);
+    if (entries.length != 1) return;
+    final entry = entries.first;
+    if (entry.isDirectory) {
+      if (side == _FileSide.local) {
+        if (entry.serverId != null) {
+          _openLeftRemotePath(entry.path);
+        } else {
+          unawaited(_openLocal(Directory(entry.path)));
+        }
+      } else {
+        unawaited(_navigateRemote(entry.path));
+      }
+      return;
+    }
+    if (side == _FileSide.local && entry.serverId == null) {
+      final entity = _localEntries
+          .where((item) => item.path == entry.path)
+          .firstOrNull;
+      if (entity is File) unawaited(_editLocal(entity));
+    } else if (side == _FileSide.remote) {
+      final sftpName = _remoteEntries
+          .where(
+            (item) => _joinRemotePath(_remotePath, item.filename) == entry.path,
+          )
+          .firstOrNull;
+      if (sftpName != null && sftpName.attr.isFile) {
+        unawaited(_editRemote(sftpName));
+      }
+    }
+  }
+
+  void _renameFocusedSelection() {
+    _requestShortcutFocus();
+    final side = _focusedSide;
+    if (side == null) return;
+    final entries = _entriesForSelection(side);
+    if (entries.length != 1) return;
+    unawaited(_renameEntry(entries.first));
+  }
+
+  void _refreshFocusedPane() {
+    final side = _focusedSide ?? _FileSide.remote;
+    if (side == _FileSide.local) {
+      if (_leftIsRemote) {
+        unawaited(_refreshLeftRemote());
+      } else {
+        unawaited(_refreshLocal());
+      }
+    } else {
+      unawaited(_refreshRemote());
+    }
+  }
+
+  void _focusPathBar() {
+    final focusLeft = _focusedSide == _FileSide.local && _leftIsRemote;
+    final node = focusLeft ? _leftRemotePathFocusNode : _remotePathFocusNode;
+    final controller = focusLeft
+        ? _leftRemotePathController
+        : _remotePathController;
+    node.requestFocus();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      controller.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: controller.text.length,
+      );
+    });
+  }
+
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
     // Let path bar and other text fields handle select-all, delete, paste, etc.
@@ -2906,29 +3147,99 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
     final isMeta =
         HardwareKeyboard.instance.isMetaPressed ||
         HardwareKeyboard.instance.isControlPressed;
-    if (isMeta && event.logicalKey == LogicalKeyboardKey.keyA) {
-      _selectAllOnFocusedSide();
+    final isShift = HardwareKeyboard.instance.isShiftPressed;
+    final logical = event.logicalKey;
+
+    if (isMeta) {
+      if (logical == LogicalKeyboardKey.keyA) {
+        _selectAllOnFocusedSide();
+        return KeyEventResult.handled;
+      }
+      if (logical == LogicalKeyboardKey.keyC) {
+        _setClipboard(_ClipboardMode.copy);
+        return KeyEventResult.handled;
+      }
+      if (logical == LogicalKeyboardKey.keyX) {
+        _setClipboard(_ClipboardMode.cut);
+        return KeyEventResult.handled;
+      }
+      if (logical == LogicalKeyboardKey.keyV) {
+        final side = _focusedSide;
+        if (side != null) _pasteInto(side);
+        return KeyEventResult.handled;
+      }
+      if (logical == LogicalKeyboardKey.keyN) {
+        unawaited(_createFolder(_focusedSide ?? _FileSide.remote));
+        return KeyEventResult.handled;
+      }
+      if (logical == LogicalKeyboardKey.keyR) {
+        _refreshFocusedPane();
+        return KeyEventResult.handled;
+      }
+      if (logical == LogicalKeyboardKey.keyL) {
+        _focusPathBar();
+        return KeyEventResult.handled;
+      }
+      if (logical == LogicalKeyboardKey.arrowUp) {
+        _goUpFocusedSide();
+        return KeyEventResult.handled;
+      }
+      if (logical == LogicalKeyboardKey.arrowDown) {
+        _openFocusedSelection();
+        return KeyEventResult.handled;
+      }
+      if (logical == LogicalKeyboardKey.arrowLeft) {
+        if (_canFocusLocalPane) _focusSide(_FileSide.local);
+        return KeyEventResult.handled;
+      }
+      if (logical == LogicalKeyboardKey.arrowRight) {
+        _focusSide(_FileSide.remote);
+        return KeyEventResult.handled;
+      }
+    }
+    if (logical == LogicalKeyboardKey.arrowUp ||
+        logical == LogicalKeyboardKey.arrowDown) {
+      _moveSelectionInSide(
+        logical == LogicalKeyboardKey.arrowDown ? 1 : -1,
+        range: isShift,
+      );
       return KeyEventResult.handled;
     }
-    if (isMeta && event.logicalKey == LogicalKeyboardKey.keyC) {
-      _setClipboard(_ClipboardMode.copy);
+    if (logical == LogicalKeyboardKey.home) {
+      _selectBoundary(first: true);
       return KeyEventResult.handled;
     }
-    if (isMeta && event.logicalKey == LogicalKeyboardKey.keyX) {
-      _setClipboard(_ClipboardMode.cut);
+    if (logical == LogicalKeyboardKey.end) {
+      _selectBoundary(first: false);
       return KeyEventResult.handled;
     }
-    if (isMeta && event.logicalKey == LogicalKeyboardKey.keyV) {
-      final side = _focusedSide;
-      if (side != null) _pasteInto(side);
+    if (logical == LogicalKeyboardKey.enter ||
+        logical == LogicalKeyboardKey.numpadEnter) {
+      _openFocusedSelection();
       return KeyEventResult.handled;
     }
-    if (event.logicalKey == LogicalKeyboardKey.backslash) {
+    if (logical == LogicalKeyboardKey.f2) {
+      _renameFocusedSelection();
+      return KeyEventResult.handled;
+    }
+    if (logical == LogicalKeyboardKey.f5) {
+      _refreshFocusedPane();
+      return KeyEventResult.handled;
+    }
+    if (logical == LogicalKeyboardKey.backslash) {
       _wakeSearch(_focusedSide ?? _FileSide.remote);
       return KeyEventResult.handled;
     }
-    if (event.logicalKey == LogicalKeyboardKey.backspace ||
-        event.logicalKey == LogicalKeyboardKey.delete) {
+    if (logical == LogicalKeyboardKey.escape) {
+      if (_leftSearchOpen || _rightSearchOpen) {
+        if (_leftSearchOpen) _toggleSearch(_FileSide.local);
+        if (_rightSearchOpen) _toggleSearch(_FileSide.remote);
+        return KeyEventResult.handled;
+      }
+      return KeyEventResult.ignored;
+    }
+    if (logical == LogicalKeyboardKey.backspace ||
+        logical == LogicalKeyboardKey.delete) {
       _deleteSelection();
       return KeyEventResult.handled;
     }
@@ -3013,6 +3324,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
             ],
             child: _LocalFileList(
               entries: _displayedLocalEntries,
+              scrollController: _localListController,
               emptyMessage: _leftSearchController.text.trim().isEmpty
                   ? null
                   : 'fileManagerNoMatches'.tr(),
@@ -3105,6 +3417,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
       ],
       child: _RemoteFileList(
         entries: _displayedRemoteEntries,
+        scrollController: _rightRemoteListController,
         emptyMessage: _rightSearchController.text.trim().isEmpty
             ? null
             : 'fileManagerNoMatches'.tr(),
@@ -3309,6 +3622,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
       ],
       child: _RemoteFileList(
         entries: _displayedLeftRemoteEntries,
+        scrollController: _leftRemoteListController,
         emptyMessage: _leftSearchController.text.trim().isEmpty
             ? null
             : 'fileManagerNoMatches'.tr(),
@@ -3686,6 +4000,7 @@ class _LocalFileList extends StatelessWidget {
     required this.dragDataFor,
     required this.onContextPrepare,
     required this.menuProvider,
+    this.scrollController,
     this.emptyMessage,
   });
 
@@ -3693,6 +4008,7 @@ class _LocalFileList extends StatelessWidget {
   final Set<String> selectedPaths;
   final Set<String> cutPaths;
   final String? emptyMessage;
+  final ScrollController? scrollController;
   final void Function(FileSystemEntity entry, int index) onTapEntry;
   final ValueChanged<FileSystemEntity> onOpen;
   final ValueChanged<FileSystemEntity> onEdit;
@@ -3707,6 +4023,8 @@ class _LocalFileList extends StatelessWidget {
     }
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 4),
+      itemExtent: _kFileRowExtent,
+      controller: scrollController,
       itemCount: entries.length,
       itemBuilder: (context, index) {
         final entry = entries[index];
@@ -3750,6 +4068,7 @@ class _RemoteFileList extends StatelessWidget {
     required this.dragDataFor,
     required this.onContextPrepare,
     required this.menuProvider,
+    this.scrollController,
     this.emptyMessage,
   });
 
@@ -3758,6 +4077,7 @@ class _RemoteFileList extends StatelessWidget {
   final Set<String> selectedPaths;
   final Set<String> cutPaths;
   final String? emptyMessage;
+  final ScrollController? scrollController;
   final void Function(SftpName entry, int index) onTapEntry;
   final ValueChanged<SftpName> onOpen;
   final ValueChanged<SftpName> onEdit;
@@ -3772,6 +4092,8 @@ class _RemoteFileList extends StatelessWidget {
     }
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 4),
+      itemExtent: _kFileRowExtent,
+      controller: scrollController,
       itemCount: entries.length,
       itemBuilder: (context, index) {
         final entry = entries[index];
