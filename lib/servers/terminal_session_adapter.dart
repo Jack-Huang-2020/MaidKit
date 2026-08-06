@@ -457,6 +457,13 @@ class XtermTerminalSessionAdapter implements TerminalSessionAdapter {
         scrollController: _scrollController,
         autofocus: autofocus,
         readOnly: readOnly,
+        // Mobile soft keyboards send backspace through the IME, not as
+        // hardware key events. deleteDetection keeps a non-empty IME buffer
+        // so the deletion is observable; without it Android's backspace is
+        // silently dropped.
+        deleteDetection: !kIsWeb &&
+            (defaultTargetPlatform == TargetPlatform.android ||
+                defaultTargetPlatform == TargetPlatform.iOS),
         // Never use hardwareKeyboardOnly together with readOnly: that combo
         // skips both CustomTextEdit and CustomKeyboardListener, leaving no
         // Focus node for Cmd/Ctrl+C after selecting log text.

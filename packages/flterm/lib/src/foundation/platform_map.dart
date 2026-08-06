@@ -1,5 +1,28 @@
-import 'package:flutter/services.dart' show PhysicalKeyboardKey;
+import 'package:flutter/services.dart'
+    show LogicalKeyboardKey, PhysicalKeyboardKey;
 import 'package:libghostty/libghostty.dart' show Key;
+
+/// Maps Flutter [LogicalKeyboardKey]s to libghostty keys for input events
+/// that carry no physical key. Soft keyboards on Android synthesize
+/// backspace/enter/arrow events through the IME, and the engine reports them
+/// with [PhysicalKeyboardKey.none], so the physical-key map alone drops them.
+final Map<LogicalKeyboardKey, Key> _logicalKeyMap = {
+  LogicalKeyboardKey.backspace: Key.backspace,
+  LogicalKeyboardKey.delete: Key.delete,
+  LogicalKeyboardKey.enter: Key.enter,
+  LogicalKeyboardKey.tab: Key.tab,
+  LogicalKeyboardKey.space: Key.space,
+  LogicalKeyboardKey.escape: Key.escape,
+  LogicalKeyboardKey.arrowUp: Key.arrowUp,
+  LogicalKeyboardKey.arrowDown: Key.arrowDown,
+  LogicalKeyboardKey.arrowLeft: Key.arrowLeft,
+  LogicalKeyboardKey.arrowRight: Key.arrowRight,
+  LogicalKeyboardKey.home: Key.home,
+  LogicalKeyboardKey.end: Key.end,
+  LogicalKeyboardKey.pageUp: Key.pageUp,
+  LogicalKeyboardKey.pageDown: Key.pageDown,
+  LogicalKeyboardKey.insert: Key.insert,
+};
 
 final Map<int, Key> _codepointToKey = {
   0x20: Key.space,
@@ -213,6 +236,13 @@ Key? keyFromCodepoint(int codepoint) => _codepointToKey[codepoint];
 Key keyFromPhysical(PhysicalKeyboardKey physical) {
   return _keyMap[physical] ?? .unidentified;
 }
+
+/// Maps a Flutter [LogicalKeyboardKey] to the corresponding libghostty [Key].
+///
+/// Used for input events synthesized by soft keyboards and IMEs, which
+/// Android reports without a physical key. Returns `null` for logical keys
+/// with no terminal counterpart.
+Key? keyFromLogical(LogicalKeyboardKey logical) => _logicalKeyMap[logical];
 
 /// Returns the lowercase ASCII codepoint for [key], or 0 for non-character
 /// keys. Punctuation keys report their US-layout unshifted codepoint.

@@ -272,7 +272,13 @@ class TerminalControllerImpl extends TerminalController
       if (_extendSelection(event.logicalKey)) return .handled;
     }
 
-    final key = keyFromPhysical(event.physicalKey);
+    var key = keyFromPhysical(event.physicalKey);
+    // Soft keyboards and IMEs synthesize key events without a physical key
+    // (Android reports PhysicalKeyboardKey.none). Without a logical fallback
+    // their backspace/enter/arrow presses would be dropped silently.
+    if (key == .unidentified) {
+      key = keyFromLogical(event.logicalKey) ?? key;
+    }
     final KeyAction? action = switch (event) {
       KeyDownEvent() => .press,
       KeyUpEvent() => .release,

@@ -343,6 +343,19 @@ final class TerminalInputClient with DeltaTextInputClient {
     final committed = value.terminalCommittedText;
     if (committed.isNotEmpty) {
       _commitInputText(committed, fromComposition: false);
+    } else if (value.text.length < _sentinel.text.length) {
+      // Platforms that report edits as full editing values (rather than
+      // deltas) shrink the sentinel buffer when the user presses backspace.
+      // Without this branch the deletion would be silently dropped.
+      if (_committedCompositionEdit == .suppressNextDeletionDelta) {
+        // The platform already applied this deletion on our behalf.
+        _clearCommittedCompositionEdit();
+        _resetBuffer();
+        return;
+      }
+      _onDelete?.call(_sentinel.text.length - value.text.length);
+      _clearCommittedCompositionEdit();
+      _resetBuffer();
     }
   }
 
