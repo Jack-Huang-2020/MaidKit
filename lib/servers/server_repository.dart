@@ -16,9 +16,15 @@ class ServerRepository {
 
   Stream<List<Server>> watchAll() => _database.watchServers();
 
-  Future<List<Server>> all() => (_database.select(
-    _database.servers,
-  )..where((table) => table.deletedAt.isNull())).get();
+  Future<List<Server>> all() =>
+      (_database.select(_database.servers)
+            ..where((table) => table.deletedAt.isNull())
+            ..orderBy([
+              (table) => OrderingTerm.asc(table.sortOrder.isNull()),
+              (table) => OrderingTerm.asc(table.sortOrder),
+              (table) => OrderingTerm.asc(table.id),
+            ]))
+          .get();
 
   Future<Server> create(ServerDraft draft) async {
     final now = DateTime.now().toUtc();
@@ -30,33 +36,45 @@ class ServerRepository {
             draft.proxy!.password!,
             context: 'server-proxy-password',
           );
-    final id = await _database
-        .into(_database.servers)
-        .insert(
-          ServersCompanion.insert(
-            name: draft.name.trim(),
-            host: draft.host.trim(),
-            port: Value(draft.port),
-            username: draft.username.trim(),
-            syncId: Value(_uuid.v4()),
-            createdAt: Value(now),
-            updatedAt: Value(now),
-            credentialId: Value(credentialId),
-            collectStats: Value(draft.collectStats),
-            collectSystemInfo: Value(draft.collectSystemInfo),
-            proxyType: Value(draft.proxy?.type.name),
-            proxyHost: Value(draft.proxy?.host),
-            proxyPort: Value(draft.proxy?.port),
-            proxyUsername: Value(draft.proxy?.username),
-            encryptedProxyPassword: Value(proxyPassword?.bytes),
-            proxyPasswordNonce: Value(proxyPassword?.nonce),
-            environment: Value(encodeEnvironmentMap(draft.environment)),
-            initialSnippets: Value(encodeSnippetIdList(draft.initialSnippets)),
-            tags: Value(encodeStringList(draft.tags)),
-            connectionType: Value(draft.connectionType.name),
-            serialConfig: Value(encodeSerialConfig(draft.serialConfig)),
-          ),
-        );
+    final id = await _database.transaction(() async {
+      final maxOrder =
+          await (_database.selectOnly(_database.servers)
+                ..addColumns([_database.servers.sortOrder.max()])
+                ..where(_database.servers.deletedAt.isNull()))
+              .getSingle();
+      final nextOrder =
+          (maxOrder.read(_database.servers.sortOrder.max()) ?? -1) + 1;
+      return _database
+          .into(_database.servers)
+          .insert(
+            ServersCompanion.insert(
+              name: draft.name.trim(),
+              host: draft.host.trim(),
+              port: Value(draft.port),
+              username: draft.username.trim(),
+              syncId: Value(_uuid.v4()),
+              createdAt: Value(now),
+              updatedAt: Value(now),
+              credentialId: Value(credentialId),
+              collectStats: Value(draft.collectStats),
+              collectSystemInfo: Value(draft.collectSystemInfo),
+              proxyType: Value(draft.proxy?.type.name),
+              proxyHost: Value(draft.proxy?.host),
+              proxyPort: Value(draft.proxy?.port),
+              proxyUsername: Value(draft.proxy?.username),
+              encryptedProxyPassword: Value(proxyPassword?.bytes),
+              proxyPasswordNonce: Value(proxyPassword?.nonce),
+              environment: Value(encodeEnvironmentMap(draft.environment)),
+              initialSnippets: Value(
+                encodeSnippetIdList(draft.initialSnippets),
+              ),
+              tags: Value(encodeStringList(draft.tags)),
+              connectionType: Value(draft.connectionType.name),
+              serialConfig: Value(encodeSerialConfig(draft.serialConfig)),
+              sortOrder: Value(nextOrder),
+            ),
+          );
+    });
     return (_database.select(
       _database.servers,
     )..where((t) => t.id.equals(id))).getSingle();
@@ -286,6 +304,22 @@ class ServerRepository {
         ),
       );
 
+  /// Persists the dashboard display order. [orderedIds] must list every
+  /// non-deleted server id exactly once; each server's position in the list
+  /// becomes its [Server.sortOrder].
+  Future<void> reorderServers(List<int> orderedIds) async {
+    final now = DateTime.now().toUtc();
+    await _database.batch((batch) {
+      for (var i = 0; i < orderedIds.length; i++) {
+        batch.update(
+          _database.servers,
+          ServersCompanion(sortOrder: Value(i), updatedAt: Value(now)),
+          where: (table) => table.id.equals(orderedIds[i]),
+        );
+      }
+    });
+  }
+
   Future<void> rememberHostKey(int id, HostKeyPrompt hostKey) =>
       (_database.update(
         _database.servers,
@@ -337,6 +371,7 @@ class ServerRepository {
             'tags': server.tags,
             'connectionType': server.connectionType,
             'serialConfig': server.serialConfig,
+            'sortOrder': server.sortOrder,
           },
         )
         .toList();
@@ -390,6 +425,7 @@ class ServerRepository {
           tags: Value(value['tags'] as String?),
           connectionType: Value(value['connectionType'] as String? ?? 'ssh'),
           serialConfig: Value(value['serialConfig'] as String?),
+          sortOrder: Value(value['sortOrder'] as int?),
           createdAt: Value(DateTime.parse(value['createdAt'] as String)),
           updatedAt: Value(DateTime.parse(value['updatedAt'] as String)),
           deletedAt: Value(

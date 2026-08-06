@@ -1027,6 +1027,8 @@
   "serversLoadHigh": "High",
   "serversLoadIdle": "Idle",
   "serversLoadNormal": "Normal",
+  "serversMoveDown": "Move down",
+  "serversMoveUp": "Move up",
   "serversNoMatches": "No servers match the current filter.",
   "serversNotConnected": "Not connected",
   "serversReconnectAll": "Reconnect all",

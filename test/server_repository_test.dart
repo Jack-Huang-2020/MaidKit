@@ -126,5 +126,39 @@ void main() {
       expect(decodeSnippetIdList(server.initialSnippets), isEmpty);
       expect(decodeStringList(server.tags), isEmpty);
     });
+
+    test('create appends servers after existing ones', () async {
+      final first = await repository.create(
+        ServerDraft(name: 'one', host: '10.0.0.1', port: 22, username: 'u'),
+      );
+      final second = await repository.create(
+        ServerDraft(name: 'two', host: '10.0.0.2', port: 22, username: 'u'),
+      );
+
+      expect(first.sortOrder!, lessThan(second.sortOrder!));
+      expect((await repository.all()).map((s) => s.id), [first.id, second.id]);
+    });
+
+    test('reorderServers persists the requested order', () async {
+      final servers = [
+        for (var i = 0; i < 3; i++)
+          await repository.create(
+            ServerDraft(
+              name: 'server-$i',
+              host: '10.0.0.$i',
+              port: 22,
+              username: 'u',
+            ),
+          ),
+      ];
+
+      final reordered = [servers[2].id, servers[0].id, servers[1].id];
+      await repository.reorderServers(reordered);
+
+      final expected = [servers[2].id, servers[0].id, servers[1].id];
+      expect((await repository.all()).map((s) => s.id), expected);
+      final watched = await database.watchServers().first;
+      expect(watched.map((s) => s.id), expected);
+    });
   });
 }

@@ -42,6 +42,9 @@ class Servers extends Table {
   // type is `serial`, [serialConfig] holds the JSON-encoded SerialConfig.
   TextColumn get connectionType => text().withDefault(const Constant('ssh'))();
   TextColumn get serialConfig => text().nullable()();
+  // User-controlled display order on the server dashboard. Rows without a
+  // value (legacy rows and imports) sort after explicitly ordered ones.
+  IntColumn get sortOrder => integer().nullable()();
 }
 
 /// An encrypted SSH credential that may be linked to by more than one server.
@@ -254,7 +257,7 @@ class AppDatabase extends _$AppDatabase {
       );
 
   @override
-  int get schemaVersion => 22;
+  int get schemaVersion => 23;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -454,11 +457,26 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(servers, servers.connectionType);
         await m.addColumn(servers, servers.serialConfig);
       }
+      if (from < 23) {
+        await m.addColumn(servers, servers.sortOrder);
+        // Preserve the current (creation-id) dashboard order for existing
+        // servers; new servers are appended after the largest sort order.
+        await customStatement(
+          'UPDATE servers SET sort_order = id WHERE sort_order IS NULL',
+        );
+      }
     },
   );
 
   Stream<List<Server>> watchServers() =>
-      (select(servers)..where((table) => table.deletedAt.isNull())).watch();
+      (select(servers)
+            ..where((table) => table.deletedAt.isNull())
+            ..orderBy([
+              (table) => OrderingTerm.asc(table.sortOrder.isNull()),
+              (table) => OrderingTerm.asc(table.sortOrder),
+              (table) => OrderingTerm.asc(table.id),
+            ]))
+          .watch();
 
   Stream<List<ComposeProjectLink>> watchComposeProjectLinks() =>
       select(composeProjectLinks).watch();

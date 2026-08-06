@@ -135,6 +135,22 @@ class ServerDashboardTab extends ConsumerWidget {
     await ref.read(serverRepositoryProvider).delete(server);
   }
 
+  /// Moves [server] by [delta] positions (-1 up, +1 down) in the full
+  /// dashboard order and persists the result.
+  Future<void> _moveServer(WidgetRef ref, Server server, int delta) async {
+    final repository = ref.read(serverRepositoryProvider);
+    final servers = await repository.all();
+    final index = servers.indexWhere((s) => s.id == server.id);
+    final target = index + delta;
+    if (index < 0 || target < 0 || target >= servers.length) return;
+    final reordered = List<Server>.of(servers);
+    final moved = reordered.removeAt(index);
+    reordered.insert(target, moved);
+    await repository.reorderServers([
+      for (final server in reordered) server.id,
+    ]);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final servers = ref.watch(serversProvider);
@@ -148,6 +164,8 @@ class ServerDashboardTab extends ConsumerWidget {
           _reconnectAll(context, ref, disconnectedServers),
       onEdit: (server) => _edit(context, ref, server),
       onDelete: (server) => _delete(ref, server),
+      onMoveUp: (server) => _moveServer(ref, server, -1),
+      onMoveDown: (server) => _moveServer(ref, server, 1),
       onOpenDetail: (server) =>
           ref.read(terminalTabsProvider.notifier).openServerDetails(server),
       onOpenTerminal: (server) => openTerminalSession(context, ref, server),
@@ -189,6 +207,8 @@ class _ServersCatalog extends StatelessWidget {
     required this.onReconnectAll,
     required this.onEdit,
     required this.onDelete,
+    required this.onMoveUp,
+    required this.onMoveDown,
     required this.onOpenDetail,
     required this.onOpenTerminal,
     required this.onOpenFiles,
@@ -202,6 +222,8 @@ class _ServersCatalog extends StatelessWidget {
   final Future<void> Function(List<Server>) onReconnectAll;
   final ValueChanged<Server> onEdit;
   final ValueChanged<Server> onDelete;
+  final ValueChanged<Server> onMoveUp;
+  final ValueChanged<Server> onMoveDown;
   final ValueChanged<Server> onOpenDetail;
   final ValueChanged<Server> onOpenTerminal;
   final ValueChanged<Server> onOpenFiles;
@@ -220,6 +242,8 @@ class _ServersCatalog extends StatelessWidget {
                 onReconnectAll: onReconnectAll,
                 onEdit: onEdit,
                 onDelete: onDelete,
+                onMoveUp: onMoveUp,
+                onMoveDown: onMoveDown,
                 onOpenDetail: onOpenDetail,
                 onOpenTerminal: onOpenTerminal,
                 onOpenFiles: onOpenFiles,
@@ -248,6 +272,8 @@ class _ServerGrid extends StatefulWidget {
     required this.onReconnectAll,
     required this.onEdit,
     required this.onDelete,
+    required this.onMoveUp,
+    required this.onMoveDown,
     required this.onOpenDetail,
     required this.onOpenTerminal,
     required this.onOpenFiles,
@@ -260,6 +286,8 @@ class _ServerGrid extends StatefulWidget {
   final Future<void> Function(List<Server>) onReconnectAll;
   final ValueChanged<Server> onEdit;
   final ValueChanged<Server> onDelete;
+  final ValueChanged<Server> onMoveUp;
+  final ValueChanged<Server> onMoveDown;
   final ValueChanged<Server> onOpenDetail;
   final ValueChanged<Server> onOpenTerminal;
   final ValueChanged<Server> onOpenFiles;
@@ -382,9 +410,36 @@ class _ServerGridState extends State<_ServerGrid> {
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final server = visibleServers[index];
                       final session = sessionsByServerId[server.id];
+                      // Reordering is a property of the full list, so it is
+                      // only offered when no tag filter is active.
+                      final indexInOrder = widget.servers.indexWhere(
+                        (candidate) => candidate.id == server.id,
+                      );
+                      final canMoveUp = indexInOrder > 0;
+                      final canMoveDown =
+                          indexInOrder < widget.servers.length - 1;
                       return ContextMenuWidget(
                         menuProvider: (_) => Menu(
                           children: [
+                            if (_selectedTags.isEmpty) ...[
+                              MenuAction(
+                                title: 'serversMoveUp'.tr(),
+                                image: MenuImage.icon(Symbols.arrow_upward),
+                                attributes: MenuActionAttributes(
+                                  disabled: !canMoveUp,
+                                ),
+                                callback: () => widget.onMoveUp(server),
+                              ),
+                              MenuAction(
+                                title: 'serversMoveDown'.tr(),
+                                image: MenuImage.icon(Symbols.arrow_downward),
+                                attributes: MenuActionAttributes(
+                                  disabled: !canMoveDown,
+                                ),
+                                callback: () => widget.onMoveDown(server),
+                              ),
+                              MenuSeparator(),
+                            ],
                             MenuAction(
                               title: 'serversEditServer'.tr(),
                               callback: () => widget.onEdit(server),

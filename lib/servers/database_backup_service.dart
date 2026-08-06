@@ -249,6 +249,7 @@ class DatabaseBackupService {
                 tags: Value(server.tags),
                 connectionType: Value(server.connectionType),
                 serialConfig: Value(server.serialConfig),
+                sortOrder: Value(server.sortOrder),
               ),
             );
       }

@@ -330,6 +330,17 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, Server> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -361,6 +372,7 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, Server> {
     tags,
     connectionType,
     serialConfig,
+    sortOrder,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -599,6 +611,12 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, Server> {
         ),
       );
     }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
     return context;
   }
 
@@ -724,6 +742,10 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, Server> {
         DriftSqlType.string,
         data['${effectivePrefix}serial_config'],
       ),
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      ),
     );
   }
 
@@ -763,6 +785,7 @@ class Server extends DataClass implements Insertable<Server> {
   final String? tags;
   final String connectionType;
   final String? serialConfig;
+  final int? sortOrder;
   const Server({
     required this.id,
     required this.name,
@@ -793,6 +816,7 @@ class Server extends DataClass implements Insertable<Server> {
     this.tags,
     required this.connectionType,
     this.serialConfig,
+    this.sortOrder,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -870,6 +894,9 @@ class Server extends DataClass implements Insertable<Server> {
     if (!nullToAbsent || serialConfig != null) {
       map['serial_config'] = Variable<String>(serialConfig);
     }
+    if (!nullToAbsent || sortOrder != null) {
+      map['sort_order'] = Variable<int>(sortOrder);
+    }
     return map;
   }
 
@@ -944,6 +971,9 @@ class Server extends DataClass implements Insertable<Server> {
       serialConfig: serialConfig == null && nullToAbsent
           ? const Value.absent()
           : Value(serialConfig),
+      sortOrder: sortOrder == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sortOrder),
     );
   }
 
@@ -990,6 +1020,7 @@ class Server extends DataClass implements Insertable<Server> {
       tags: serializer.fromJson<String?>(json['tags']),
       connectionType: serializer.fromJson<String>(json['connectionType']),
       serialConfig: serializer.fromJson<String?>(json['serialConfig']),
+      sortOrder: serializer.fromJson<int?>(json['sortOrder']),
     );
   }
   @override
@@ -1027,6 +1058,7 @@ class Server extends DataClass implements Insertable<Server> {
       'tags': serializer.toJson<String?>(tags),
       'connectionType': serializer.toJson<String>(connectionType),
       'serialConfig': serializer.toJson<String?>(serialConfig),
+      'sortOrder': serializer.toJson<int?>(sortOrder),
     };
   }
 
@@ -1060,6 +1092,7 @@ class Server extends DataClass implements Insertable<Server> {
     Value<String?> tags = const Value.absent(),
     String? connectionType,
     Value<String?> serialConfig = const Value.absent(),
+    Value<int?> sortOrder = const Value.absent(),
   }) => Server(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -1110,6 +1143,7 @@ class Server extends DataClass implements Insertable<Server> {
     tags: tags.present ? tags.value : this.tags,
     connectionType: connectionType ?? this.connectionType,
     serialConfig: serialConfig.present ? serialConfig.value : this.serialConfig,
+    sortOrder: sortOrder.present ? sortOrder.value : this.sortOrder,
   );
   Server copyWithCompanion(ServersCompanion data) {
     return Server(
@@ -1174,6 +1208,7 @@ class Server extends DataClass implements Insertable<Server> {
       serialConfig: data.serialConfig.present
           ? data.serialConfig.value
           : this.serialConfig,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
     );
   }
 
@@ -1208,7 +1243,8 @@ class Server extends DataClass implements Insertable<Server> {
           ..write('initialSnippets: $initialSnippets, ')
           ..write('tags: $tags, ')
           ..write('connectionType: $connectionType, ')
-          ..write('serialConfig: $serialConfig')
+          ..write('serialConfig: $serialConfig, ')
+          ..write('sortOrder: $sortOrder')
           ..write(')'))
         .toString();
   }
@@ -1244,6 +1280,7 @@ class Server extends DataClass implements Insertable<Server> {
     tags,
     connectionType,
     serialConfig,
+    sortOrder,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -1277,7 +1314,8 @@ class Server extends DataClass implements Insertable<Server> {
           other.initialSnippets == this.initialSnippets &&
           other.tags == this.tags &&
           other.connectionType == this.connectionType &&
-          other.serialConfig == this.serialConfig);
+          other.serialConfig == this.serialConfig &&
+          other.sortOrder == this.sortOrder);
 }
 
 class ServersCompanion extends UpdateCompanion<Server> {
@@ -1310,6 +1348,7 @@ class ServersCompanion extends UpdateCompanion<Server> {
   final Value<String?> tags;
   final Value<String> connectionType;
   final Value<String?> serialConfig;
+  final Value<int?> sortOrder;
   const ServersCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -1340,6 +1379,7 @@ class ServersCompanion extends UpdateCompanion<Server> {
     this.tags = const Value.absent(),
     this.connectionType = const Value.absent(),
     this.serialConfig = const Value.absent(),
+    this.sortOrder = const Value.absent(),
   });
   ServersCompanion.insert({
     this.id = const Value.absent(),
@@ -1371,6 +1411,7 @@ class ServersCompanion extends UpdateCompanion<Server> {
     this.tags = const Value.absent(),
     this.connectionType = const Value.absent(),
     this.serialConfig = const Value.absent(),
+    this.sortOrder = const Value.absent(),
   }) : name = Value(name),
        host = Value(host),
        username = Value(username);
@@ -1404,6 +1445,7 @@ class ServersCompanion extends UpdateCompanion<Server> {
     Expression<String>? tags,
     Expression<String>? connectionType,
     Expression<String>? serialConfig,
+    Expression<int>? sortOrder,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1439,6 +1481,7 @@ class ServersCompanion extends UpdateCompanion<Server> {
       if (tags != null) 'tags': tags,
       if (connectionType != null) 'connection_type': connectionType,
       if (serialConfig != null) 'serial_config': serialConfig,
+      if (sortOrder != null) 'sort_order': sortOrder,
     });
   }
 
@@ -1472,6 +1515,7 @@ class ServersCompanion extends UpdateCompanion<Server> {
     Value<String?>? tags,
     Value<String>? connectionType,
     Value<String?>? serialConfig,
+    Value<int?>? sortOrder,
   }) {
     return ServersCompanion(
       id: id ?? this.id,
@@ -1504,6 +1548,7 @@ class ServersCompanion extends UpdateCompanion<Server> {
       tags: tags ?? this.tags,
       connectionType: connectionType ?? this.connectionType,
       serialConfig: serialConfig ?? this.serialConfig,
+      sortOrder: sortOrder ?? this.sortOrder,
     );
   }
 
@@ -1599,6 +1644,9 @@ class ServersCompanion extends UpdateCompanion<Server> {
     if (serialConfig.present) {
       map['serial_config'] = Variable<String>(serialConfig.value);
     }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
     return map;
   }
 
@@ -1633,7 +1681,8 @@ class ServersCompanion extends UpdateCompanion<Server> {
           ..write('initialSnippets: $initialSnippets, ')
           ..write('tags: $tags, ')
           ..write('connectionType: $connectionType, ')
-          ..write('serialConfig: $serialConfig')
+          ..write('serialConfig: $serialConfig, ')
+          ..write('sortOrder: $sortOrder')
           ..write(')'))
         .toString();
   }
@@ -7913,6 +7962,7 @@ typedef $$ServersTableCreateCompanionBuilder =
       Value<String?> tags,
       Value<String> connectionType,
       Value<String?> serialConfig,
+      Value<int?> sortOrder,
     });
 typedef $$ServersTableUpdateCompanionBuilder =
     ServersCompanion Function({
@@ -7945,6 +7995,7 @@ typedef $$ServersTableUpdateCompanionBuilder =
       Value<String?> tags,
       Value<String> connectionType,
       Value<String?> serialConfig,
+      Value<int?> sortOrder,
     });
 
 class $$ServersTableFilterComposer
@@ -8098,6 +8149,11 @@ class $$ServersTableFilterComposer
 
   ColumnFilters<String> get serialConfig => $composableBuilder(
     column: $table.serialConfig,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -8255,6 +8311,11 @@ class $$ServersTableOrderingComposer
     column: $table.serialConfig,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ServersTableAnnotationComposer
@@ -8384,6 +8445,9 @@ class $$ServersTableAnnotationComposer
     column: $table.serialConfig,
     builder: (column) => column,
   );
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
 }
 
 class $$ServersTableTableManager
@@ -8443,6 +8507,7 @@ class $$ServersTableTableManager
                 Value<String?> tags = const Value.absent(),
                 Value<String> connectionType = const Value.absent(),
                 Value<String?> serialConfig = const Value.absent(),
+                Value<int?> sortOrder = const Value.absent(),
               }) => ServersCompanion(
                 id: id,
                 name: name,
@@ -8473,6 +8538,7 @@ class $$ServersTableTableManager
                 tags: tags,
                 connectionType: connectionType,
                 serialConfig: serialConfig,
+                sortOrder: sortOrder,
               ),
           createCompanionCallback:
               ({
@@ -8505,6 +8571,7 @@ class $$ServersTableTableManager
                 Value<String?> tags = const Value.absent(),
                 Value<String> connectionType = const Value.absent(),
                 Value<String?> serialConfig = const Value.absent(),
+                Value<int?> sortOrder = const Value.absent(),
               }) => ServersCompanion.insert(
                 id: id,
                 name: name,
@@ -8535,6 +8602,7 @@ class $$ServersTableTableManager
                 tags: tags,
                 connectionType: connectionType,
                 serialConfig: serialConfig,
+                sortOrder: sortOrder,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
