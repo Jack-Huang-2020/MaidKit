@@ -405,7 +405,7 @@ class _ComposeDetailPageState extends ConsumerState<ComposeDetailPage> {
   }
 
   Future<void> _openContainer(ServerContainer container) async {
-    await context.router.root.push(
+    await context.router.push(
       ContainerDetailRoute(
         server: widget.server,
         runtime: widget.runtime,

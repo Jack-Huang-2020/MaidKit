@@ -12,6 +12,7 @@ import 'package:maid_kit/data/local/app_database.dart';
 import 'package:maid_kit/github/github_models.dart';
 import 'package:maid_kit/github/github_providers.dart';
 import 'package:maid_kit/github/github_ui.dart';
+import 'package:maid_kit/routing/app_router.dart';
 import 'package:maid_kit/routing/app_router.gr.dart';
 import 'package:maid_kit/servers/server_connection_actions.dart';
 import 'package:maid_kit/servers/server_models.dart';
@@ -1099,7 +1100,7 @@ class _ResourceTileState extends ConsumerState<_ResourceTile> {
 
   Future<void> _showContainerLogs() async {
     final host = server!;
-    await context.router.root.push(
+    await context.router.push(
       ContainerDetailRoute(
         server: host,
         runtime: _runtime,
@@ -1216,19 +1217,17 @@ class _ResourceTileState extends ConsumerState<_ResourceTile> {
           .read(terminalTabsProvider.notifier)
           .openFileManagement(host, initialPath: path.isEmpty ? null : path);
       context.router.root.navigate(
-        const ServerWorkspaceRoute(children: [ServersRoute()]),
+        ServerWorkspaceRoute(children: [ServersTab()]),
       );
       return;
     }
     if (kind == DeploymentResourceKind.compose) {
       if (!_composeReady) {
         // Missing identity — fall back to the server's container tab.
-        context.router.root.push(
-          ServerDetailRoute(server: host, initialTab: 4),
-        );
+        context.router.push(ServerDetailRoute(server: host, initialTab: 4));
         return;
       }
-      context.router.root.push(
+      context.router.push(
         ComposeDetailRoute(
           server: host,
           runtime: _runtime,
@@ -1239,7 +1238,7 @@ class _ResourceTileState extends ConsumerState<_ResourceTile> {
       );
       return;
     }
-    context.router.root.push(
+    context.router.push(
       ServerDetailRoute(server: host, initialTab: _serverTabFor(kind)),
     );
   }
@@ -1741,7 +1740,7 @@ class _ComposeLivePanelState extends ConsumerState<_ComposeLivePanel> {
   }
 
   Future<void> _containerLogs(ServerContainer container) async {
-    await context.router.root.push(
+    await context.router.push(
       ContainerDetailRoute(
         server: widget.server,
         runtime: _runtime,
@@ -1788,7 +1787,7 @@ class _ComposeLivePanelState extends ConsumerState<_ComposeLivePanel> {
               return ContainerListTile(
                 container: item,
                 contentPadding: EdgeInsets.zero,
-                onOpen: () => context.router.root.push(
+                onOpen: () => context.router.push(
                   ContainerDetailRoute(
                     server: widget.server,
                     runtime: _runtime,

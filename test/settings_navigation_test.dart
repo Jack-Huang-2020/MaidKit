@@ -90,7 +90,7 @@ void main() {
     await pumpApp(tester);
 
     await tester.tap(find.byIcon(Symbols.inventory_2));
-    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pumpAndSettle();
 
     expect(find.text('assetsConnections'.tr()), findsOneWidget);
     expect(find.text('assetsCredentialsTitle'.tr()), findsOneWidget);

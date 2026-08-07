@@ -6,6 +6,7 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import 'package:maid_kit/agent/agent_input_focus.dart';
 import 'package:maid_kit/github/github_providers.dart';
+import 'package:maid_kit/routing/app_router.dart';
 import 'package:maid_kit/routing/app_router.gr.dart';
 import 'package:maid_kit/shared/presentation/deploy_terminal.dart';
 import 'package:maid_kit/shared/presentation/app_scaffold.dart';
@@ -21,10 +22,10 @@ class ServerWorkspacePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AutoTabsRouter(
-      routes: const [
-        ServersRoute(),
-        AssetsRoute(),
-        ProjectsRoute(),
+      routes: [
+        ServersTab(),
+        AssetsTab(),
+        ProjectsTab(),
         SnippetsRoute(),
         AgentRoute(),
         SettingsRoute(),
