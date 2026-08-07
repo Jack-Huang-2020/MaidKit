@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:dartssh2/dartssh2.dart';
 
 import 'server_models.dart';
+import 'socks5_protocol.dart';
 
 /// Timeout for establishing the connection to the proxy and negotiating the
 /// tunnel. Matches the SSH handshake timeout used by dartssh2.
@@ -320,7 +321,7 @@ Future<void> _socks5Connect(
       );
   }
 
-  final address = _socks5Address(targetHost);
+  final address = encodeSocks5Address(targetHost);
   socket.add(
     Uint8List.fromList([
       0x05,
@@ -342,7 +343,7 @@ Future<void> _socks5Connect(
   if (header[1] != 0x00) {
     throw ProxyConnectException(
       'The SOCKS5 proxy could not connect to the target '
-      '(${_socks5Error(header[1])}).',
+      '(${socks5ErrorMessage(header[1])}).',
     );
   }
   // Consume the proxy's bound address so the SSH client never sees it.
@@ -368,34 +369,4 @@ String _httpAuthority(String host, int port) {
   return '$formattedHost:$port';
 }
 
-/// The SOCKS5 CONNECT address. Domain names are sent as-is (ATYP 3) so DNS
-/// resolution happens at the proxy; IP literals use the compact binary form.
-({int atyp, List<int> bytes}) _socks5Address(String host) {
-  final ip = InternetAddress.tryParse(host);
-  if (ip != null) {
-    return switch (ip.type) {
-      InternetAddressType.IPv4 => (atyp: 0x01, bytes: ip.rawAddress),
-      InternetAddressType.IPv6 => (atyp: 0x04, bytes: ip.rawAddress),
-      _ => (atyp: 0x03, bytes: utf8.encode(host)),
-    };
-  }
-  final bytes = utf8.encode(host);
-  if (bytes.length > 255) {
-    throw ArgumentError('The target hostname is too long for SOCKS5.');
-  }
-  return (atyp: 0x03, bytes: [bytes.length, ...bytes]);
-}
-
 List<int> _port(int port) => [port >> 8, port & 0xff];
-
-String _socks5Error(int code) => switch (code) {
-  0x01 => 'general failure',
-  0x02 => 'connection not allowed by ruleset',
-  0x03 => 'network unreachable',
-  0x04 => 'host unreachable',
-  0x05 => 'connection refused',
-  0x06 => 'TTL expired',
-  0x07 => 'command not supported',
-  0x08 => 'address type not supported',
-  _ => 'unknown error 0x${code.toRadixString(16)}',
-};

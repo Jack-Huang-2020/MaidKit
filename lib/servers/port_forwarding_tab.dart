@@ -29,6 +29,7 @@ class _PortForwardingTabState extends ConsumerState<PortForwardingTab> {
   final _targetHost = TextEditingController(text: '127.0.0.1');
   final _targetPort = TextEditingController();
   var _direction = PortForwardDirection.local;
+  var _kind = PortForwardKind.tcp;
   var _starting = false;
 
   @override
@@ -43,16 +44,24 @@ class _PortForwardingTabState extends ConsumerState<PortForwardingTab> {
   Future<void> _start() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _starting = true);
+    final kind = _kind;
+    final targetHost = kind == PortForwardKind.tcp
+        ? _targetHost.text.trim()
+        : '';
+    final targetPort = kind == PortForwardKind.tcp
+        ? int.parse(_targetPort.text)
+        : 0;
     try {
       await ref
           .read(connectionManagerProvider)
           .startPortForward(
             server: widget.server,
             direction: _direction,
+            kind: kind,
             bindHost: _bindHost.text.trim(),
             bindPort: int.parse(_bindPort.text),
-            targetHost: _targetHost.text.trim(),
-            targetPort: int.parse(_targetPort.text),
+            targetHost: targetHost,
+            targetPort: targetPort,
           );
       if (mounted) {
         showSnackBar('portForwardingStarted'.tr());
@@ -73,9 +82,12 @@ class _PortForwardingTabState extends ConsumerState<PortForwardingTab> {
                 const <ActivePortForward>[])
             .where((forward) => forward.serverId == widget.server.id);
     final scheme = Theme.of(context).colorScheme;
-    final directionDescription = switch (_direction) {
-      PortForwardDirection.local => 'portForwardingLocalDesc',
-      PortForwardDirection.remote => 'portForwardingRemoteDesc',
+    final directionDescription = switch ((_kind, _direction)) {
+      (PortForwardKind.tcp, PortForwardDirection.local) =>
+        'portForwardingLocalDesc',
+      (PortForwardKind.tcp, PortForwardDirection.remote) =>
+        'portForwardingRemoteDesc',
+      (PortForwardKind.socks5, _) => 'portForwardingSocks5Desc',
     }.tr();
 
     return ListView(
@@ -101,31 +113,61 @@ class _PortForwardingTabState extends ConsumerState<PortForwardingTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SegmentedButton<PortForwardDirection>(
+                SegmentedButton<PortForwardKind>(
                   segments: [
                     ButtonSegment(
-                      value: PortForwardDirection.local,
-                      icon: const Icon(Symbols.laptop_mac),
-                      label: Text('portForwardingLocal').tr(),
+                      value: PortForwardKind.tcp,
+                      icon: const Icon(Symbols.swap_horiz),
+                      label: Text('portForwardingTcp').tr(),
                     ),
                     ButtonSegment(
-                      value: PortForwardDirection.remote,
-                      icon: const Icon(Symbols.dns),
-                      label: Text('portForwardingRemote').tr(),
+                      value: PortForwardKind.socks5,
+                      icon: const Icon(Symbols.vpn_lock),
+                      label: Text('portForwardingSocks5').tr(),
                     ),
                   ],
-                  selected: {_direction},
-                  onSelectionChanged: (value) =>
-                      setState(() => _direction = value.first),
+                  selected: {_kind},
+                  onSelectionChanged: (value) => setState(() {
+                    _kind = value.first;
+                    // SOCKS5 is a local listener only.
+                    if (_kind == PortForwardKind.socks5) {
+                      _direction = PortForwardDirection.local;
+                    }
+                  }),
                 ),
                 const SizedBox(height: 16),
-                _ForwardFields(
-                  bindHost: _bindHost,
-                  bindPort: _bindPort,
-                  targetHost: _targetHost,
-                  targetPort: _targetPort,
-                  direction: _direction,
-                ),
+                if (_kind == PortForwardKind.tcp) ...[
+                  SegmentedButton<PortForwardDirection>(
+                    segments: [
+                      ButtonSegment(
+                        value: PortForwardDirection.local,
+                        icon: const Icon(Symbols.laptop_mac),
+                        label: Text('portForwardingLocal').tr(),
+                      ),
+                      ButtonSegment(
+                        value: PortForwardDirection.remote,
+                        icon: const Icon(Symbols.dns),
+                        label: Text('portForwardingRemote').tr(),
+                      ),
+                    ],
+                    selected: {_direction},
+                    onSelectionChanged: (value) =>
+                        setState(() => _direction = value.first),
+                  ),
+                  const SizedBox(height: 16),
+                  _ForwardFields(
+                    bindHost: _bindHost,
+                    bindPort: _bindPort,
+                    targetHost: _targetHost,
+                    targetPort: _targetPort,
+                    direction: _direction,
+                  ),
+                ] else
+                  _HostPortFields(
+                    label: 'portForwardingThisComputerListens',
+                    host: _bindHost,
+                    port: _bindPort,
+                  ),
                 const SizedBox(height: 16),
                 FilledButton.icon(
                   onPressed: _starting ? null : _start,
@@ -254,11 +296,13 @@ class _ForwardTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) => ListTile(
     contentPadding: EdgeInsets.zero,
     leading: Icon(
-      forward.direction == PortForwardDirection.local
+      forward.kind == PortForwardKind.socks5
+          ? Symbols.vpn_lock
+          : forward.direction == PortForwardDirection.local
           ? Symbols.laptop_mac
           : Symbols.dns,
     ),
-    title: Text('${forward.directionLabel} · ${forward.summary}'),
+    title: Text('${forward.label} · ${forward.summary}'),
     subtitle: Text(
       forward.direction == PortForwardDirection.local
           ? 'portForwardingRunningOnThisComputer'.tr()

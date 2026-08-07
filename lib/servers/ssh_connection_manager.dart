@@ -15,6 +15,7 @@ import 'port_forwarding_models.dart';
 import 'server_metrics_collector.dart';
 import 'server_models.dart';
 import 'ssh_proxy_connect.dart';
+import 'socks5_protocol.dart';
 import 'systemd_models.dart';
 import 'tailscale_ssh_socket.dart';
 import 'terminal_session_adapter.dart';
@@ -59,19 +60,27 @@ class SshConnectionManager {
   Future<ActivePortForward> startPortForward({
     required Server server,
     required PortForwardDirection direction,
+    required PortForwardKind kind,
     required String bindHost,
     required int bindPort,
-    required String targetHost,
-    required int targetPort,
+    String targetHost = '',
+    int targetPort = 0,
   }) async {
     final client = clientFor(server.id);
     if (client == null) throw const ServerConnectionRequiredException();
+    if (kind == PortForwardKind.socks5 &&
+        direction == PortForwardDirection.remote) {
+      throw ArgumentError(
+        'SOCKS5 forwarding is only available in the local direction.',
+      );
+    }
     final id = 'forward-${_nextPortForwardId++}';
     final info = ActivePortForward(
       id: id,
       serverId: server.id,
       serverName: server.name,
       direction: direction,
+      kind: kind,
       bindHost: bindHost,
       bindPort: bindPort,
       targetHost: targetHost,
@@ -83,7 +92,11 @@ class SshConnectionManager {
       final listener = await ServerSocket.bind(bindHost, bindPort);
       connection = _PortForwardingConnection.local(info, listener);
       connection.subscription = listener.listen((socket) {
-        unawaited(_pipeLocalConnection(client, socket, targetHost, targetPort));
+        unawaited(
+          kind == PortForwardKind.socks5
+              ? _pipeSocks5Connection(client, socket)
+              : _pipeLocalConnection(client, socket, targetHost, targetPort),
+        );
       }, onError: (_, _) => unawaited(stopPortForward(id)));
     } else {
       final remote = await client.forwardRemote(host: bindHost, port: bindPort);
@@ -125,6 +138,37 @@ class SshConnectionManager {
       unawaited(channel.stream.cast<List<int>>().pipe(socket));
       unawaited(socket.cast<List<int>>().pipe(channel.sink));
     } catch (_) {
+      await socket.close();
+    }
+  }
+
+  /// Runs a SOCKS5 server handshake on a locally accepted [socket], then
+  /// tunnels the client's traffic to the destination it chose over an SSH
+  /// direct-tcpip channel. DNS for domain destinations happens on the SSH
+  /// server, matching plain TCP forwarding.
+  Future<void> _pipeSocks5Connection(SSHClient client, Socket socket) async {
+    final handshake = Socks5ServerHandshake(socket, socket);
+    try {
+      final destination = await handshake.negotiate();
+      final channel = await client.forwardLocal(
+        destination.host,
+        destination.port,
+        localHost: socket.remoteAddress.address,
+        localPort: socket.remotePort,
+      );
+      handshake.startPump();
+      unawaited(handshake.stream.cast<List<int>>().pipe(channel.sink));
+      unawaited(channel.stream.cast<List<int>>().pipe(socket));
+    } on Socks5ProtocolException {
+      // The failure reply was already sent (or none applies); just close.
+      await handshake.dispose();
+      await socket.close();
+    } catch (_) {
+      // The handshake succeeded but the tunnel could not be opened.
+      try {
+        socket.add(const [0x05, 0x05, 0x00, 0x01, 0, 0, 0, 0, 0, 0]);
+      } catch (_) {}
+      await handshake.dispose();
       await socket.close();
     }
   }
