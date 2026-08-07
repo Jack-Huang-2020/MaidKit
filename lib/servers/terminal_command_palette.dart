@@ -7,6 +7,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:maid_kit/data/local/app_database.dart';
 import 'package:maid_kit/shared/presentation/maidkit_alert.dart';
 import 'server_connection_actions.dart';
+import 'server_models.dart';
 import 'server_providers.dart';
 import 'terminal_tabs_provider.dart';
 
@@ -24,16 +25,21 @@ Future<void> showTerminalCommandPalette(BuildContext context, WidgetRef ref) {
       servers: servers,
       onDismiss: () => close(null),
       onOpen: (server) async {
-        await openTerminalSession(context, ref, server);
+        await openTerminalFor(context, ref, server);
         close(null);
       },
       onOpenFiles: activeServer == null
           ? null
           : () async {
-              final manager = ref.read(connectionManagerProvider);
-              if (manager.clientFor(activeServer.id) == null &&
-                  !await connectForStatistics(context, ref, activeServer)) {
-                return;
+              final isLocal =
+                  activeServer.connectionType ==
+                  ServerConnectionType.local.name;
+              if (!isLocal) {
+                final manager = ref.read(connectionManagerProvider);
+                if (manager.clientFor(activeServer.id) == null &&
+                    !await connectForStatistics(context, ref, activeServer)) {
+                  return;
+                }
               }
               ref
                   .read(terminalTabsProvider.notifier)

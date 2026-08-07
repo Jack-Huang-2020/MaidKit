@@ -23,6 +23,7 @@ import 'package:maid_kit/shared/presentation/task_progress.dart';
 import 'package:maid_kit/theme.dart';
 import 'file_editor_tab.dart';
 import 'server_connection_actions.dart';
+import 'server_models.dart';
 import 'server_providers.dart';
 import 'terminal_tabs_provider.dart';
 
@@ -251,6 +252,17 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
 
   bool get _leftIsRemote => _leftServerId != null;
 
+  /// Whether this tab manages the machine MaidKit runs on. The local machine
+  /// has no SFTP side, so the right pane is informational and the local pane
+  /// is the only filesystem browser.
+  bool get _isLocalMachine {
+    final servers = ref.read(serversProvider).asData?.value ?? const [];
+    final server = servers
+        .where((item) => item.id == widget.tab.serverId)
+        .firstOrNull;
+    return server?.connectionType == ServerConnectionType.local.name;
+  }
+
   Future<SftpClient> _leftSftp() {
     final serverId = _leftServerId;
     if (serverId == null) {
@@ -406,6 +418,15 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
   }
 
   Future<void> _refreshRemote() async {
+    // The local machine has no SFTP side; keep the right pane idle instead
+    // of surfacing a connection error.
+    if (_isLocalMachine) {
+      setState(() {
+        _loadingRemote = false;
+        _remoteError = null;
+      });
+      return;
+    }
     setState(() {
       _loadingRemote = true;
       _remoteError = null;
@@ -549,6 +570,15 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
         title: 'Could not open terminal',
         icon: Symbols.error,
         accentColor: Theme.of(context).colorScheme.error,
+      );
+      return;
+    }
+    if (server.connectionType == ServerConnectionType.local.name) {
+      await openLocalTerminalSession(
+        context,
+        ref,
+        server,
+        initialDirectory: _localDirectory.path,
       );
       return;
     }
@@ -3348,7 +3378,9 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
             ),
           );
     final remotePane = _FilePane(
-      title: 'fileManagerRemote'.tr(),
+      title: _isLocalMachine
+          ? 'fileManagerLocalMachine'.tr()
+          : 'fileManagerRemote'.tr(),
       path: _remotePath,
       pathTextStyle: pathTextStyle,
       searchInput: _rightSearchOpen ? _searchInput(_FileSide.remote) : null,
@@ -3418,7 +3450,9 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
       child: _RemoteFileList(
         entries: _displayedRemoteEntries,
         scrollController: _rightRemoteListController,
-        emptyMessage: _rightSearchController.text.trim().isEmpty
+        emptyMessage: _isLocalMachine
+            ? 'fileManagerLocalMachineHint'.tr()
+            : _rightSearchController.text.trim().isEmpty
             ? null
             : 'fileManagerNoMatches'.tr(),
         currentPath: _remotePath,

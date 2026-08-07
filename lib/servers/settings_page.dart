@@ -28,6 +28,7 @@ import 'cloud_sync_service.dart';
 import 'connection_export_service.dart';
 import 'connection_import_service.dart';
 import 'connection_import_sheet.dart';
+import 'local_connection_manager.dart';
 import 'server_providers.dart';
 import 'tailscale_settings_section.dart';
 import 'terminal_adapter_preferences.dart';
@@ -53,6 +54,7 @@ class SettingsPage extends ConsumerWidget {
     final terminalDarkTheme = ref.watch(terminalDarkThemeProvider);
     final connectOnStartup = ref.watch(connectOnStartupProvider);
     final hideServerAddresses = ref.watch(hideServerAddressesProvider);
+    final localMachineEnabled = ref.watch(localMachineEnabledProvider);
     final refreshInterval = ref.watch(serverMetricsRefreshIntervalProvider);
     final focusedRefreshInterval = ref.watch(
       focusedServerRefreshIntervalProvider,
@@ -389,6 +391,17 @@ class SettingsPage extends ConsumerWidget {
                           .read(hideServerAddressesProvider.notifier)
                           .setEnabled(value),
                     ),
+                    if (localMachineSupported) ...[
+                      SwitchListTile(
+                        contentPadding: _sectionTilePadding,
+                        title: const Text('settingsLocalMachine').tr(),
+                        subtitle: const Text('settingsLocalMachineHint').tr(),
+                        value: localMachineEnabled,
+                        onChanged: (value) => ref
+                            .read(localMachineEnabledProvider.notifier)
+                            .setEnabled(value),
+                      ),
+                    ],
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                       child: Column(

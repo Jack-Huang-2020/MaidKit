@@ -151,6 +151,23 @@ Future<bool> openTerminalSession(
   }
 }
 
+/// Opens the terminal appropriate for [server]'s transport: serial bridge,
+/// local shell, or SSH. Returns whether the terminal tab was opened.
+Future<bool> openTerminalFor(
+  BuildContext context,
+  WidgetRef ref,
+  Server server, {
+  String? paneId,
+}) {
+  if (server.connectionType == ServerConnectionType.serial.name) {
+    return openSerialTerminalSession(context, ref, server, paneId: paneId);
+  }
+  if (server.connectionType == ServerConnectionType.local.name) {
+    return openLocalTerminalSession(context, ref, server, paneId: paneId);
+  }
+  return openTerminalSession(context, ref, server, paneId: paneId);
+}
+
 /// Opens a terminal over [server]'s local serial port through the bridge
 /// helper. Returns whether the terminal tab was opened.
 Future<bool> openSerialTerminalSession(
@@ -184,6 +201,40 @@ Future<bool> openSerialTerminalSession(
       showStyledSnackBar(
         message: error.toString(),
         title: 'serverCannotOpenSerialTerminal'.tr(),
+        icon: Symbols.terminal,
+        accentColor: Theme.of(context).colorScheme.error,
+      );
+    }
+    return false;
+  } finally {
+    loading.dismiss();
+  }
+}
+
+/// Opens a terminal on the machine MaidKit runs on. No SSH connection or
+/// credentials are involved: the shell is spawned as a local process.
+/// Returns whether the terminal tab was opened.
+Future<bool> openLocalTerminalSession(
+  BuildContext context,
+  WidgetRef ref,
+  Server server, {
+  String? paneId,
+  String? initialDirectory,
+}) async {
+  final loading = showMaidKitLoadingModal(
+    context,
+    message: 'serverOpeningTerminal'.tr(args: [server.name]),
+  );
+  try {
+    await ref
+        .read(terminalTabsProvider.notifier)
+        .openLocal(server, paneId: paneId, initialDirectory: initialDirectory);
+    return true;
+  } catch (error) {
+    if (context.mounted) {
+      showStyledSnackBar(
+        message: error.toString(),
+        title: 'serverCannotOpenTerminal'.tr(),
         icon: Symbols.terminal,
         accentColor: Theme.of(context).colorScheme.error,
       );

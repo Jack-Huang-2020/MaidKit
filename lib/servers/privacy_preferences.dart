@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:maid_kit/data/local/app_database.dart';
@@ -51,6 +53,15 @@ class InMemoryPrivacySettings implements PrivacySettings {
 String serverAddressLabel(Server server, {required bool hideAddresses}) {
   if (server.connectionType == ServerConnectionType.serial.name) {
     return decodeSerialConfig(server.serialConfig)?.device ?? server.host;
+  }
+  // The local machine has no address; show the operating system instead.
+  if (server.connectionType == ServerConnectionType.local.name) {
+    return switch (Platform.operatingSystem) {
+      'macos' => 'macOS',
+      'windows' => 'Windows',
+      'linux' => 'Linux',
+      final other => other,
+    };
   }
   return hideAddresses
       ? server.username

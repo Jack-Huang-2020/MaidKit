@@ -305,6 +305,26 @@ class TerminalTabsNotifier extends Notifier<TerminalTabsState> {
     _watchTerminalDone(handle);
   }
 
+  /// Opens a shell on the machine MaidKit runs on, bypassing SSH entirely.
+  Future<void> openLocal(
+    Server server, {
+    String? paneId,
+    String? initialDirectory,
+  }) async {
+    if (paneId != null) focusPane(paneId);
+    final handle = await ref
+        .read(localConnectionManagerProvider)
+        .openTerminal(server, initialDirectory: initialDirectory);
+    final tab = TerminalTab(
+      id: handle.id,
+      serverId: server.id,
+      serverName: server.name,
+      terminal: handle.adapter,
+    );
+    _insertTab(tab, targetPaneId: paneId);
+    _watchTerminalDone(handle);
+  }
+
   void openFileManagement(
     Server server, {
     String? initialPath,
@@ -526,6 +546,8 @@ class TerminalTabsNotifier extends Notifier<TerminalTabsState> {
       await ref.read(connectionManagerProvider).closeTerminal(tabId);
       // Idempotent for SSH terminal ids, closes serial sessions.
       await ref.read(serialConnectionManagerProvider).closeTerminal(tabId);
+      // Idempotent for SSH/serial ids, closes local shells.
+      await ref.read(localConnectionManagerProvider).closeTerminal(tabId);
     }
     fileEditorCloseGuards.remove(tabId);
     _removeTab(tabId);

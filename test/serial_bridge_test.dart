@@ -53,12 +53,11 @@ void main() {
     rendezvousDir = Directory.systemTemp.createTempSync('serial-rdv-');
     bundleId = 'test.maidkit.serial';
     helperProcess = await Process.start(binary.path, [bundleId]);
-    // The helper writes to <home>/Library/Containers/<bundle>/Data/... so a
+    // The helper writes to <home>/Library/Application Support/<bundle>/… so a
     // plain temp dir would not be hit; instead we mock path_provider to the
-    // real container path so the client and helper agree. Recreate what the
-    // app container looks like for a sandboxed app.
+    // same directory so the client and helper agree.
     final container = Directory(
-      '${Platform.environment['HOME']}/Library/Containers/$bundleId/Data/Library/Application Support',
+      '${Platform.environment['HOME']}/Library/Application Support/$bundleId',
     );
     await container.create(recursive: true);
     rendezvousDir = container;
@@ -75,9 +74,9 @@ void main() {
 
   tearDownAll(() {
     helperProcess.kill();
-    // Clean up the synthetic container so repeated runs start fresh.
+    // Clean up the synthetic support directory so repeated runs start fresh.
     Directory(
-      '${Platform.environment['HOME']}/Library/Containers/$bundleId',
+      '${Platform.environment['HOME']}/Library/Application Support/$bundleId',
     ).deleteSync(recursive: true);
   });
 

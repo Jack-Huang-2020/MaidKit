@@ -62,6 +62,8 @@ class ServerDashboardTab extends ConsumerWidget {
   ) async {
     if (server.connectionType == ServerConnectionType.serial.name) {
       await openSerialTerminalSession(context, ref, server);
+    } else if (server.connectionType == ServerConnectionType.local.name) {
+      await openLocalTerminalSession(context, ref, server);
     } else {
       await connectForStatistics(context, ref, server);
     }
@@ -135,20 +137,10 @@ class ServerDashboardTab extends ConsumerWidget {
     await ref.read(serverRepositoryProvider).delete(server);
   }
 
-  /// Moves [server] by [delta] positions (-1 up, +1 down) in the full
-  /// dashboard order and persists the result.
-  Future<void> _moveServer(WidgetRef ref, Server server, int delta) async {
+  /// Persists the full dashboard order selected in arrange mode.
+  Future<void> _reorderServers(WidgetRef ref, List<int> orderedIds) async {
     final repository = ref.read(serverRepositoryProvider);
-    final servers = await repository.all();
-    final index = servers.indexWhere((s) => s.id == server.id);
-    final target = index + delta;
-    if (index < 0 || target < 0 || target >= servers.length) return;
-    final reordered = List<Server>.of(servers);
-    final moved = reordered.removeAt(index);
-    reordered.insert(target, moved);
-    await repository.reorderServers([
-      for (final server in reordered) server.id,
-    ]);
+    await repository.reorderServers(orderedIds);
   }
 
   @override
@@ -164,14 +156,15 @@ class ServerDashboardTab extends ConsumerWidget {
           _reconnectAll(context, ref, disconnectedServers),
       onEdit: (server) => _edit(context, ref, server),
       onDelete: (server) => _delete(ref, server),
-      onMoveUp: (server) => _moveServer(ref, server, -1),
-      onMoveDown: (server) => _moveServer(ref, server, 1),
+      onReorder: (orderedIds) => _reorderServers(ref, orderedIds),
       onOpenDetail: (server) =>
           ref.read(terminalTabsProvider.notifier).openServerDetails(server),
-      onOpenTerminal: (server) => openTerminalSession(context, ref, server),
+      onOpenTerminal: (server) => openTerminalFor(context, ref, server),
       onOpenFiles: (server) => _openFiles(context, ref, server),
       onRefresh: (server) =>
-          ref.read(connectionManagerProvider).refreshServerInfo(server),
+          server.connectionType == ServerConnectionType.local.name
+          ? ref.read(localConnectionManagerProvider).refreshNow()
+          : ref.read(connectionManagerProvider).refreshServerInfo(server),
     );
   }
 
@@ -181,6 +174,10 @@ class ServerDashboardTab extends ConsumerWidget {
     Server server,
   ) async {
     if (server.connectionType == ServerConnectionType.serial.name) return;
+    if (server.connectionType == ServerConnectionType.local.name) {
+      ref.read(terminalTabsProvider.notifier).openFileManagement(server);
+      return;
+    }
     final manager = ref.read(connectionManagerProvider);
     if (manager.clientFor(server.id) == null &&
         !await connectForStatistics(context, ref, server)) {
@@ -207,8 +204,7 @@ class _ServersCatalog extends StatelessWidget {
     required this.onReconnectAll,
     required this.onEdit,
     required this.onDelete,
-    required this.onMoveUp,
-    required this.onMoveDown,
+    required this.onReorder,
     required this.onOpenDetail,
     required this.onOpenTerminal,
     required this.onOpenFiles,
@@ -222,8 +218,7 @@ class _ServersCatalog extends StatelessWidget {
   final Future<void> Function(List<Server>) onReconnectAll;
   final ValueChanged<Server> onEdit;
   final ValueChanged<Server> onDelete;
-  final ValueChanged<Server> onMoveUp;
-  final ValueChanged<Server> onMoveDown;
+  final Future<void> Function(List<int> orderedIds) onReorder;
   final ValueChanged<Server> onOpenDetail;
   final ValueChanged<Server> onOpenTerminal;
   final ValueChanged<Server> onOpenFiles;
@@ -242,8 +237,7 @@ class _ServersCatalog extends StatelessWidget {
                 onReconnectAll: onReconnectAll,
                 onEdit: onEdit,
                 onDelete: onDelete,
-                onMoveUp: onMoveUp,
-                onMoveDown: onMoveDown,
+                onReorder: onReorder,
                 onOpenDetail: onOpenDetail,
                 onOpenTerminal: onOpenTerminal,
                 onOpenFiles: onOpenFiles,
@@ -272,8 +266,7 @@ class _ServerGrid extends StatefulWidget {
     required this.onReconnectAll,
     required this.onEdit,
     required this.onDelete,
-    required this.onMoveUp,
-    required this.onMoveDown,
+    required this.onReorder,
     required this.onOpenDetail,
     required this.onOpenTerminal,
     required this.onOpenFiles,
@@ -286,8 +279,7 @@ class _ServerGrid extends StatefulWidget {
   final Future<void> Function(List<Server>) onReconnectAll;
   final ValueChanged<Server> onEdit;
   final ValueChanged<Server> onDelete;
-  final ValueChanged<Server> onMoveUp;
-  final ValueChanged<Server> onMoveDown;
+  final Future<void> Function(List<int> orderedIds) onReorder;
   final ValueChanged<Server> onOpenDetail;
   final ValueChanged<Server> onOpenTerminal;
   final ValueChanged<Server> onOpenFiles;
@@ -299,7 +291,51 @@ class _ServerGrid extends StatefulWidget {
 
 class _ServerGridState extends State<_ServerGrid> {
   var _isReconnecting = false;
+  var _isArranging = false;
+  var _isSavingOrder = false;
   final _selectedTags = <String>{};
+  List<int>? _pendingOrder;
+
+  List<Server> get _orderedServers {
+    final pendingOrder = _pendingOrder;
+    if (!_isArranging || pendingOrder == null) return widget.servers;
+
+    final byId = {for (final server in widget.servers) server.id: server};
+    return [for (final id in pendingOrder) ?byId.remove(id), ...byId.values];
+  }
+
+  void _startArranging() {
+    setState(() {
+      _isArranging = true;
+      _selectedTags.clear();
+      _pendingOrder = [for (final server in widget.servers) server.id];
+    });
+  }
+
+  Future<void> _moveBefore(int draggedId, int targetId) async {
+    if (_isSavingOrder || draggedId == targetId) return;
+    final reordered = [for (final server in _orderedServers) server.id];
+    final oldIndex = reordered.indexOf(draggedId);
+    final targetIndex = reordered.indexOf(targetId);
+    if (oldIndex < 0 || targetIndex < 0) return;
+
+    reordered.removeAt(oldIndex);
+    final insertionIndex = reordered.indexOf(targetId);
+    reordered.insert(insertionIndex, draggedId);
+    setState(() {
+      _pendingOrder = reordered;
+      _isSavingOrder = true;
+    });
+    try {
+      await widget.onReorder(reordered);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _pendingOrder = null);
+      }
+    } finally {
+      if (mounted) setState(() => _isSavingOrder = false);
+    }
+  }
 
   Future<void> _reconnectAll(List<Server> servers) async {
     setState(() => _isReconnecting = true);
@@ -321,11 +357,16 @@ class _ServerGridState extends State<_ServerGrid> {
             .toSet()
             .toList()
           ..sort();
-    final visibleServers = widget.servers.where((server) {
+    final visibleServers = _orderedServers.where((server) {
       final tags = decodeStringList(server.tags).toSet();
       return _selectedTags.every(tags.contains);
     }).toList();
     final disconnectedServers = visibleServers.where((server) {
+      // The local machine is always reachable and never participates in
+      // reconnect-all.
+      if (server.connectionType == ServerConnectionType.local.name) {
+        return false;
+      }
       final status = sessionsByServerId[server.id]?.status;
       return status != SessionStatus.connected &&
           status != SessionStatus.connecting;
@@ -354,7 +395,33 @@ class _ServerGridState extends State<_ServerGrid> {
                 )
               : const SizedBox.shrink(key: ValueKey('servers-reconnect-none')),
         ),
-        if (allTags.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: _ArrangeServersControl(
+              isArranging: _isArranging,
+              canArrange: widget.servers.length > 1,
+              onPressed: _isArranging
+                  ? () => setState(() => _isArranging = false)
+                  : _startArranging,
+            ),
+          ),
+        ),
+        if (_isArranging)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'serversArrangeHint'.tr(),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          )
+        else if (allTags.isNotEmpty)
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
             child: Align(
@@ -410,36 +477,33 @@ class _ServerGridState extends State<_ServerGrid> {
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final server = visibleServers[index];
                       final session = sessionsByServerId[server.id];
-                      // Reordering is a property of the full list, so it is
-                      // only offered when no tag filter is active.
-                      final indexInOrder = widget.servers.indexWhere(
-                        (candidate) => candidate.id == server.id,
+                      final card = _ServerCard(
+                        server: server,
+                        session: session,
+                        onConnect: () => widget.onConnect(server),
+                        onOpenDetail: () => widget.onOpenDetail(server),
+                        onOpenTerminal: () => widget.onOpenTerminal(server),
+                        onOpenFiles: () => widget.onOpenFiles(server),
+                        onRefresh: () => widget.onRefresh(server),
                       );
-                      final canMoveUp = indexInOrder > 0;
-                      final canMoveDown =
-                          indexInOrder < widget.servers.length - 1;
+                      // The local machine is a virtual server: it is not in
+                      // the database, so it cannot be reordered, edited, or
+                      // deleted, and gets no context menu.
+                      final isLocal =
+                          server.connectionType ==
+                          ServerConnectionType.local.name;
+                      if (isLocal) return card;
+                      if (_isArranging) {
+                        return _ReorderableServerTile(
+                          server: server,
+                          isSavingOrder: _isSavingOrder,
+                          onMoveBefore: _moveBefore,
+                          child: card,
+                        );
+                      }
                       return ContextMenuWidget(
                         menuProvider: (_) => Menu(
                           children: [
-                            if (_selectedTags.isEmpty) ...[
-                              MenuAction(
-                                title: 'serversMoveUp'.tr(),
-                                image: MenuImage.icon(Symbols.arrow_upward),
-                                attributes: MenuActionAttributes(
-                                  disabled: !canMoveUp,
-                                ),
-                                callback: () => widget.onMoveUp(server),
-                              ),
-                              MenuAction(
-                                title: 'serversMoveDown'.tr(),
-                                image: MenuImage.icon(Symbols.arrow_downward),
-                                attributes: MenuActionAttributes(
-                                  disabled: !canMoveDown,
-                                ),
-                                callback: () => widget.onMoveDown(server),
-                              ),
-                              MenuSeparator(),
-                            ],
                             MenuAction(
                               title: 'serversEditServer'.tr(),
                               callback: () => widget.onEdit(server),
@@ -454,15 +518,7 @@ class _ServerGridState extends State<_ServerGrid> {
                             ),
                           ],
                         ),
-                        child: _ServerCard(
-                          server: server,
-                          session: session,
-                          onConnect: () => widget.onConnect(server),
-                          onOpenDetail: () => widget.onOpenDetail(server),
-                          onOpenTerminal: () => widget.onOpenTerminal(server),
-                          onOpenFiles: () => widget.onOpenFiles(server),
-                          onRefresh: () => widget.onRefresh(server),
-                        ),
+                        child: card,
                       );
                     }, childCount: visibleServers.length),
                   ),
@@ -471,6 +527,148 @@ class _ServerGridState extends State<_ServerGrid> {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _ArrangeServersControl extends StatelessWidget {
+  const _ArrangeServersControl({
+    required this.isArranging,
+    required this.canArrange,
+    required this.onPressed,
+  });
+
+  final bool isArranging;
+  final bool canArrange;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isArranging) {
+      return FilledButton.icon(
+        onPressed: onPressed,
+        icon: const Icon(Symbols.check),
+        label: Text('serversDoneArranging'.tr()),
+      );
+    }
+
+    return OutlinedButton.icon(
+      onPressed: canArrange ? onPressed : null,
+      icon: const Icon(Symbols.drag_indicator),
+      label: Text('serversArrange'.tr()),
+    );
+  }
+}
+
+class _ReorderableServerTile extends StatelessWidget {
+  const _ReorderableServerTile({
+    required this.server,
+    required this.isSavingOrder,
+    required this.onMoveBefore,
+    required this.child,
+  });
+
+  final Server server;
+  final bool isSavingOrder;
+  final Future<void> Function(int draggedId, int targetId) onMoveBefore;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return DragTarget<int>(
+      onWillAcceptWithDetails: (details) =>
+          !isSavingOrder && details.data != server.id,
+      onAcceptWithDetails: (details) => onMoveBefore(details.data, server.id),
+      builder: (context, candidateData, rejectedData) {
+        final isDropTarget = candidateData.isNotEmpty;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          curve: Curves.easeOutCubic,
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: isDropTarget
+                  ? Theme.of(context).colorScheme.primary
+                  : Colors.transparent,
+              width: 2,
+            ),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              IgnorePointer(child: child),
+              Positioned(
+                // Keep the handle in the trailing corner while sharing the
+                // vertical center of the leading server icon row.
+                right: 8,
+                top: 5,
+                child: MouseRegion(
+                  cursor: isSavingOrder
+                      ? SystemMouseCursors.basic
+                      : SystemMouseCursors.grab,
+                  child: Draggable<int>(
+                    data: server.id,
+                    maxSimultaneousDrags: isSavingOrder ? 0 : 1,
+                    feedback: _ServerDragFeedback(name: server.name),
+                    childWhenDragging: const Opacity(
+                      opacity: 0.35,
+                      child: _ServerDragHandle(),
+                    ),
+                    child: const _ServerDragHandle(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ServerDragHandle extends StatelessWidget {
+  const _ServerDragHandle();
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Padding(
+        padding: EdgeInsets.all(8),
+        child: Icon(Symbols.drag_indicator, size: 20),
+      ),
+    );
+  }
+}
+
+class _ServerDragFeedback extends StatelessWidget {
+  const _ServerDragFeedback({required this.name});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Material(
+      color: Colors.transparent,
+      child: Card(
+        elevation: 6,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Symbols.drag_indicator, color: colorScheme.primary),
+              const SizedBox(width: 12),
+              Text(name, style: Theme.of(context).textTheme.titleSmall),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -572,7 +770,10 @@ class _ServerCard extends ConsumerWidget {
     final textTheme = theme.textTheme;
     final hideAddresses = ref.watch(hideServerAddressesProvider);
     final isSerial = server.connectionType == ServerConnectionType.serial.name;
-    final connected = session?.status == SessionStatus.connected;
+    final isLocal = server.connectionType == ServerConnectionType.local.name;
+    // The local machine is always reachable; its session may lag one refresh
+    // behind, so never surface it as disconnected.
+    final connected = isLocal || session?.status == SessionStatus.connected;
     final connecting = session?.status == SessionStatus.connecting;
     final failed = session?.status == SessionStatus.failed;
 
@@ -580,7 +781,9 @@ class _ServerCard extends ConsumerWidget {
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: onOpenDetail,
+        // The local machine has no SSH details page; its actions live on the
+        // card itself (terminal, files, refresh).
+        onTap: isLocal ? null : onOpenDetail,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 12),
           child: Column(
@@ -591,7 +794,7 @@ class _ServerCard extends ConsumerWidget {
                 child: Row(
                   children: [
                     Icon(
-                      Symbols.dns,
+                      isLocal ? Symbols.computer : Symbols.dns,
                       fill: connected ? 1 : 0,
                       size: 22,
                       color: connected
@@ -638,6 +841,10 @@ class _ServerCard extends ConsumerWidget {
                                   ),
                                 ),
                               ),
+                              if (isLocal) ...[
+                                const SizedBox(width: 6),
+                                _BadgeChip(label: 'localMachineBadge'.tr()),
+                              ],
                             ],
                           ),
                           _ServerBadges(server: server),
@@ -724,6 +931,31 @@ class _ServerCard extends ConsumerWidget {
   }
 }
 
+/// Small label chip shared by the local-machine badge and tag chips.
+class _BadgeChip extends StatelessWidget {
+  const _BadgeChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(
+          context,
+        ).textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant),
+      ),
+    );
+  }
+}
+
 /// Tag chips shown under a server card's title.
 class _ServerBadges extends StatelessWidget {
   const _ServerBadges({required this.server});
@@ -736,20 +968,6 @@ class _ServerBadges extends StatelessWidget {
     if (tags.isEmpty) {
       return const SizedBox.shrink();
     }
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final chipTextStyle = textTheme.labelSmall?.copyWith(
-      color: colorScheme.onSurfaceVariant,
-    );
-
-    Widget chip(String label) => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.7),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(label, style: chipTextStyle),
-    );
 
     return Padding(
       padding: const EdgeInsets.only(top: 6),
@@ -757,8 +975,8 @@ class _ServerBadges extends StatelessWidget {
         spacing: 4,
         runSpacing: 4,
         children: [
-          for (final tag in tags.take(3)) chip(tag),
-          if (tags.length > 3) chip('+${tags.length - 3}'),
+          for (final tag in tags.take(3)) _BadgeChip(label: tag),
+          if (tags.length > 3) _BadgeChip(label: '+${tags.length - 3}'),
         ],
       ),
     );

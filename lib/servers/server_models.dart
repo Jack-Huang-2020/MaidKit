@@ -144,14 +144,15 @@ List<String> decodeStringList(String? value) {
   ];
 }
 
-enum ServerConnectionType { ssh, serial }
+enum ServerConnectionType { ssh, serial, local }
 
 /// Whether serial-port servers are offered in the UI and can be connected.
 ///
-/// Disabled while the macOS bridge helper flow (SMAppService approval,
-/// helper registration) is unfinished. Set to `true` when the helper path is
-/// solid; Windows/Linux will need their own transport before enabling.
-const bool serialPortsSupported = false;
+/// Serial access runs through the bundled `serial-bridge` helper, which the
+/// app spawns as a direct child process. The app is not sandboxed, so the
+/// helper (and the app itself) can open /dev/cu.* device nodes. Windows and
+/// Linux need their own transport before this flag can cover them.
+const bool serialPortsSupported = true;
 
 enum SerialParity { none, even, odd }
 

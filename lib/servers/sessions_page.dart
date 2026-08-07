@@ -53,10 +53,7 @@ class SessionsWorkspace extends ConsumerWidget {
                       tabs: tabs,
                       // Full-workspace intro (no pane chrome / no top tab strip).
                       onOpenTerminal: (server) =>
-                          server.connectionType ==
-                              ServerConnectionType.serial.name
-                          ? openSerialTerminalSession(context, ref, server)
-                          : openTerminalSession(context, ref, server),
+                          openTerminalFor(context, ref, server),
                       onOpenFiles: (server) => _openFiles(context, ref, server),
                     ),
                   )
@@ -83,6 +80,8 @@ SshSessionInfo? _sessionForTab(
       .firstOrNull;
 }
 
+/// Opens the file management tab for [server]'s side. The local machine has
+/// no SFTP side and opens straight into the local browser.
 Future<void> _openFiles(
   BuildContext context,
   WidgetRef ref,
@@ -90,6 +89,12 @@ Future<void> _openFiles(
   String? paneId,
 }) async {
   if (server.connectionType == ServerConnectionType.serial.name) return;
+  if (server.connectionType == ServerConnectionType.local.name) {
+    ref
+        .read(terminalTabsProvider.notifier)
+        .openFileManagement(server, paneId: paneId);
+    return;
+  }
   final manager = ref.read(connectionManagerProvider);
   if (manager.clientFor(server.id) == null &&
       !await connectForStatistics(context, ref, server)) {
@@ -331,20 +336,7 @@ class _SessionPaneView extends ConsumerWidget {
                       tabs: tabs,
                       compact: true,
                       onOpenTerminal: (server) =>
-                          server.connectionType ==
-                              ServerConnectionType.serial.name
-                          ? openSerialTerminalSession(
-                              context,
-                              ref,
-                              server,
-                              paneId: paneId,
-                            )
-                          : openTerminalSession(
-                              context,
-                              ref,
-                              server,
-                              paneId: paneId,
-                            ),
+                          openTerminalFor(context, ref, server, paneId: paneId),
                       onOpenFiles: (server) =>
                           _openFiles(context, ref, server, paneId: paneId),
                     )

@@ -18,9 +18,10 @@
 //   then raw duplex bytes until either side closes.
 //
 // Rendezvous: on startup the helper writes {"port": N, "token": "<uuid>"} to
-// <container>/Library/Application Support/serial-bridge.json so the sandboxed
-// app can discover port + token. The container path is derived from the app
-// bundle id passed as argv[1] by the LaunchAgent plist.
+// <home>/Library/Application Support/<bundle-id>/serial-bridge.json so the app
+// can discover port + token. The app reads the same path via path_provider's
+// getApplicationSupportDirectory(); the bundle id is passed as argv[1] by the
+// app when it spawns this helper.
 //
 // The helper is deliberately not sandboxed and holds no credentials; it only
 // opens devices the user asks for.
@@ -37,8 +38,7 @@ let bundleId: String = {
   return "dev.solsynth.maidKit"
 }()
 
-let containerDataDir = NSHomeDirectory() + "/Library/Containers/\(bundleId)/Data"
-let appSupportDir = containerDataDir + "/Library/Application Support"
+let appSupportDir = NSHomeDirectory() + "/Library/Application Support/\(bundleId)"
 let rendezvousPath = appSupportDir + "/serial-bridge.json"
 
 let token = UUID().uuidString
@@ -337,7 +337,8 @@ withUnsafeMutablePointer(to: &boundAddr) { ptr in
 }
 let port = UInt16(bigEndian: boundAddr.sin_port)
 
-// Publish the rendezvous file. The app polls this path inside its container.
+// Publish the rendezvous file. The app polls this path under its
+// Application Support directory.
 do {
   try FileManager.default.createDirectory(atPath: appSupportDir, withIntermediateDirectories: true)
   let payload = "{\"port\":\(port),\"token\":\"\(token)\"}"

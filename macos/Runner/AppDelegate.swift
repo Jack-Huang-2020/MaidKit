@@ -1,11 +1,14 @@
 import Cocoa
 import FlutterMacOS
-import ServiceManagement
 
 @main
 class AppDelegate: FlutterAppDelegate {
   private static let serialBridgeChannel = "dev.solsynth.maidKit/serial_bridge"
-  private static let serialBridgePlist = "dev.solsynth.maidKit.serial-bridge.plist"
+
+  /// The running serial-bridge helper. The app is not sandboxed, so the
+  /// helper runs as a plain child process and can open /dev/cu.* device
+  /// nodes directly; no LaunchAgent or approval flow is involved.
+  private var serialBridgeProcess: Process?
 
   override func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
     return true
@@ -13,6 +16,11 @@ class AppDelegate: FlutterAppDelegate {
 
   override func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
     return true
+  }
+
+  override func applicationWillTerminate(_ notification: Notification) {
+    serialBridgeProcess?.terminate()
+    super.applicationWillTerminate(notification)
   }
 
   override func applicationDidFinishLaunching(_ notification: Notification) {
@@ -28,54 +36,50 @@ class AppDelegate: FlutterAppDelegate {
       case "ensureRegistered":
         self?.ensureSerialBridgeRegistered(result: result)
       case "openLoginItemsSettings":
-        self?.openLoginItemsSettings(result: result)
+        // No approval flow: the helper is spawned directly by the app.
+        result(nil)
       default:
         result(FlutterMethodNotImplemented)
       }
     }
   }
 
-  /// Registers the serial-bridge LaunchAgent with Service Management and
-  /// reports its status. Registration can only be initiated from the main
-  /// app; the agent itself runs unsandboxed because the main app is
-  /// sandboxed and cannot open serial devices.
+  /// Ensures the bundled serial-bridge helper is running and reports its
+  /// status. The helper is respawned if it exits after a healthy run, so a
+  /// crashed helper recovers without an app restart.
   private func ensureSerialBridgeRegistered(result: @escaping FlutterResult) {
-    guard #available(macOS 13.0, *) else {
-      result("unsupported")
+    guard let helper = Bundle.main.resourceURL?.appendingPathComponent("serial-bridge"),
+      FileManager.default.isExecutableFile(atPath: helper.path)
+    else {
+      result("notFound")
       return
     }
-    let service = SMAppService.agent(plistName: Self.serialBridgePlist)
-    if service.status == .notRegistered || service.status == .notFound {
-      do {
-        try service.register()
-      } catch {
-        result("error:\(error.localizedDescription)")
-        return
+    if let process = serialBridgeProcess, process.isRunning {
+      result("enabled")
+      return
+    }
+    let process = Process()
+    process.executableURL = helper
+    process.arguments = [Bundle.main.bundleIdentifier ?? "dev.solsynth.maidKit"]
+    let launchTime = Date()
+    process.terminationHandler = { [weak self] proc in
+      guard self?.serialBridgeProcess === proc else { return }
+      self?.serialBridgeProcess = nil
+      // A helper that dies almost immediately is broken; do not respawn it
+      // in a loop. After a healthy run, bring it back shortly.
+      if Date().timeIntervalSince(launchTime) >= 3 {
+        DispatchQueue.global().asyncAfter(deadline: .now() + 1) { [weak self] in
+          self?.ensureSerialBridgeRegistered(result: { _ in })
+        }
       }
     }
-    switch service.status {
-    case .enabled:
-      result("enabled")
-    case .requiresApproval:
-      result("requiresApproval")
-    case .notRegistered:
-      result("notRegistered")
-    case .notFound:
-      result("notFound")
-    @unknown default:
-      result("error:unknown status")
-    }
-  }
-
-  private func openLoginItemsSettings(result: @escaping FlutterResult) {
-    guard #available(macOS 13.0, *) else {
-      result(FlutterError(
-        code: "unsupported",
-        message: "Serial ports require macOS 13 or later",
-        details: nil))
+    do {
+      try process.run()
+    } catch {
+      result("error:\(error.localizedDescription)")
       return
     }
-    SMAppService.openSystemSettingsLoginItems()
-    result(nil)
+    serialBridgeProcess = process
+    result("enabled")
   }
 }
