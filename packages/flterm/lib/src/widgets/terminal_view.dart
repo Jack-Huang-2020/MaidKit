@@ -430,6 +430,13 @@ class _TerminalViewState extends State<TerminalView> {
     _links.invalidateContent();
     _syncLinkInteraction();
     _scrollController.activeScreen = _controller.activeScreen;
+    if (_controller.activeScreen == .alternate &&
+        _scrollController.hasClients) {
+      // Base the first wheel conversion on the position we enter the
+      // alternate screen at, so a scrollback position from the primary
+      // screen doesn't burst arrows on the first tick.
+      _lastAlternatePixels = _scrollController.position.pixels;
+    }
     _updateTextInputGeometry();
     setState(_syncBlink);
   }

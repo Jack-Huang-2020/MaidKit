@@ -180,6 +180,7 @@ class TerminalRenderBox extends RenderBox {
   var _needsFrameSync = false;
   var _stickToBottom = true;
   var _lastScrollbackRows = 0;
+  var _lastActiveScreen = TerminalScreen.primary;
   var _preeditText = '';
   Offset? _cursorMotionTarget;
   Offset? _cursorMotionFrom;
@@ -217,6 +218,8 @@ class TerminalRenderBox extends RenderBox {
       onImageReady: markNeedsPaint,
     );
     _cursorMotionTicker = Ticker(_onCursorMotionTick);
+
+    _lastActiveScreen = _terminal.activeScreen;
 
     _applyTerminalThemeColors();
   }
@@ -572,7 +575,17 @@ class TerminalRenderBox extends RenderBox {
   void _onTerminalChanged() {
     if (_paintState.rows == 0 || _performingLayout) return;
 
-    if (_terminal.scrollbackRows != _lastScrollbackRows) {
+    // The alternate screen has no scrollback, so scrollbackRows alone won't
+    // change on screen switches. Layout must still rerun to apply the
+    // alternate-screen content dimensions to the scroll position (which the
+    // position turns into infinite extents so wheel gestures can be converted
+    // to cursor/mouse input instead of being clamped dead at 0..0).
+    final screenChanged = _terminal.activeScreen != _lastActiveScreen;
+    if (screenChanged) {
+      _lastActiveScreen = _terminal.activeScreen;
+    }
+
+    if (screenChanged || _terminal.scrollbackRows != _lastScrollbackRows) {
       _needsFrameSync = true;
       markNeedsLayout();
       return;
