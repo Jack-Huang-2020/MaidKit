@@ -29,6 +29,12 @@ class _VaultCreatePageState extends ConsumerState<VaultCreatePage> {
   bool _importMode = false;
   List<ImportCandidate>? _pendingCandidates;
   bool _busy = false;
+
+  /// Whether the Solarpass sign-in/download request is in flight. Kept
+  /// separate from [_busy] so the choices view can show progress feedback:
+  /// the sign-in can take seconds (OIDC discovery, browser authorization,
+  /// token exchange, workspace list) with no modal to signal it.
+  bool _cloudBusy = false;
   String? _error;
 
   @override
@@ -121,6 +127,28 @@ class _VaultCreatePageState extends ConsumerState<VaultCreatePage> {
             ],
           ),
         ),
+        if (_cloudBusy)
+          Padding(
+            padding: const EdgeInsets.only(top: 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'settingsCloudSigningIn'.tr(),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
         if (_error != null)
           Padding(
             padding: const EdgeInsets.only(top: 12),
@@ -132,7 +160,9 @@ class _VaultCreatePageState extends ConsumerState<VaultCreatePage> {
           ),
         const SizedBox(height: 8),
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: _busy
+              ? null
+              : () => Navigator.of(context).pop(),
           child: Text('commonCancel'.tr()),
         ),
       ],
@@ -394,6 +424,7 @@ class _VaultCreatePageState extends ConsumerState<VaultCreatePage> {
     setState(() {
       _error = null;
       _busy = true;
+      _cloudBusy = true;
     });
     try {
       final accountService = ref.read(cloudSyncServiceProvider);
@@ -420,7 +451,12 @@ class _VaultCreatePageState extends ConsumerState<VaultCreatePage> {
     } catch (error) {
       if (mounted) setState(() => _error = _friendlyError(error));
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _cloudBusy = false;
+        });
+      }
     }
   }
 

@@ -1107,6 +1107,7 @@
   "settingsCloudSignInAction": "Sign in",
   "settingsCloudSignInHint": "Sign in to select a workspace and use optional cloud sync.",
   "settingsCloudSignInRequired": "Sign in to Solarpass to continue.",
+  "settingsCloudSigningIn": "Signing in to Solarpass…",
   "settingsCloudSignOut": "Sign out",
   "settingsCloudSignOutHint": "Sign out of Solarpass on this device.",
   "settingsCloudSignOutSuccess": "Signed out of Solarpass.",

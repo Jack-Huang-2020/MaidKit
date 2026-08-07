@@ -1107,6 +1107,7 @@
   "settingsCloudSignInAction": "登录",
   "settingsCloudSignInHint": "登录后即可选择工作区并使用可选的云端同步。",
   "settingsCloudSignInRequired": "请先登录 Solarpass。",
+  "settingsCloudSigningIn": "正在登录 Solarpass…",
   "settingsCloudSignOut": "退出登录",
   "settingsCloudSignOutHint": "在此设备上退出 Solarpass。",
   "settingsCloudSignOutSuccess": "已退出 Solarpass。",
