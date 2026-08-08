@@ -393,10 +393,13 @@ class SshConnectionManager {
       // Sort once on the host so head keeps top CPU/RSS-relevant rows without
       // shipping the entire process table. Avoid polling this every few seconds
       // when the Processes tab is not visible.
-      final session = await client.execute(
-        'LC_ALL=C ps -eo pid=,user=,%cpu=,%mem=,rss=,comm= '
-        '--sort=-%cpu | head -n $processListLimit',
-      );
+      final session = await client.execute('''sh -c '
+if ps -eo pid=,user=,%cpu=,%mem=,rss=,comm= --sort=-%cpu >/dev/null 2>&1; then
+  ps -eo pid=,user=,%cpu=,%mem=,rss=,comm= --sort=-%cpu | head -n $processListLimit
+else
+  ps -Ao pid=,user=,%cpu=,%mem=,rss=,comm= -r | head -n $processListLimit
+fi
+' ''');
       final output = await utf8.decoder.bind(session.stdout).join();
       await session.done;
       return output
@@ -598,25 +601,47 @@ class SshConnectionManager {
     });
   }
 
-  /// Collects raw host counters for the Activity tab in a single SSH round-trip.
+  /// Collects raw host counters for the Activity tab in a single SSH
+  /// round-trip.
   Future<ActivityCounters> collectActivityCounters(int serverId) async {
     return withClient(serverId, (client) async {
       final result = await _execute(client, r'''
 sh -c '
-echo --STAT--
-head -n 1 /proc/stat 2>/dev/null || true
-echo --LOAD--
-cat /proc/loadavg 2>/dev/null || true
-echo --CPU--
-getconf _NPROCESSORS_ONLN 2>/dev/null || nproc 2>/dev/null || echo 1
-echo --MEM--
-cat /proc/meminfo 2>/dev/null || true
-echo --DISK--
-df -Pk / 2>/dev/null | tail -n 1 || true
-echo --NET--
-cat /proc/net/dev 2>/dev/null || true
-echo --UPTIME--
-cut -d. -f1 /proc/uptime 2>/dev/null || true
+if [ -r /proc/stat ]; then
+  echo --STAT--
+  head -n 1 /proc/stat 2>/dev/null || true
+  echo --LOAD--
+  cat /proc/loadavg 2>/dev/null || true
+  echo --CPU--
+  getconf _NPROCESSORS_ONLN 2>/dev/null || nproc 2>/dev/null || echo 1
+  echo --MEM--
+  cat /proc/meminfo 2>/dev/null || true
+  echo --DISK--
+  df -Pk / 2>/dev/null | tail -n 1 || true
+  echo --NET--
+  cat /proc/net/dev 2>/dev/null || true
+  echo --UPTIME--
+  cut -d. -f1 /proc/uptime 2>/dev/null || true
+else
+  echo --STAT--
+  sysctl -n kern.cp_time 2>/dev/null || true
+  echo --LOAD--
+  sysctl -n vm.loadavg 2>/dev/null || true
+  echo --CPU--
+  sysctl -n hw.ncpu 2>/dev/null || true
+  echo --MEM--
+  sysctl -n hw.memsize 2>/dev/null || true
+  echo --VMSTAT--
+  vm_stat 2>/dev/null || true
+  echo --SWAP--
+  sysctl -n vm.swapusage 2>/dev/null || true
+  echo --DISK--
+  df -Pk / 2>/dev/null || true
+  echo --NET--
+  netstat -ib 2>/dev/null || true
+  echo --UPTIME--
+  sysctl -n kern.boottime 2>/dev/null || true
+fi
 '
 ''');
       if (result.exitCode != 0 && result.stdout.trim().isEmpty) {
@@ -639,70 +664,149 @@ cut -d. -f1 /proc/uptime 2>/dev/null || true
     }
 
     final statLine = section('STAT');
+    final rawStatFields = statLine.split(RegExp(r'\s+'));
+    final statFields = statLine.startsWith('cpu')
+        ? rawStatFields.skip(1).map(int.tryParse).whereType<int>().toList()
+        : rawStatFields.map(int.tryParse).whereType<int>().toList();
     int? cpuIdle;
     int? cpuTotal;
-    if (statLine.startsWith('cpu')) {
-      final fields = statLine
-          .split(RegExp(r'\s+'))
-          .skip(1)
-          .map(int.tryParse)
-          .whereType<int>()
-          .toList();
-      if (fields.length >= 4) {
-        // user nice system idle iowait irq softirq steal …
-        final idle = fields[3] + (fields.length > 4 ? fields[4] : 0);
-        final total = fields.fold<int>(0, (sum, value) => sum + value);
-        cpuIdle = idle;
-        cpuTotal = total;
-      }
+    if (statFields.length >= 4) {
+      // Linux: user nice system idle iowait irq softirq steal …
+      // macOS: user nice system interrupt idle.
+      final idleIndex = statLine.startsWith('cpu') ? 3 : statFields.length - 1;
+      final idle =
+          statFields[idleIndex] +
+          (statLine.startsWith('cpu') && statFields.length > 4
+              ? statFields[4]
+              : 0);
+      cpuIdle = idle;
+      cpuTotal = statFields.fold<int>(0, (sum, value) => sum + value);
     }
 
-    final loads = section('LOAD').split(RegExp(r'\s+'));
+    final loads = RegExp(r'[0-9]+(?:\.[0-9]+)?')
+        .allMatches(section('LOAD'))
+        .map((match) => double.tryParse(match.group(0)!))
+        .whereType<double>()
+        .toList();
+    final memSection = section('MEM');
     int? memValue(String label) {
-      final match = RegExp('$label:\\s+(\\d+)').firstMatch(section('MEM'));
+      final match = RegExp('$label:\\s+(\\d+)').firstMatch(memSection);
       return match == null ? null : int.tryParse(match.group(1)!);
     }
 
-    final diskFields = section('DISK').split(RegExp(r'\s+'));
+    final macTotalBytes = int.tryParse(memSection);
+    int? macAvailableBytes() {
+      final vmStat = section('VMSTAT');
+      final pageSize = int.tryParse(
+        RegExp(r'page size of (\d+) bytes').firstMatch(vmStat)?.group(1) ?? '',
+      );
+      if (pageSize == null) return null;
+      int? pages(String label) => int.tryParse(
+        RegExp('$label:\\s+(\\d+)').firstMatch(vmStat)?.group(1) ?? '',
+      );
+      final values = [
+        pages('Pages free'),
+        pages('Pages inactive'),
+        pages('Pages speculative'),
+      ].whereType<int>().toList();
+      if (values.isEmpty) return null;
+      return values.fold<int>(0, (sum, value) => sum + value) * pageSize;
+    }
+
+    int? macSwapValue(String label) {
+      final match = RegExp(
+        '$label\\s*=\\s*([0-9]+(?:\\.[0-9]+)?)([KMGT])',
+        caseSensitive: false,
+      ).firstMatch(section('SWAP'));
+      if (match == null) return null;
+      final amount = double.tryParse(match.group(1)!);
+      if (amount == null) return null;
+      final multiplier = switch (match.group(2)!.toUpperCase()) {
+        'K' => 1,
+        'M' => 1024,
+        'G' => 1024 * 1024,
+        'T' => 1024 * 1024 * 1024,
+        _ => 1,
+      };
+      return (amount * multiplier).round();
+    }
+
+    final diskLines = section('DISK')
+        .split('\n')
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .toList();
+    final diskFields = diskLines.isEmpty
+        ? const <String>[]
+        : diskLines.last.split(RegExp(r'\s+'));
     var netRx = 0;
     var netTx = 0;
     var hasNet = false;
     for (final line in section('NET').split('\n')) {
       final trimmed = line.trim();
-      if (!trimmed.contains(':')) continue;
-      final parts = trimmed.split(':');
-      if (parts.length < 2) continue;
-      final iface = parts[0].trim();
-      if (iface == 'lo') continue;
-      final cols = parts[1].trim().split(RegExp(r'\s+'));
-      if (cols.length < 9) continue;
-      final rx = int.tryParse(cols[0]);
-      final tx = int.tryParse(cols[8]);
+      if (trimmed.contains(':')) {
+        final parts = trimmed.split(':');
+        if (parts.length < 2 || parts[0].trim() == 'lo') continue;
+        final cols = parts[1].trim().split(RegExp(r'\s+'));
+        if (cols.length < 9) continue;
+        final rx = int.tryParse(cols[0]);
+        final tx = int.tryParse(cols[8]);
+        if (rx == null || tx == null) continue;
+        netRx += rx;
+        netTx += tx;
+        hasNet = true;
+        continue;
+      }
+      final fields = trimmed.split(RegExp(r'\s+'));
+      if (fields.length < 10 ||
+          fields[0] == 'Name' ||
+          fields[0] == 'lo0' ||
+          !fields[2].startsWith('<Link#')) {
+        continue;
+      }
+      final rx = int.tryParse(fields[6]);
+      final tx = int.tryParse(fields[9]);
       if (rx == null || tx == null) continue;
       netRx += rx;
       netTx += tx;
       hasNet = true;
     }
 
+    final uptimeText = section('UPTIME');
+    var uptimeSeconds = int.tryParse(uptimeText);
+    if (uptimeSeconds == null) {
+      final boot = int.tryParse(
+        RegExp(r'sec\s*=\s*(\d+)').firstMatch(uptimeText)?.group(1) ?? '',
+      );
+      if (boot != null) {
+        uptimeSeconds = DateTime.now().millisecondsSinceEpoch ~/ 1000 - boot;
+      }
+    }
     return ActivityCounters(
       at: DateTime.now(),
       cpuIdle: cpuIdle,
       cpuTotal: cpuTotal,
-      load1: loads.isNotEmpty ? double.tryParse(loads[0]) : null,
-      load5: loads.length > 1 ? double.tryParse(loads[1]) : null,
-      load15: loads.length > 2 ? double.tryParse(loads[2]) : null,
+      load1: loads.isNotEmpty ? loads[0] : null,
+      load5: loads.length > 1 ? loads[1] : null,
+      load15: loads.length > 2 ? loads[2] : null,
       cpuCount: int.tryParse(section('CPU')),
-      memoryTotalKb: memValue('MemTotal'),
-      memoryAvailableKb: memValue('MemAvailable'),
-      swapTotalKb: memValue('SwapTotal'),
-      swapFreeKb: memValue('SwapFree'),
+      memoryTotalKb:
+          memValue('MemTotal') ??
+          (macTotalBytes == null ? null : macTotalBytes ~/ 1024),
+      memoryAvailableKb:
+          memValue('MemAvailable') ??
+          (macAvailableBytes() == null ? null : macAvailableBytes()! ~/ 1024),
+      swapTotalKb: memValue('SwapTotal') ?? macSwapValue('total'),
+      swapFreeKb: memValue('SwapFree') ?? macSwapValue('free'),
       diskTotalKb: diskFields.length > 1 ? int.tryParse(diskFields[1]) : null,
       diskAvailableKb: diskFields.length > 3
           ? int.tryParse(diskFields[3])
           : null,
       netRxBytes: hasNet ? netRx : null,
       netTxBytes: hasNet ? netTx : null,
-      uptime: Duration(seconds: int.tryParse(section('UPTIME')) ?? 0),
+      uptime: uptimeSeconds == null || uptimeSeconds < 0
+          ? null
+          : Duration(seconds: uptimeSeconds),
     );
   }
 
@@ -3248,7 +3352,7 @@ fi
         _set((_states[state.serverId] ?? state).copyWith(stats: stats));
       }
     } catch (_) {
-      // Statistics are optional and can be unavailable on non-Linux hosts.
+      // Statistics are optional and can be unavailable on restricted hosts.
     }
   }
 
@@ -3257,9 +3361,17 @@ fi
     SshSessionInfo state,
   ) async {
     try {
-      final session = await client.execute(
-        "sh -c 'if [ -r /etc/os-release ]; then . /etc/os-release; printf \"%s\\n\" \"\$PRETTY_NAME\"; else uname -s; fi; uname -r'",
-      );
+      final session = await client.execute(r"""sh -c '
+if command -v sw_vers >/dev/null 2>&1; then
+  printf "%s %s\n" "$(sw_vers -productName)" "$(sw_vers -productVersion)"
+elif [ -r /etc/os-release ]; then
+  . /etc/os-release
+  printf "%s\n" "$PRETTY_NAME"
+else
+  uname -s
+fi
+uname -r
+'""");
       final output = await utf8.decoder.bind(session.stdout).join();
       await session.done;
       final values = output.trim().split('\n');
