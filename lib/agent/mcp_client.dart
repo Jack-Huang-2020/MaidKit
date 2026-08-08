@@ -92,8 +92,7 @@ class StdioMcpTransport implements McpTransport {
         .transform(const LineSplitter())
         .listen(
           (line) => debugPrint('[mcp] stderr: $line'),
-          onError: (Object error) =>
-              debugPrint('[mcp] stderr error: $error'),
+          onError: (Object error) => debugPrint('[mcp] stderr error: $error'),
         );
     _process.exitCode.then(
       (_) => _alive = false,
@@ -135,9 +134,8 @@ class McpClient {
   McpClient(this._transport, [this._serverName = 'MCP']) {
     _incomingSubscription = _transport.incoming.listen(
       _handleIncoming,
-      onError: (Object error, StackTrace stack) => _failPending(
-        McpException('MCP server connection dropped.', error),
-      ),
+      onError: (Object error, StackTrace stack) =>
+          _failPending(McpException('MCP server connection dropped.', error)),
       onDone: () {
         _streamClosed = true;
         _failPending(const McpException('MCP server closed.'));
@@ -192,24 +190,18 @@ class McpClient {
 
   Future<void> initialize() async {
     if (_initialized) return;
-    await _request(
-      'initialize',
-      const {
-        'protocolVersion': mcpProtocolVersion,
-        'capabilities': <String, Object?>{},
-        'clientInfo': {'name': 'MaidKit', 'version': '1.0.0'},
-      },
-      timeout: initializeTimeout,
-    );
+    await _request('initialize', const {
+      'protocolVersion': mcpProtocolVersion,
+      'capabilities': <String, Object?>{},
+      'clientInfo': {'name': 'MaidKit', 'version': '1.0.0'},
+    }, timeout: initializeTimeout);
     _initialized = true;
     // No reply is expected; the notification is the spec's handshake end.
-    _send(
-      {
-        'jsonrpc': '2.0',
-        'method': 'notifications/initialized',
-        'params': const <String, Object?>{},
-      },
-    );
+    _send({
+      'jsonrpc': '2.0',
+      'method': 'notifications/initialized',
+      'params': const <String, Object?>{},
+    });
   }
 
   /// Lists the tools this server exposes. Results are cached until the
@@ -217,11 +209,14 @@ class McpClient {
   Future<List<McpToolDefinition>> listTools({bool refresh = false}) async {
     await initialize();
     if (!refresh && _cachedTools != null) return _cachedTools!;
-    final result = await _request(
-      'tools/list',
-      const <String, Object?>{},
-      timeout: listToolsTimeout,
-    ) as Map<String, dynamic>? ?? const <String, dynamic>{};
+    final result =
+        await _request(
+              'tools/list',
+              const <String, Object?>{},
+              timeout: listToolsTimeout,
+            )
+            as Map<String, dynamic>? ??
+        const <String, dynamic>{};
     final tools = result['tools'];
     if (tools is! List) {
       throw const McpException('MCP server returned an invalid tools list.');
@@ -287,10 +282,7 @@ class McpClient {
           rendered.add(jsonEncode(item));
       }
     }
-    return McpToolResult(
-      content: rendered,
-      isError: map['isError'] == true,
-    );
+    return McpToolResult(content: rendered, isError: map['isError'] == true);
   }
 
   /// Disposes the connection and kills the child process if any.
@@ -351,28 +343,24 @@ class McpClient {
         completer.completeError(const AgentCancelledException());
       }
       try {
-        _send(
-          {
-            'jsonrpc': '2.0',
-            'method': 'notifications/cancelled',
-            'params': {'requestId': id, 'reason': 'Cancelled by user'},
-          },
-        );
+        _send({
+          'jsonrpc': '2.0',
+          'method': 'notifications/cancelled',
+          'params': {'requestId': id, 'reason': 'Cancelled by user'},
+        });
       } catch (_) {
         // The connection may already be gone; the abort stands either way.
       }
     });
-    final result = completer.future.timeout(timeout, onTimeout: () {
-      _pending.remove(id);
-      throw McpException('MCP request "$method" timed out.');
-    });
+    final result = completer.future.timeout(
+      timeout,
+      onTimeout: () {
+        _pending.remove(id);
+        throw McpException('MCP request "$method" timed out.');
+      },
+    );
     try {
-      _send({
-        'jsonrpc': '2.0',
-        'id': id,
-        'method': method,
-        'params': params,
-      });
+      _send({'jsonrpc': '2.0', 'id': id, 'method': method, 'params': params});
     } catch (error) {
       _pending.remove(id);
       if (!completer.isCompleted) {

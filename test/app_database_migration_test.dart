@@ -21,53 +21,51 @@ void main() {
   _mockPathProvider();
 
   group('AppDatabase migrations', () {
-    test('schema 22 database that already has sort_order migrates to 23',
-        () async {
-      final directory = Directory.systemTemp.createTempSync(
-        'migration_test',
-      );
-      final path = '${directory.path}/stale.sqlite';
+    test(
+      'schema 22 database that already has sort_order migrates to 23',
+      () async {
+        final directory = Directory.systemTemp.createTempSync('migration_test');
+        final path = '${directory.path}/stale.sqlite';
 
-      // Reproduce the state left behind by pre-release builds: a servers
-      // table that already contains sort_order while user_version still
-      // reports 22.
-      final seeded = AppDatabase(filePath: path);
-      await seeded
-          .into(seeded.servers)
-          .insert(
-            ServersCompanion.insert(
-              name: 'legacy',
-              host: '10.0.0.1',
-              username: 'root',
-            ),
-          );
-      await seeded.customStatement('PRAGMA user_version = 22');
-      await seeded.close();
+        // Reproduce the state left behind by pre-release builds: a servers
+        // table that already contains sort_order while user_version still
+        // reports 22.
+        final seeded = AppDatabase(filePath: path);
+        await seeded
+            .into(seeded.servers)
+            .insert(
+              ServersCompanion.insert(
+                name: 'legacy',
+                host: '10.0.0.1',
+                username: 'root',
+              ),
+            );
+        await seeded.customStatement('PRAGMA user_version = 22');
+        await seeded.close();
 
-      // Opening the database again runs the 22 -> 23 migration, which must
-      // not fail with a duplicate column error.
-      final database = AppDatabase(filePath: path);
-      final version = await database
-          .customSelect('PRAGMA user_version')
-          .getSingle();
-      expect(version.read<int>('user_version'), 23);
+        // Opening the database again runs the 22 -> 23 migration, which must
+        // not fail with a duplicate column error.
+        final database = AppDatabase(filePath: path);
+        final version = await database
+            .customSelect('PRAGMA user_version')
+            .getSingle();
+        expect(version.read<int>('user_version'), 23);
 
-      // The order backfill still ran, so the legacy row keeps its
-      // creation-id position.
-      final row = await database
-          .customSelect(
-            'SELECT sort_order FROM servers WHERE name = ?',
-            variables: [Variable('legacy')],
-          )
-          .getSingle();
-      expect(row.read<int>('sort_order'), 1);
-      await database.close();
-    });
+        // The order backfill still ran, so the legacy row keeps its
+        // creation-id position.
+        final row = await database
+            .customSelect(
+              'SELECT sort_order FROM servers WHERE name = ?',
+              variables: [Variable('legacy')],
+            )
+            .getSingle();
+        expect(row.read<int>('sort_order'), 1);
+        await database.close();
+      },
+    );
 
     test('schema 22 without sort_order adds the column on upgrade', () async {
-      final directory = Directory.systemTemp.createTempSync(
-        'migration_test',
-      );
+      final directory = Directory.systemTemp.createTempSync('migration_test');
       final path = '${directory.path}/clean.sqlite';
 
       final seeded = AppDatabase(filePath: path);

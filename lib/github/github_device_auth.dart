@@ -112,10 +112,7 @@ class GithubDeviceAuth {
           case 'authorization_pending':
             return (token: null, interval: null);
           case 'slow_down':
-            return (
-              token: null,
-              interval: (data['interval'] as num?)?.toInt(),
-            );
+            return (token: null, interval: (data['interval'] as num?)?.toInt());
           case 'expired_token':
             throw const DeviceFlowException(
               DeviceFlowError.expired,

@@ -38,34 +38,33 @@ void main() {
       expect(names, ['composition-patterns', 'web-design-guidelines']);
     });
 
-    test('listSkills fails with a readable error on bad status or payload',
-        () async {
-      final missing = SkillRegistryClient(
-        httpClient: _mockClient({}),
-      );
-      await expectLater(
-        missing.listSkills(),
-        throwsA(isA<SkillRegistryException>()),
-      );
+    test(
+      'listSkills fails with a readable error on bad status or payload',
+      () async {
+        final missing = SkillRegistryClient(httpClient: _mockClient({}));
+        await expectLater(
+          missing.listSkills(),
+          throwsA(isA<SkillRegistryException>()),
+        );
 
-      final broken = SkillRegistryClient(
-        httpClient: _mockClient({
-          '/repos/vercel-labs/agent-skills/contents/skills': () =>
-              http.Response('{"unexpected": true}', 200),
-        }),
-      );
-      await expectLater(
-        broken.listSkills(),
-        throwsA(isA<SkillRegistryException>()),
-      );
-    });
+        final broken = SkillRegistryClient(
+          httpClient: _mockClient({
+            '/repos/vercel-labs/agent-skills/contents/skills': () =>
+                http.Response('{"unexpected": true}', 200),
+          }),
+        );
+        await expectLater(
+          broken.listSkills(),
+          throwsA(isA<SkillRegistryException>()),
+        );
+      },
+    );
 
     test('fetchSkill extracts the description and markdown body', () async {
       final client = SkillRegistryClient(
         httpClient: _mockClient({
           '/vercel-labs/agent-skills/main/skills/web/SKILL.md': () =>
-              http.Response(
-                '''
+              http.Response('''
 ---
 name: web-design-guidelines
 description: Review UI code for guidelines compliance.
@@ -76,9 +75,7 @@ metadata:
 # Web Interface Guidelines
 
 Body content here.
-''',
-                200,
-              ),
+''', 200),
         }),
       );
       final skill = await client.fetchSkill('web');
@@ -89,28 +86,30 @@ Body content here.
       expect(skill.content, endsWith('Body content here.'));
     });
 
-    test('fetchSkill falls back when front-matter is missing or malformed',
-        () async {
-      final plain = SkillRegistryClient(
-        httpClient: _mockClient({
-          '/vercel-labs/agent-skills/main/skills/plain/SKILL.md': () =>
-              http.Response('# Plain\n\nNo front matter.', 200),
-        }),
-      );
-      final skill = await plain.fetchSkill('plain');
-      expect(skill.description, isEmpty);
-      expect(skill.content, startsWith('# Plain'));
+    test(
+      'fetchSkill falls back when front-matter is missing or malformed',
+      () async {
+        final plain = SkillRegistryClient(
+          httpClient: _mockClient({
+            '/vercel-labs/agent-skills/main/skills/plain/SKILL.md': () =>
+                http.Response('# Plain\n\nNo front matter.', 200),
+          }),
+        );
+        final skill = await plain.fetchSkill('plain');
+        expect(skill.description, isEmpty);
+        expect(skill.content, startsWith('# Plain'));
 
-      final broken = SkillRegistryClient(
-        httpClient: _mockClient({
-          '/vercel-labs/agent-skills/main/skills/broken/SKILL.md': () =>
-              http.Response('---\nname: [unclosed\n---\nBody.', 200),
-        }),
-      );
-      final malformed = await broken.fetchSkill('broken');
-      expect(malformed.description, isEmpty);
-      expect(malformed.content, isNotEmpty);
-    });
+        final broken = SkillRegistryClient(
+          httpClient: _mockClient({
+            '/vercel-labs/agent-skills/main/skills/broken/SKILL.md': () =>
+                http.Response('---\nname: [unclosed\n---\nBody.', 200),
+          }),
+        );
+        final malformed = await broken.fetchSkill('broken');
+        expect(malformed.description, isEmpty);
+        expect(malformed.content, isNotEmpty);
+      },
+    );
 
     test('fetchSkill fails with a readable error on missing skill', () async {
       final client = SkillRegistryClient(httpClient: _mockClient({}));
@@ -130,25 +129,25 @@ Body content here.
       final client = SkillRegistryClient(
         httpClient: _mockClient({
           '/api/search': () => http.Response(
-                jsonEncode({
-                  'query': 'react',
-                  'skills': [
-                    {
-                      'skillId': 'small',
-                      'name': 'small',
-                      'installs': 5,
-                      'source': 'a/b',
-                    },
-                    {
-                      'skillId': 'big',
-                      'name': 'big',
-                      'installs': 604235,
-                      'source': 'vercel-labs/agent-skills',
-                    },
-                  ],
-                }),
-                200,
-              ),
+            jsonEncode({
+              'query': 'react',
+              'skills': [
+                {
+                  'skillId': 'small',
+                  'name': 'small',
+                  'installs': 5,
+                  'source': 'a/b',
+                },
+                {
+                  'skillId': 'big',
+                  'name': 'big',
+                  'installs': 604235,
+                  'source': 'vercel-labs/agent-skills',
+                },
+              ],
+            }),
+            200,
+          ),
         }),
       );
       final hits = await client.searchSkills('react');
@@ -187,21 +186,21 @@ Body content here.
         httpClient: _mockClient({
           '/api/download/vercel-labs/agent-skills/vercel-react-best-practices':
               () => http.Response(
-                    jsonEncode({
-                      'hash': 'abc',
-                      'files': [
-                        {'path': 'rules/extra.md', 'contents': '# Extra'},
-                        {
-                          'path': 'SKILL.md',
-                          'contents':
-                              '---\nname: vercel-react-best-practices\n'
-                              'description: React performance guidelines.\n---\n'
-                              '\n# React Best Practices\n\nBody.\n',
-                        },
-                      ],
-                    }),
-                    200,
-                  ),
+                jsonEncode({
+                  'hash': 'abc',
+                  'files': [
+                    {'path': 'rules/extra.md', 'contents': '# Extra'},
+                    {
+                      'path': 'SKILL.md',
+                      'contents':
+                          '---\nname: vercel-react-best-practices\n'
+                          'description: React performance guidelines.\n---\n'
+                          '\n# React Best Practices\n\nBody.\n',
+                    },
+                  ],
+                }),
+                200,
+              ),
         }),
       );
       final skill = await client.fetchSkillHit(
@@ -218,50 +217,52 @@ Body content here.
       expect(skill.content, isNot(contains('# Extra')));
     });
 
-    test('fetchSkillHit rejects invalid sources and missing SKILL.md',
-        () async {
-      final badSource = SkillRegistryClient(httpClient: _mockClient({}));
-      await expectLater(
-        badSource.fetchSkillHit(
-          const RegistrySkillHit(
-            skillId: 'x',
-            name: 'x',
-            installs: 0,
-            source: 'not-a-source',
+    test(
+      'fetchSkillHit rejects invalid sources and missing SKILL.md',
+      () async {
+        final badSource = SkillRegistryClient(httpClient: _mockClient({}));
+        await expectLater(
+          badSource.fetchSkillHit(
+            const RegistrySkillHit(
+              skillId: 'x',
+              name: 'x',
+              installs: 0,
+              source: 'not-a-source',
+            ),
           ),
-        ),
-        throwsA(isA<SkillRegistryException>()),
-      );
+          throwsA(isA<SkillRegistryException>()),
+        );
 
-      final noSkillMd = SkillRegistryClient(
-        httpClient: _mockClient({
-          '/api/download/a/b/x': () => http.Response(
-                jsonEncode({
-                  'files': [
-                    {'path': 'README.md', 'contents': 'no skill here'},
-                  ],
-                }),
-                200,
-              ),
-        }),
-      );
-      await expectLater(
-        noSkillMd.fetchSkillHit(
-          const RegistrySkillHit(
-            skillId: 'x',
-            name: 'x',
-            installs: 0,
-            source: 'a/b',
+        final noSkillMd = SkillRegistryClient(
+          httpClient: _mockClient({
+            '/api/download/a/b/x': () => http.Response(
+              jsonEncode({
+                'files': [
+                  {'path': 'README.md', 'contents': 'no skill here'},
+                ],
+              }),
+              200,
+            ),
+          }),
+        );
+        await expectLater(
+          noSkillMd.fetchSkillHit(
+            const RegistrySkillHit(
+              skillId: 'x',
+              name: 'x',
+              installs: 0,
+              source: 'a/b',
+            ),
           ),
-        ),
-        throwsA(
-          isA<SkillRegistryException>().having(
-            (error) => error.message,
-            'message',
-            contains('SKILL.md'),
+          throwsA(
+            isA<SkillRegistryException>().having(
+              (error) => error.message,
+              'message',
+              contains('SKILL.md'),
+            ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
   });
 }

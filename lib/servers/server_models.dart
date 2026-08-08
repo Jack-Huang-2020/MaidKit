@@ -95,7 +95,7 @@ class ServerDraft {
   final List<String> tags;
 
   /// Transport used to reach this server: `ssh` for a remote host, `serial`
-  /// for a local serial port bridged over loopback TCP.
+  /// for a local serial port.
   final ServerConnectionType connectionType;
 
   /// Serial-port settings, only used when [connectionType] is serial.
@@ -148,19 +148,16 @@ enum ServerConnectionType { ssh, serial, local }
 
 /// Whether serial-port servers are offered in the UI and can be connected.
 ///
-/// Serial access runs through the bundled `serial-bridge` helper, which the
-/// app spawns as a direct child process. The app is not sandboxed, so the
-/// helper (and the app itself) can open /dev/cu.* device nodes. Windows and
-/// Linux need their own transport before this flag can cover them.
+/// On macOS, the unsandboxed Runner opens /dev/cu.* device nodes directly.
+/// Windows and Linux need their own transport before this flag can cover them.
 const bool serialPortsSupported = true;
 
 enum SerialParity { none, even, odd }
 
 enum SerialFlowControl { none, hardware, software }
 
-/// Serial-port settings for a [ServerConnectionType.serial] server. The
-/// terminal reaches the device through the platform's local bridge helper,
-/// which tunnels the raw byte stream over loopback TCP.
+/// Serial sessions are owned by the native platform implementation and expose
+/// their raw byte stream to the terminal.
 class SerialConfig {
   const SerialConfig({
     required this.device,

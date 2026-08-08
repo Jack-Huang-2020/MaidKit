@@ -241,7 +241,6 @@
 				33CC10E92044A3C60003C045 /* Sources */,
 				33CC10EA2044A3C60003C045 /* Frameworks */,
 				33CC10EB2044A3C60003C045 /* Resources */,
-				E2A0B1C2D3E4000000000001 /* Build Serial Bridge Helper */,
 				33CC110E2044A8840003C045 /* Bundle Framework */,
 				3399D490228B24CF009A79C7 /* ShellScript */,
 				5AE3A24619F362444B914678 /* [CP] Embed Pods Frameworks */,
@@ -333,25 +332,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		E2A0B1C2D3E4000000000001 /* Build Serial Bridge Helper */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Build Serial Bridge Helper";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "set -e\nSRC=\"$PROJECT_DIR/SerialBridge/SerialBridge.swift\"\nOUT=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/serial-bridge\"\nmkdir -p \"$(dirname \"$OUT\")\"\nxcrun --sdk macosx swiftc -O -o \"$OUT\" \"$SRC\"\ncodesign --force --sign - \"$OUT\"\n";
-		};
 		3399D490228B24CF009A79C7 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;

@@ -461,7 +461,8 @@ class XtermTerminalSessionAdapter implements TerminalSessionAdapter {
         // hardware key events. deleteDetection keeps a non-empty IME buffer
         // so the deletion is observable; without it Android's backspace is
         // silently dropped.
-        deleteDetection: !kIsWeb &&
+        deleteDetection:
+            !kIsWeb &&
             (defaultTargetPlatform == TargetPlatform.android ||
                 defaultTargetPlatform == TargetPlatform.iOS),
         // Never use hardwareKeyboardOnly together with readOnly: that combo

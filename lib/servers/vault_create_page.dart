@@ -160,9 +160,7 @@ class _VaultCreatePageState extends ConsumerState<VaultCreatePage> {
           ),
         const SizedBox(height: 8),
         TextButton(
-          onPressed: _busy
-              ? null
-              : () => Navigator.of(context).pop(),
+          onPressed: _busy ? null : () => Navigator.of(context).pop(),
           child: Text('commonCancel'.tr()),
         ),
       ],

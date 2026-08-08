@@ -34,7 +34,7 @@ import 'port_forwarding_models.dart';
 import 'privacy_preferences.dart';
 import 'server_repository.dart';
 import 'server_metrics_refresh_scheduler.dart';
-import 'serial_bridge_client.dart';
+import 'serial_port_client.dart';
 import 'serial_connection_manager.dart';
 import 'ssh_connection_manager.dart';
 import 'server_models.dart';
@@ -902,11 +902,9 @@ final connectionManagerProvider = Provider<SshConnectionManager>((ref) {
   return manager;
 });
 
-/// The shared serial bridge client. Registration status is cached per client
-/// instance, so the editor's device picker and the connection manager agree on
-/// whether the helper has been approved.
-final serialBridgeClientProvider = Provider<SerialBridgeClient>(
-  (ref) => SerialBridgeClient(),
+/// The shared native serial-port client.
+final serialPortClientProvider = Provider<SerialPortClient>(
+  (ref) => SerialPortClient(),
 );
 
 final serialConnectionManagerProvider = Provider<SerialConnectionManager>((
@@ -914,7 +912,7 @@ final serialConnectionManagerProvider = Provider<SerialConnectionManager>((
 ) {
   final manager = SerialConnectionManager(
     () => ref.read(terminalSessionAdapterFactoryProvider),
-    bridgeClient: ref.watch(serialBridgeClientProvider),
+    serialClient: ref.watch(serialPortClientProvider),
   );
   ref.onDispose(manager.dispose);
   return manager;

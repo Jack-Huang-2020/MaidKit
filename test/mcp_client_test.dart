@@ -62,13 +62,15 @@ int _lastRequestId(_FakeMcpTransport transport) {
 
 void main() {
   group('McpClient over stdio-style transport', () {
-    test('initialize sends the handshake and the initialized notification',
-        () async {
-      final transport = _FakeMcpTransport();
-      final client = McpClient(transport);
-      await _handshake(client, transport);
-      await client.dispose();
-    });
+    test(
+      'initialize sends the handshake and the initialized notification',
+      () async {
+        final transport = _FakeMcpTransport();
+        final client = McpClient(transport);
+        await _handshake(client, transport);
+        await client.dispose();
+      },
+    );
 
     test('listTools parses tool definitions and caches them', () async {
       final transport = _FakeMcpTransport();
@@ -131,42 +133,38 @@ void main() {
       await client.dispose();
     });
 
-    test('callTool sends arguments and renders text and image content',
-        () async {
-      final transport = _FakeMcpTransport();
-      final client = McpClient(transport);
-      await _handshake(client, transport);
+    test(
+      'callTool sends arguments and renders text and image content',
+      () async {
+        final transport = _FakeMcpTransport();
+        final client = McpClient(transport);
+        await _handshake(client, transport);
 
-      final call = client.callTool('echo', {'text': 'hello'});
-      await _flush();
-      final request = jsonDecode(
-        transport.sent.last,
-      ) as Map<String, dynamic>;
-      expect(request['method'], 'tools/call');
-      expect(request['params'], {
-        'name': 'echo',
-        'arguments': {'text': 'hello'},
-      });
-      transport.emit({
-        'jsonrpc': '2.0',
-        'id': request['id'],
-        'result': {
-          'content': [
-            {'type': 'text', 'text': 'line one\nline two'},
-            {
-              'type': 'image',
-              'mimeType': 'image/png',
-              'data': 'aGVsbG8=',
-            },
-          ],
-        },
-      });
-      final result = await call;
-      expect(result.isError, isFalse);
-      expect(result.text, 'line one\nline two\n[image (image/png)]');
-      expect(result.content, hasLength(2));
-      await client.dispose();
-    });
+        final call = client.callTool('echo', {'text': 'hello'});
+        await _flush();
+        final request = jsonDecode(transport.sent.last) as Map<String, dynamic>;
+        expect(request['method'], 'tools/call');
+        expect(request['params'], {
+          'name': 'echo',
+          'arguments': {'text': 'hello'},
+        });
+        transport.emit({
+          'jsonrpc': '2.0',
+          'id': request['id'],
+          'result': {
+            'content': [
+              {'type': 'text', 'text': 'line one\nline two'},
+              {'type': 'image', 'mimeType': 'image/png', 'data': 'aGVsbG8='},
+            ],
+          },
+        });
+        final result = await call;
+        expect(result.isError, isFalse);
+        expect(result.text, 'line one\nline two\n[image (image/png)]');
+        expect(result.content, hasLength(2));
+        await client.dispose();
+      },
+    );
 
     test('callTool surfaces server errors as McpException', () async {
       final transport = _FakeMcpTransport();
@@ -193,8 +191,7 @@ void main() {
       await client.dispose();
     });
 
-    test('a cancelled token aborts the call and notifies the server',
-        () async {
+    test('a cancelled token aborts the call and notifies the server', () async {
       final transport = _FakeMcpTransport();
       final client = McpClient(transport);
       await _handshake(client, transport);
@@ -205,9 +202,7 @@ void main() {
       token.cancel();
       await expectLater(call, throwsA(isA<AgentCancelledException>()));
       await _flush();
-      final cancelled = jsonDecode(
-        transport.sent.last,
-      ) as Map<String, dynamic>;
+      final cancelled = jsonDecode(transport.sent.last) as Map<String, dynamic>;
       expect(cancelled['method'], 'notifications/cancelled');
       await client.dispose();
     });
@@ -256,7 +251,9 @@ void main() {
         description: 'Read a file',
         inputSchema: const {
           'type': 'object',
-          'properties': {'path': {'type': 'string'}},
+          'properties': {
+            'path': {'type': 'string'},
+          },
         },
       );
       expect(target.qualifiedName, 'mcp_3__read_file');
@@ -300,8 +297,7 @@ void main() {
   });
 
   group('MCP repository encoding', () {
-    test('decodeMcpArguments and decodeMcpEnvironment handle bad payloads',
-        () {
+    test('decodeMcpArguments and decodeMcpEnvironment handle bad payloads', () {
       expect(decodeMcpArguments('["a","b"]'), ['a', 'b']);
       expect(decodeMcpArguments('not json'), isEmpty);
       expect(decodeMcpArguments('{"a":1}'), isEmpty);

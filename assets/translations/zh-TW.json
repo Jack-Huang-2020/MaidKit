@@ -931,8 +931,6 @@
   "runtimeInstallSuccess": "{} 已安裝",
   "runtimeInstallTitle": "安裝容器執行時",
   "runtimePodman": "Podman",
-  "serialBridgeRequiresApproval": "請在系統設定 → 登入項與擴充套件中啟用 MaidKit 的序列埠橋接助手",
-  "serialBridgeUnsupported": "序列埠功能需要 macOS 13 或更高版本",
   "serverAddEnvVar": "新增變數",
   "serverApprove": "批准",
   "serverAuthPassword": "密碼",

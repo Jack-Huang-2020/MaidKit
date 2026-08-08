@@ -180,7 +180,7 @@ rclone copyto "$ARCHIVE_PATH" "${RCLONE_REMOTE}:${S3_BUCKET}/${S3_PREFIX%/}/$ARC
 
 echo "Updating $CASK_RELATIVE_PATH..."
 sed -i '' -E "s|^([[:space:]]*)version \".*\"|\1version \"$HOMEBREW_VERSION\"|" "$CASK_FILE"
-sed -i '' -E "s|^([[:space:]]*)sha256 \".*\"|\1sha256 \"$SHA256\"|" "$CASK_FILE"
+sed -i '' -E "s|^([[:space:]]*)sha256 .*|\1sha256 \"$SHA256\"|" "$CASK_FILE"
 sed -i '' -E "s|^([[:space:]]*)url \".*\"|\1url \"$DOWNLOAD_URL\"|" "$CASK_FILE"
 
 git -C "$TAP_DIR" add "$CASK_RELATIVE_PATH"

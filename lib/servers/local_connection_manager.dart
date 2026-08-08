@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -277,13 +276,18 @@ class LocalConnectionManager {
   List<SshSessionInfo> get current => _states.values.toList();
 
   /// Opens a shell on this machine. Returns when the process has started;
-  /// [server] must be the local-machine server. [initialDirectory] moves the
-  /// shell into that folder after launch, when it is non-empty.
+  /// [server] must be the local-machine server. [initialDirectory] is used as
+  /// the process working directory when it is non-empty.
   Future<TerminalSessionHandle> openTerminal(
     Server server, {
     String? initialDirectory,
   }) async {
-    final process = await _spawnShell();
+    final directory = initialDirectory?.trim();
+    final process = await _spawnShell(
+      workingDirectory: directory == null || directory.isEmpty
+          ? null
+          : directory,
+    );
     final terminal = _terminalAdapterFactory().create();
     final terminalId = 'local-${_nextTerminalId++}';
     final binding = TerminalSessionBinding(
@@ -293,16 +297,6 @@ class LocalConnectionManager {
       send: process.stdin.add,
       resize: (_) {},
     );
-    final directory = initialDirectory?.trim();
-    if (directory != null && directory.isNotEmpty) {
-      process.stdin.write(
-        utf8.encode(
-          Platform.isWindows
-              ? 'cd /d "${directory.replaceAll('"', r'\"')}"\n'
-              : 'cd ${_shellQuote(directory)}\n',
-        ),
-      );
-    }
     _terminals[terminalId] = _LocalTerminalConnection(
       serverId: server.id,
       process: process,
@@ -423,47 +417,62 @@ class LocalConnectionManager {
   /// POSIX-safe single-quoted string for local shell commands.
   String _shellQuote(String value) => "'${value.replaceAll("'", "'\\''")}'";
 
-  Future<Process> _spawnShell() async {
+  Future<Process> _spawnShell({String? workingDirectory}) async {
     final home = Platform.environment['HOME'] ?? Directory.current.path;
-    const environment = {'TERM': 'xterm-256color'};
+    final cwd = workingDirectory ?? home;
+    final environment = Map<String, String>.of(Platform.environment)
+      ..['TERM'] = 'xterm-256color';
     if (Platform.isWindows) {
       return Process.start(
         'cmd.exe',
         const [],
-        workingDirectory: home,
+        workingDirectory: cwd,
         environment: environment,
       );
     }
     final shell =
         Platform.environment['SHELL'] ??
         (Platform.isMacOS ? '/bin/zsh' : '/bin/sh');
+    final shellArguments = _shellArguments(shell);
     try {
       if (Platform.isMacOS) {
         // BSD `script`: `script -q /dev/null <shell>` allocates a PTY so the
         // shell runs interactively (prompt, job control, colors).
         return await Process.start(
           '/usr/bin/script',
-          ['-q', '/dev/null', shell],
-          workingDirectory: home,
+          ['-q', '/dev/null', shell, ...shellArguments],
+          workingDirectory: cwd,
           environment: environment,
         );
       }
       // GNU `script` (util-linux): `script -qec <shell> /dev/null`.
+      final command = [shell, ...shellArguments].map(_shellQuote).join(' ');
       return await Process.start(
         '/usr/bin/script',
-        ['-qec', shell, '/dev/null'],
-        workingDirectory: home,
+        ['-qec', command, '/dev/null'],
+        workingDirectory: cwd,
         environment: environment,
       );
     } on ProcessException {
       // Minimal systems without `script`: run the shell without a PTY.
       return Process.start(
         shell,
-        const [],
-        workingDirectory: home,
+        shellArguments,
+        workingDirectory: cwd,
         environment: environment,
       );
     }
+  }
+
+  List<String> _shellArguments(String shell) {
+    final arguments = <String>['-i'];
+    if (shell.endsWith('/zsh')) {
+      // Spaceship's prompt declares function-local scalars without `typeset`.
+      // Newer zsh releases report those declarations when this diagnostic
+      // option is enabled, flooding the terminal before the prompt appears.
+      arguments.addAll(const ['+o', 'WARN_CREATE_GLOBAL']);
+    }
+    return arguments;
   }
 }
 

@@ -127,9 +127,9 @@ class SkillRegistryClient {
     String query, {
     int limit = 10,
   }) async {
-    final uri = Uri.parse('$apiBaseUrl/api/search').replace(
-      queryParameters: {'q': query, 'limit': '$limit'},
-    );
+    final uri = Uri.parse(
+      '$apiBaseUrl/api/search',
+    ).replace(queryParameters: {'q': query, 'limit': '$limit'});
     final response = await _http.get(uri);
     if (response.statusCode != 200) {
       throw SkillRegistryException(

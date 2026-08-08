@@ -88,6 +88,14 @@ void main() {
 
       final handle = await manager.openTerminal(server);
       adapter.sendInput('echo maidkit-local-ok\n');
+      final zsh = Platform.environment['SHELL']?.endsWith('/zsh') ?? false;
+      if (Platform.isMacOS && zsh) {
+        adapter.sendInput(
+          'if [[ -o warncreateglobal ]]; then '
+          'echo maidkit-warning-option-enabled; '
+          'else echo maidkit-warning-option-disabled; fi\n',
+        );
+      }
 
       final deadline = DateTime.now().add(const Duration(seconds: 15));
       String output = '';
@@ -98,6 +106,55 @@ void main() {
       }
 
       expect(output, contains('maidkit-local-ok'));
+      if (Platform.isMacOS && zsh) {
+        expect(output, contains('maidkit-warning-option-disabled'));
+      }
+      await manager.closeTerminal(handle.id);
+    },
+    timeout: const Timeout(Duration(seconds: 30)),
+  );
+  test(
+    'starts a local shell in its requested working directory',
+    () async {
+      if (!localMachineSupported) return;
+      final directory = await Directory.systemTemp.createTemp(
+        'maidkit-local-cwd-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final adapter = _RecordingAdapter();
+      final manager = LocalConnectionManager(
+        () => _StubAdapterFactory(adapter),
+        isEnabled: () => true,
+        interval: () => const Duration(days: 1),
+        serverName: () => 'test machine',
+      );
+      addTearDown(manager.dispose);
+      final server = Server(
+        id: localMachineServerId,
+        name: 'test machine',
+        host: '127.0.0.1',
+        port: 22,
+        username: 'tester',
+        collectStats: true,
+        collectSystemInfo: true,
+        connectionType: ServerConnectionType.local.name,
+      );
+
+      final handle = await manager.openTerminal(
+        server,
+        initialDirectory: directory.path,
+      );
+      adapter.sendInput('pwd\n');
+
+      final deadline = DateTime.now().add(const Duration(seconds: 15));
+      String output = '';
+      while (!output.contains(directory.path) &&
+          DateTime.now().isBefore(deadline)) {
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+        output = utf8.decode(adapter.received.toBytes(), allowMalformed: true);
+      }
+
+      expect(output, contains(directory.path));
       await manager.closeTerminal(handle.id);
     },
     timeout: const Timeout(Duration(seconds: 30)),

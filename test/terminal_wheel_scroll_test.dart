@@ -18,8 +18,14 @@ void main() {
 
   Uint8List seq(List<int> bytes) => Uint8List.fromList(bytes);
 
-  Future<(flterm.TerminalController, flterm.TerminalScrollController,
-      List<List<int>>)> pumpTerminal(WidgetTester tester) async {
+  Future<
+    (
+      flterm.TerminalController,
+      flterm.TerminalScrollController,
+      List<List<int>>,
+    )
+  >
+  pumpTerminal(WidgetTester tester) async {
     final controller = flterm.TerminalController();
     final scroll = flterm.TerminalScrollController();
     final bytes = <List<int>>[];
@@ -42,8 +48,12 @@ void main() {
     return (controller, scroll, bytes);
   }
 
-  Future<void> enterAlternateScreen(flterm.TerminalController controller) async {
-    controller.write(seq(const [0x1b, 0x5b, 0x3f, 0x31, 0x30, 0x34, 0x39, 0x68])); // CSI ? 1049 h
+  Future<void> enterAlternateScreen(
+    flterm.TerminalController controller,
+  ) async {
+    controller.write(
+      seq(const [0x1b, 0x5b, 0x3f, 0x31, 0x30, 0x34, 0x39, 0x68]),
+    ); // CSI ? 1049 h
   }
 
   Future<void> wheel(WidgetTester tester, double dy) async {
@@ -76,7 +86,8 @@ void main() {
     expect(
       upOutputs,
       containsAllInOrder(const [0x1b, 0x5b, 0x41]),
-      reason: 'wheel up in alt screen must emit cursor up, got '
+      reason:
+          'wheel up in alt screen must emit cursor up, got '
           '${upOutputs.map((b) => b.toRadixString(16))}',
     );
 
@@ -86,30 +97,38 @@ void main() {
     expect(
       downOutputs,
       containsAllInOrder(const [0x1b, 0x5b, 0x42]),
-      reason: 'wheel down in alt screen must emit cursor down, got '
+      reason:
+          'wheel down in alt screen must emit cursor down, got '
           '${downOutputs.map((b) => b.toRadixString(16))}',
     );
   });
 
-  testWidgets('alt screen: wheel scroll with SGR mouse tracking emits wheel buttons',
-      (tester) async {
-    final (controller, _, bytes) = await pumpTerminal(tester);
-    await enterAlternateScreen(controller);
-    // Button-event tracking (1000) + SGR encoding (1006).
-    controller.write(seq(const [0x1b, 0x5b, 0x3f, 0x31, 0x30, 0x30, 0x30, 0x68]));
-    controller.write(seq(const [0x1b, 0x5b, 0x3f, 0x31, 0x30, 0x30, 0x36, 0x68]));
-    await tester.pump();
+  testWidgets(
+    'alt screen: wheel scroll with SGR mouse tracking emits wheel buttons',
+    (tester) async {
+      final (controller, _, bytes) = await pumpTerminal(tester);
+      await enterAlternateScreen(controller);
+      // Button-event tracking (1000) + SGR encoding (1006).
+      controller.write(
+        seq(const [0x1b, 0x5b, 0x3f, 0x31, 0x30, 0x30, 0x30, 0x68]),
+      );
+      controller.write(
+        seq(const [0x1b, 0x5b, 0x3f, 0x31, 0x30, 0x30, 0x36, 0x68]),
+      );
+      await tester.pump();
 
-    await wheel(tester, -120); // wheel up
-    final all = outputs(bytes);
-    // SGR wheel up is button code 64, emitted as \x1b[<64;…
-    expect(
-      all,
-      containsAllInOrder(const [0x1b, 0x5b, 0x3c, 0x36, 0x34]),
-      reason: 'wheel up with SGR tracking must emit a button-64 report, got '
-          '${all.map((b) => b.toRadixString(16))}',
-    );
-  });
+      await wheel(tester, -120); // wheel up
+      final all = outputs(bytes);
+      // SGR wheel up is button code 64, emitted as \x1b[<64;…
+      expect(
+        all,
+        containsAllInOrder(const [0x1b, 0x5b, 0x3c, 0x36, 0x34]),
+        reason:
+            'wheel up with SGR tracking must emit a button-64 report, got '
+            '${all.map((b) => b.toRadixString(16))}',
+      );
+    },
+  );
 
   testWidgets('primary screen: wheel still scrolls scrollback', (tester) async {
     final (controller, scroll, _) = await pumpTerminal(tester);

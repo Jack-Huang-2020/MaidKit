@@ -320,38 +320,36 @@ void main() {
         expiresIn: 900,
         interval: 5,
       );
-      expect(
-        await auth.pollAccessToken(code),
-        (token: null, interval: null),
-      );
+      expect(await auth.pollAccessToken(code), (token: null, interval: null));
       expect(await auth.pollAccessToken(code), (token: 'tok', interval: null));
     });
 
-    test('pollAccessToken surfaces the escalated interval on slow_down', () async {
-      final auth = GithubDeviceAuth(
-        clientId: 'cid',
-        dio: _dio(
-          (options) async => _json({
-            'error': 'slow_down',
-            'error_description': 'Too many requests have been made '
-                'in the same timeframe.',
-            'interval': 10,
-          }),
-          baseUrl: 'https://github.com',
-        ),
-      );
-      const code = GitHubDeviceCode(
-        deviceCode: 'dc',
-        userCode: 'uc',
-        verificationUri: 'https://github.com/login/device',
-        expiresIn: 900,
-        interval: 5,
-      );
-      expect(
-        await auth.pollAccessToken(code),
-        (token: null, interval: 10),
-      );
-    });
+    test(
+      'pollAccessToken surfaces the escalated interval on slow_down',
+      () async {
+        final auth = GithubDeviceAuth(
+          clientId: 'cid',
+          dio: _dio(
+            (options) async => _json({
+              'error': 'slow_down',
+              'error_description':
+                  'Too many requests have been made '
+                  'in the same timeframe.',
+              'interval': 10,
+            }),
+            baseUrl: 'https://github.com',
+          ),
+        );
+        const code = GitHubDeviceCode(
+          deviceCode: 'dc',
+          userCode: 'uc',
+          verificationUri: 'https://github.com/login/device',
+          expiresIn: 900,
+          interval: 5,
+        );
+        expect(await auth.pollAccessToken(code), (token: null, interval: 10));
+      },
+    );
 
     test('pollAccessToken surfaces denial and expiry', () async {
       final denied = GithubDeviceAuth(

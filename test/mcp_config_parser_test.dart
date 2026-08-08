@@ -27,10 +27,11 @@ void main() {
       final filesystem = result.servers[0];
       expect(filesystem.name, 'filesystem');
       expect(filesystem.command, 'npx');
-      expect(
-        filesystem.arguments,
-        ['-y', '@modelcontextprotocol/server-filesystem', '/Users/me'],
-      );
+      expect(filesystem.arguments, [
+        '-y',
+        '@modelcontextprotocol/server-filesystem',
+        '/Users/me',
+      ]);
       expect(filesystem.environment, {'API_KEY': 'abc123'});
 
       final github = result.servers[1];
@@ -52,7 +53,10 @@ void main() {
 {"servers": {"a": {"command": "x", "env": {"PORT": 8080, "FLAG": true}}}}
 ''');
       expect(result.hasErrors, isFalse);
-      expect(result.servers.single.environment, {'PORT': '8080', 'FLAG': 'true'});
+      expect(result.servers.single.environment, {
+        'PORT': '8080',
+        'FLAG': 'true',
+      });
     });
 
     test('reports invalid JSON', () {

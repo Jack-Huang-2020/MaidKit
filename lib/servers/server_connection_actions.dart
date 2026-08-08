@@ -151,8 +151,8 @@ Future<bool> openTerminalSession(
   }
 }
 
-/// Opens the terminal appropriate for [server]'s transport: serial bridge,
-/// local shell, or SSH. Returns whether the terminal tab was opened.
+/// Opens the terminal appropriate for [server]'s transport: serial, local
+/// shell, or SSH. Returns whether the terminal tab was opened.
 Future<bool> openTerminalFor(
   BuildContext context,
   WidgetRef ref,
@@ -168,8 +168,8 @@ Future<bool> openTerminalFor(
   return openTerminalSession(context, ref, server, paneId: paneId);
 }
 
-/// Opens a terminal over [server]'s local serial port through the bridge
-/// helper. Returns whether the terminal tab was opened.
+/// Opens a terminal over [server]'s local serial port. Returns whether the
+/// terminal tab was opened.
 Future<bool> openSerialTerminalSession(
   BuildContext context,
   WidgetRef ref,

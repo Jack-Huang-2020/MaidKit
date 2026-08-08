@@ -16,7 +16,7 @@ import 'package:maid_kit/snippets/snippet_repository.dart';
 import 'server_connection_actions.dart';
 import 'server_models.dart';
 import 'server_providers.dart';
-import 'serial_bridge_client.dart';
+import 'serial_port_client.dart';
 import 'privacy_preferences.dart';
 import 'sessions_page.dart';
 import 'tailscale_service.dart';
@@ -1722,7 +1722,7 @@ class _AddServerDialogState extends ConsumerState<ServerEditorDialog> {
     if (_scanningSerialDevices) return;
     setState(() => _scanningSerialDevices = true);
     try {
-      final devices = await ref.read(serialBridgeClientProvider).listDevices();
+      final devices = await ref.read(serialPortClientProvider).listDevices();
       if (!mounted) return;
       setState(() {
         _serialDevices = devices;
@@ -1731,7 +1731,7 @@ class _AddServerDialogState extends ConsumerState<ServerEditorDialog> {
           _serialDevice.text = devices.first;
         }
       });
-    } on SerialBridgeException catch (error) {
+    } on SerialPortException catch (error) {
       if (mounted) {
         showStyledSnackBar(
           message: error.message,

@@ -931,8 +931,6 @@
   "runtimeInstallSuccess": "{} installed",
   "runtimeInstallTitle": "Install container runtime",
   "runtimePodman": "Podman",
-  "serialBridgeRequiresApproval": "Enable MaidKit's serial bridge helper under System Settings → Login Items & Extensions",
-  "serialBridgeUnsupported": "Serial ports require macOS 13 or later",
   "serverAddEnvVar": "Add variable",
   "serverApprove": "Approve",
   "serverAuthPassword": "Password",

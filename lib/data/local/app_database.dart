@@ -38,8 +38,8 @@ class Servers extends Table {
   TextColumn get initialSnippets => text().nullable()();
   TextColumn get tags => text().nullable()();
   // Connection transport: `ssh` for a remote host, `serial` for a local
-  // serial port bridged over loopback TCP by the platform helper. When the
-  // type is `serial`, [serialConfig] holds the JSON-encoded SerialConfig.
+  // serial port. When the type is `serial`, [serialConfig] holds the JSON-
+  // encoded SerialConfig.
   TextColumn get connectionType => text().withDefault(const Constant('ssh'))();
   TextColumn get serialConfig => text().nullable()();
   // User-controlled display order on the server dashboard. Rows without a

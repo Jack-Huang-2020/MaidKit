@@ -33,15 +33,19 @@ void main() {
     return controller;
   }
 
-  testWidgets('flterm: full-value IME backspace reaches the shell',
-      (tester) async {
+  testWidgets('flterm: full-value IME backspace reaches the shell', (
+    tester,
+  ) async {
     final controller = await pumpFltermTerminal(tester);
     final bytes = <List<int>>[];
     controller.onOutput = bytes.add;
 
     // IME buffer after sentinel (' ') + typed 'l': ' l'.
     tester.testTextInput.updateEditingValue(
-      TextEditingValue(text: ' l', selection: TextSelection.collapsed(offset: 2)),
+      TextEditingValue(
+        text: ' l',
+        selection: TextSelection.collapsed(offset: 2),
+      ),
     );
     await tester.pump();
 
@@ -56,12 +60,14 @@ void main() {
     expect(
       all,
       contains(0x7f),
-      reason: 'backspace must reach the shell, got ${all.map((b) => b.toRadixString(16))}',
+      reason:
+          'backspace must reach the shell, got ${all.map((b) => b.toRadixString(16))}',
     );
   });
 
-  testWidgets('flterm: delta-model backspace reaches the shell',
-      (tester) async {
+  testWidgets('flterm: delta-model backspace reaches the shell', (
+    tester,
+  ) async {
     final controller = await pumpFltermTerminal(tester);
     final bytes = <List<int>>[];
     controller.onOutput = bytes.add;
@@ -95,8 +101,9 @@ void main() {
     expect(all, contains(0x7f), reason: 'deletion delta must reach the shell');
   });
 
-  testWidgets('flterm: IME key events without a physical key are mapped',
-      (tester) async {
+  testWidgets('flterm: IME key events without a physical key are mapped', (
+    tester,
+  ) async {
     final controller = await pumpFltermTerminal(tester);
     final bytes = <List<int>>[];
     controller.onOutput = bytes.add;
@@ -123,12 +130,14 @@ void main() {
     expect(
       all,
       contains(0x7f),
-      reason: 'IME backspace key event must reach the shell, got ${all.map((b) => b.toRadixString(16))}',
+      reason:
+          'IME backspace key event must reach the shell, got ${all.map((b) => b.toRadixString(16))}',
     );
   });
 
-  testWidgets('xterm: IME backspace reaches the shell via delete detection',
-      (tester) async {
+  testWidgets('xterm: IME backspace reaches the shell via delete detection', (
+    tester,
+  ) async {
     final adapter = XtermTerminalSessionAdapter(
       colorScheme: TerminalColorSchemes.defaultScheme,
     );
@@ -154,13 +163,19 @@ void main() {
 
     // IME buffer after sentinel ('  ') + typed 'l': '  l'.
     tester.testTextInput.updateEditingValue(
-      TextEditingValue(text: '  l', selection: TextSelection.collapsed(offset: 3)),
+      TextEditingValue(
+        text: '  l',
+        selection: TextSelection.collapsed(offset: 3),
+      ),
     );
     await tester.pump();
 
     // Backspace deletes one sentinel char: buffer becomes ' '.
     tester.testTextInput.updateEditingValue(
-      TextEditingValue(text: ' ', selection: TextSelection.collapsed(offset: 1)),
+      TextEditingValue(
+        text: ' ',
+        selection: TextSelection.collapsed(offset: 1),
+      ),
     );
     await tester.pump();
 
@@ -168,25 +183,25 @@ void main() {
     expect(
       output.toString().codeUnits,
       contains(0x7f),
-      reason: 'backspace must reach the shell, got ${output.toString().codeUnits}',
+      reason:
+          'backspace must reach the shell, got ${output.toString().codeUnits}',
     );
   });
 }
 
 Future<void> _sendDelta(WidgetTester tester, Map<String, dynamic> delta) async {
-  final messenger = TestDefaultBinaryMessengerBinding.instance
-      .defaultBinaryMessenger;
+  final messenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   messenger.handlePlatformMessage(
     SystemChannels.textInput.name,
     SystemChannels.textInput.codec.encodeMethodCall(
-      MethodCall(
-        'TextInputClient.updateEditingStateWithDeltas',
-        <dynamic>[
-          // -1 is the magic test client id accepted in debug builds.
-          -1,
-          <String, dynamic>{'deltas': [delta]},
-        ],
-      ),
+      MethodCall('TextInputClient.updateEditingStateWithDeltas', <dynamic>[
+        // -1 is the magic test client id accepted in debug builds.
+        -1,
+        <String, dynamic>{
+          'deltas': [delta],
+        },
+      ]),
     ),
     (ByteData? data) {},
   );

@@ -356,9 +356,7 @@ class _WebServerTabState extends ConsumerState<WebServerTab> {
         const <DeploymentProject>[];
     if (projects.isEmpty) {
       if (mounted) {
-        showSnackBar(
-          'Create a deployment project before adding resources.',
-        );
+        showSnackBar('Create a deployment project before adding resources.');
       }
       return;
     }

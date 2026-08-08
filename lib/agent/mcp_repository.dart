@@ -107,14 +107,15 @@ class McpRepository {
     return id;
   }
 
-  Future<void> setEnabled(int id, bool enabled) => (_database.update(
-    _database.mcpServers,
-  )..where((table) => table.id.equals(id))).write(
-    McpServersCompanion(
-      enabled: Value(enabled),
-      updatedAt: Value(DateTime.now().toUtc()),
-    ),
-  );
+  Future<void> setEnabled(int id, bool enabled) =>
+      (_database.update(
+        _database.mcpServers,
+      )..where((table) => table.id.equals(id))).write(
+        McpServersCompanion(
+          enabled: Value(enabled),
+          updatedAt: Value(DateTime.now().toUtc()),
+        ),
+      );
 
   Future<void> delete(int id) => (_database.delete(
     _database.mcpServers,

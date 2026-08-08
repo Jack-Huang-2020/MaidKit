@@ -2,24 +2,23 @@ import 'dart:async';
 
 import 'package:maid_kit/data/local/app_database.dart';
 
-import 'serial_bridge_client.dart';
+import 'serial_port_client.dart';
 import 'server_models.dart';
 import 'ssh_connection_manager.dart';
 import 'terminal_session_adapter.dart';
 
-/// Manages terminal sessions opened over local serial ports through the
-/// platform bridge helper.
+/// Manages terminal sessions opened over local serial ports.
 ///
 /// Mirrors [SshConnectionManager]'s terminal lifecycle, but each terminal owns
 /// a [SerialPortSession] instead of an SSH channel.
 class SerialConnectionManager {
   SerialConnectionManager(
     this._terminalAdapterFactory, {
-    SerialBridgeClient? bridgeClient,
-  }) : _bridgeClient = bridgeClient ?? SerialBridgeClient();
+    SerialPortClient? serialClient,
+  }) : _serialClient = serialClient ?? SerialPortClient();
 
   final TerminalSessionAdapterFactory Function() _terminalAdapterFactory;
-  final SerialBridgeClient _bridgeClient;
+  final SerialPortClient _serialClient;
 
   final _terminals = <String, _SerialTerminalConnection>{};
   final _states = <int, SshSessionInfo>{};
@@ -41,7 +40,7 @@ class SerialConnectionManager {
     if (config == null) {
       throw ArgumentError('Server ${server.id} has no serial configuration.');
     }
-    final session = await _bridgeClient.open(config);
+    final session = await _serialClient.open(config);
     final terminal = _terminalAdapterFactory().create();
     final terminalId = 'serial-${_nextTerminalId++}';
     final binding = TerminalSessionBinding(
@@ -56,10 +55,10 @@ class SerialConnectionManager {
       session: session,
       binding: binding,
     );
-    // The helper closing the connection ends the session like `exit` would
-    // end an SSH shell. Do not use `whenComplete` here: its returned future
-    // re-emits a transport error and, because this is fire-and-forget cleanup,
-    // would become an unhandled application error.
+    // The native app closing the file descriptor ends the session like
+    // `exit` would end an SSH shell. Do not use `whenComplete` here: its
+    // returned future re-emits a transport error and, because this is
+    // fire-and-forget cleanup, would become an unhandled application error.
     session.done.then<void>(
       (_) => _closeTerminalAfterSessionEnds(terminalId, session),
       onError: (_, _) => _closeTerminalAfterSessionEnds(terminalId, session),

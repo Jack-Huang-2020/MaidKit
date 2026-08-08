@@ -42,7 +42,10 @@ McpConfigParseResult parseMcpConfigJson(String source) {
   try {
     decoded = jsonDecode(source);
   } catch (error) {
-    return McpConfigParseResult(servers: const [], errors: ['Invalid JSON: $error']);
+    return McpConfigParseResult(
+      servers: const [],
+      errors: ['Invalid JSON: $error'],
+    );
   }
   if (decoded is! Map<String, dynamic>) {
     return const McpConfigParseResult(
@@ -72,7 +75,9 @@ McpConfigParseResult parseMcpConfigJson(String source) {
     }
     final type = value['type'];
     if (type is String && type != 'stdio') {
-      errors.add('Server "$name": only stdio servers are supported (got "$type").');
+      errors.add(
+        'Server "$name": only stdio servers are supported (got "$type").',
+      );
       continue;
     }
     final command = value['command'];

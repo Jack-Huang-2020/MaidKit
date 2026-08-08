@@ -25,9 +25,8 @@ class _AwaitingUserNotifier extends GitHubSignInNotifier {
 
 class _StartingNotifier extends GitHubSignInNotifier {
   @override
-  GitHubSignInState build() => const GitHubSignInState(
-    phase: GitHubSignInPhase.starting,
-  );
+  GitHubSignInState build() =>
+      const GitHubSignInState(phase: GitHubSignInPhase.starting);
 }
 
 /// Renders [GitHubSection] with every data source overridden, so the widget
