@@ -341,12 +341,6 @@ class CloudSyncService {
         '/valve/workspaces/${workspace.id}/plan/status',
         session,
       );
-      final plan = ((planResponse.data as Map?)?['plan'] as num?)?.toInt() ?? 0;
-      if (plan < 1) {
-        throw const CloudSyncException(
-          'Cloud sync requires a Pro or Enterprise workspace.',
-        );
-      }
       final previous = await this.configuration();
       final reuseCurrentBlob =
           existingBlob == null && previous?.workspaceId == workspace.id;
