@@ -441,13 +441,13 @@ class _ServerGridState extends State<_ServerGrid> {
               slivers: [
                 const SliverToBoxAdapter(child: GithubWorkflowStatusStrip()),
                 SliverPadding(
-                  padding: EdgeInsets.all(_isCompactView ? 16 : 24),
+                  padding: const EdgeInsets.all(24),
                   sliver: SliverGrid(
                     gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: _isCompactView ? 320 : 380,
-                      mainAxisExtent: _isCompactView ? 264 : 320,
-                      mainAxisSpacing: _isCompactView ? 12 : 16,
-                      crossAxisSpacing: _isCompactView ? 12 : 16,
+                      maxCrossAxisExtent: 380,
+                      mainAxisExtent: _isCompactView ? 200 : 320,
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
                     ),
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final server = visibleServers[index];
@@ -1260,6 +1260,9 @@ class _ServerStats extends StatelessWidget {
     ].whereType<String>().join(' · ');
 
     return Column(
+      mainAxisAlignment: compact
+          ? MainAxisAlignment.end
+          : MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (stats != null)
@@ -1292,16 +1295,15 @@ class _ServerStats extends StatelessWidget {
                   valueColor: _memoryColor(memoryRatio, colorScheme),
                 ),
               ),
-              if (!compact) ...[
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _StatTile(
-                    label: 'detailUptime'.tr(),
-                    value: _formatUptime(stats!.uptime),
-                    detail: _uptimeDetail(stats!.uptime),
-                  ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _StatTile(
+                  compact: compact,
+                  label: 'detailUptime'.tr(),
+                  value: _formatUptime(stats!.uptime),
+                  detail: compact ? null : _uptimeDetail(stats!.uptime),
                 ),
-              ],
+              ),
             ],
           )
         else if (collectStats)
