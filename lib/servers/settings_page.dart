@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:auto_route/auto_route.dart';
@@ -2839,22 +2840,28 @@ class _TerminalFontDropdown extends HookConsumerWidget {
     final loaded = useState<Set<String>>(const {});
     useEffect(
       () {
+        var cancelled = false;
         final missing = filtered
             .map((option) => option.family)
             .where((family) => !loaded.value.contains(family))
             .toList();
         if (missing.isEmpty) return null;
-        () async {
+
+        Future<void> loadMissingFonts() async {
           for (final family in missing) {
+            if (cancelled) return;
             try {
               await SystemFonts().loadFont(family);
             } on Object {
               // Bundled or unavailable fonts need no engine loading.
             }
+            if (cancelled) return;
             loaded.value = {...loaded.value, family};
           }
-        }();
-        return null;
+        }
+
+        unawaited(loadMissingFonts());
+        return () => cancelled = true;
       },
       [
         monoOnly,
