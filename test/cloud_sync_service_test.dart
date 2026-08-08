@@ -8,6 +8,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:maid_kit/servers/cloud_sync_service.dart';
 
 const _sessionKey = 'maidkit_solar_network_oauth_session';
+String _configurationKey(String vaultId) =>
+    'maidkit_cloud_sync_${base64UrlEncode(utf8.encode(vaultId))}';
+
+Map<String, dynamic> _syncConfiguration({
+  required int revision,
+  String? lastContentFingerprint,
+}) => {
+  'workspaceId': 'workspace-1',
+  'workspaceName': 'Test workspace',
+  'workspaceSlug': 'test',
+  'blobId': 'blob-1',
+  'revision': revision,
+  'lastContentFingerprint': lastContentFingerprint,
+};
 
 class _MemoryStorage extends FlutterSecureStorage {
   final Map<String, String> values = {};
@@ -394,5 +408,111 @@ void main() {
     expect(storage.values.containsKey(_sessionKey), isFalse);
     expect(await service.accessToken(), isNull);
     expect(tokenExchanges, 1);
+  });
+  test('adopts a newer identical remote archive without uploading', () async {
+    final storage = _MemoryStorage()
+      ..values[_sessionKey] = jsonEncode({
+        'access_token': 'valid-token',
+        'expires_at': DateTime.now()
+            .add(const Duration(days: 1))
+            .toUtc()
+            .toIso8601String(),
+      })
+      ..values[_configurationKey('sync-vault')] = jsonEncode(
+        _syncConfiguration(
+          revision: 1,
+          lastContentFingerprint: 'local-fingerprint',
+        ),
+      );
+    var uploads = 0;
+    var applied = 0;
+    final dio = Dio()
+      ..httpClientAdapter = _CannedAdapter((options) async {
+        switch (options.uri.path) {
+          case '/flywheel/workspaces/workspace-1/apps/'
+              'dev.solsynth.maidkit/blobs/blob-1':
+            return _json({'current_revision': 2}, 200);
+          case '/flywheel/workspaces/workspace-1/apps/'
+              'dev.solsynth.maidkit/blobs/blob-1/content':
+            return ResponseBody.fromString('remote-archive', 200);
+          default:
+            if (options.method == 'PUT') uploads++;
+            return _json({'revision': 3}, 200);
+        }
+      });
+    final service = CloudSyncService(
+      vaultId: 'sync-vault',
+      secureStorage: storage,
+      dio: dio,
+    );
+
+    final configuration = await service.sync(
+      archive: 'local-archive',
+      applyArchive: (_) async => applied++,
+      contentFingerprint: () async => 'local-fingerprint',
+      compareAndMergeArchive:
+          ({required localArchive, required remoteArchive}) async {
+            expect(localArchive, 'local-archive');
+            expect(remoteArchive, 'remote-archive');
+            return const CloudSyncArchiveMergeResult.identical();
+          },
+    );
+
+    expect(configuration.revision, 2);
+    expect(configuration.lastContentFingerprint, 'local-fingerprint');
+    expect(uploads, 0);
+    expect(applied, 0);
+  });
+
+  test('silently applies and uploads an auto-merged archive', () async {
+    final storage = _MemoryStorage()
+      ..values[_sessionKey] = jsonEncode({
+        'access_token': 'valid-token',
+        'expires_at': DateTime.now()
+            .add(const Duration(days: 1))
+            .toUtc()
+            .toIso8601String(),
+      })
+      ..values[_configurationKey('merge-vault')] = jsonEncode(
+        _syncConfiguration(revision: 1),
+      );
+    var uploads = 0;
+    String? appliedArchive;
+    final dio = Dio()
+      ..httpClientAdapter = _CannedAdapter((options) async {
+        if (options.method == 'PUT') {
+          uploads++;
+          return _json({'revision': 3}, 200);
+        }
+        switch (options.uri.path) {
+          case '/flywheel/workspaces/workspace-1/apps/'
+              'dev.solsynth.maidkit/blobs/blob-1':
+            return _json({'current_revision': 2}, 200);
+          case '/flywheel/workspaces/workspace-1/apps/'
+              'dev.solsynth.maidkit/blobs/blob-1/content':
+            return ResponseBody.fromString('remote-archive', 200);
+          default:
+            return _json({}, 404);
+        }
+      });
+    final service = CloudSyncService(
+      vaultId: 'merge-vault',
+      secureStorage: storage,
+      dio: dio,
+    );
+
+    final configuration = await service.sync(
+      archive: 'local-archive',
+      applyArchive: (archive) async => appliedArchive = archive,
+      contentFingerprint: () async => 'merged-fingerprint',
+      compareAndMergeArchive:
+          ({required localArchive, required remoteArchive}) async =>
+              const CloudSyncArchiveMergeResult.merged('merged-archive'),
+    );
+
+    expect(appliedArchive, 'merged-archive');
+    expect(uploads, 1);
+    expect(configuration.revision, 3);
+    expect(configuration.lastContentFingerprint, 'merged-fingerprint');
   });
 }

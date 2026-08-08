@@ -153,6 +153,35 @@ class CloudSyncException implements Exception {
 
 enum CloudSyncConflictResolution { downloadRemote, overwriteRemote }
 
+enum CloudSyncArchiveMergeStatus { identical, merged, conflict }
+
+/// Result of comparing a local encrypted archive with a newer remote archive.
+///
+/// The comparison callback owns decryption and merge policy. A merged archive
+/// must contain the local and remote changes and remain encrypted with the
+/// current vault passphrase.
+class CloudSyncArchiveMergeResult {
+  const CloudSyncArchiveMergeResult._(this.status, this.archive);
+
+  const CloudSyncArchiveMergeResult.identical()
+    : this._(CloudSyncArchiveMergeStatus.identical, null);
+
+  const CloudSyncArchiveMergeResult.merged(String archive)
+    : this._(CloudSyncArchiveMergeStatus.merged, archive);
+
+  const CloudSyncArchiveMergeResult.conflict()
+    : this._(CloudSyncArchiveMergeStatus.conflict, null);
+
+  final CloudSyncArchiveMergeStatus status;
+  final String? archive;
+}
+
+typedef CloudSyncArchiveComparator =
+    Future<CloudSyncArchiveMergeResult> Function({
+      required String localArchive,
+      required String remoteArchive,
+    });
+
 /// Raised before either copy is changed when Flywheel has a newer revision.
 class CloudSyncConflictException extends CloudSyncException {
   const CloudSyncConflictException({this.remoteRevision})
@@ -337,7 +366,7 @@ class CloudSyncService {
           'Sign in is required to enable cloud sync.',
         );
       }
-      final planResponse = await _authorizedGet(
+      await _authorizedGet(
         '/valve/workspaces/${workspace.id}/plan/status',
         session,
       );
@@ -385,19 +414,23 @@ class CloudSyncService {
 
   /// Uploads/downloads a client-encrypted archive. Flywheel never decrypts it.
   ///
-  /// The server revision is always read first. When the cloud is newer and no
-  /// [conflictResolution] is given, the user is asked whether to take the cloud
-  /// copy or keep the local one.
+  /// When a newer remote revision exists, [compareAndMergeArchive] receives
+  /// both encrypted copies after the remote copy has been downloaded. The
+  /// callback decrypts them with the active vault passphrase and can report
+  /// identical content or return an encrypted merged archive. Only an
+  /// unmergeable difference reaches the conflict prompt.
   ///
-  /// When [contentFingerprint] is provided, the upload is skipped if it matches
-  /// the fingerprint stored at the last successful sync and the local revision
-  /// was not superseded: the local database is unchanged, so no new blob is
-  /// written. The function is invoked again after a remote download so the
-  /// stored fingerprint always reflects the vault's current content.
+  /// [conflictResolution] remains an explicit override for onboarding and
+  /// other callers that must deterministically choose one side.
+  ///
+  /// When [contentFingerprint] is provided, the upload is skipped if it
+  /// matches the fingerprint stored at the last successful sync and the local
+  /// revision was not superseded.
   Future<CloudSyncConfiguration> sync({
     required String archive,
     required Future<void> Function(String archive) applyArchive,
     Future<String> Function()? contentFingerprint,
+    CloudSyncArchiveComparator? compareAndMergeArchive,
     CloudSyncConflictResolution? conflictResolution,
     int conflictRetryCount = 0,
   }) async {
@@ -415,6 +448,7 @@ class CloudSyncService {
         );
       }
       var revision = configuration.revision;
+      var uploadArchive = archive;
       var remoteRevision = 0;
       try {
         final metadata = await _authorizedGet(
@@ -431,19 +465,17 @@ class CloudSyncService {
         if (error.response?.statusCode != 404) rethrow;
       }
       if (remoteRevision > revision) {
-        final resolution =
-            conflictResolution ?? await _resolveConflict(remoteRevision);
-        if (resolution == CloudSyncConflictResolution.downloadRemote) {
-          final content = await _dio.get<List<int>>(
-            '$apiBase${_flywheelAppPath(configuration.workspaceId)}/blobs/'
-            '${configuration.blobId}/content',
-            options: Options(
-              headers: {'Authorization': 'Bearer ${session.accessToken}'},
-              responseType: ResponseType.bytes,
-            ),
-          );
-          final remoteArchive = utf8.decode(content.data ?? const []);
-          await applyArchive(remoteArchive);
+        final remoteArchive = await _downloadRemoteArchive(
+          configuration,
+          session,
+        );
+        final comparison = conflictResolution == null
+            ? await compareAndMergeArchive?.call(
+                localArchive: archive,
+                remoteArchive: remoteArchive,
+              )
+            : null;
+        if (comparison?.status == CloudSyncArchiveMergeStatus.identical) {
           final updated = _updatedConfiguration(
             configuration,
             revision: remoteRevision,
@@ -452,16 +484,35 @@ class CloudSyncService {
           await _saveConfiguration(updated);
           return updated;
         }
-        // Normal sync is local-authoritative. It keeps this vault's stable
-        // blob ID and creates the next revision from the latest remote one.
-        revision = remoteRevision;
+        if (comparison?.status == CloudSyncArchiveMergeStatus.merged) {
+          uploadArchive = comparison!.archive!;
+          // The merged result becomes the local database before it is
+          // published. If the upload fails, the unchanged configuration causes
+          // the next sync to retry this merged local state.
+          await applyArchive(uploadArchive);
+          revision = remoteRevision;
+        } else {
+          final resolution =
+              conflictResolution ?? await _resolveConflict(remoteRevision);
+          if (resolution == CloudSyncConflictResolution.downloadRemote) {
+            await applyArchive(remoteArchive);
+            final updated = _updatedConfiguration(
+              configuration,
+              revision: remoteRevision,
+              contentFingerprint: await contentFingerprint?.call(),
+            );
+            await _saveConfiguration(updated);
+            return updated;
+          }
+          // Local-authoritative sync keeps this vault's stable blob ID and
+          // creates the next revision from the latest remote one.
+          revision = remoteRevision;
+        }
       }
       final fingerprint = await contentFingerprint?.call();
       if (fingerprint != null &&
           fingerprint == configuration.lastContentFingerprint &&
           revision == configuration.revision) {
-        // The local database is unchanged since the last sync and no newer
-        // remote revision was adopted, so there is nothing to upload.
         return configuration;
       }
       final response = await _dio.put<Map<String, dynamic>>(
@@ -471,7 +522,7 @@ class CloudSyncService {
           // Flywheel binds these multipart fields to its C# [FromForm]
           // properties. JSON's snake_case convention does not apply here.
           'File': MultipartFile.fromBytes(
-            utf8.encode(archive),
+            utf8.encode(uploadArchive),
             filename: 'vault.mkb',
           ),
           'SchemeVersion': _schemeVersion,
@@ -492,13 +543,11 @@ class CloudSyncService {
       return updated;
     } on DioException catch (error) {
       if (error.response?.statusCode == 409 && conflictRetryCount < 1) {
-        // Another device won the race after metadata was read. Re-read its
-        // revision and retry the local-authoritative upload once through the
-        // same normal sync path.
         return sync(
           archive: archive,
           applyArchive: applyArchive,
           contentFingerprint: contentFingerprint,
+          compareAndMergeArchive: compareAndMergeArchive,
           conflictResolution: CloudSyncConflictResolution.overwriteRemote,
           conflictRetryCount: conflictRetryCount + 1,
         );
@@ -510,6 +559,21 @@ class CloudSyncService {
       }
       throw CloudSyncException(_apiErrorMessage(error));
     }
+  }
+
+  Future<String> _downloadRemoteArchive(
+    CloudSyncConfiguration configuration,
+    _Session session,
+  ) async {
+    final content = await _dio.get<List<int>>(
+      '$apiBase${_flywheelAppPath(configuration.workspaceId)}/blobs/'
+      '${configuration.blobId}/content',
+      options: Options(
+        headers: {'Authorization': 'Bearer ${session.accessToken}'},
+        responseType: ResponseType.bytes,
+      ),
+    );
+    return utf8.decode(content.data ?? const []);
   }
 
   /// Asks the user whether to adopt the newer cloud revision or keep the

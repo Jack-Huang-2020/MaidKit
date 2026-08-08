@@ -5,7 +5,32 @@ import 'package:drift/drift.dart';
 
 import 'package:maid_kit/data/local/app_database.dart';
 
+import 'cloud_sync_service.dart';
 import 'vault_service.dart';
+
+enum _MergeTable {
+  servers,
+  savedCredentials,
+  composeProjectLinks,
+  containerCacheEntries,
+  deploymentProjects,
+  deploymentResources,
+  scriptSnippets,
+  githubConnections,
+  githubRepoPins,
+}
+
+const _mergeTableNames = {
+  _MergeTable.servers: 'servers',
+  _MergeTable.savedCredentials: 'savedCredentials',
+  _MergeTable.composeProjectLinks: 'composeProjectLinks',
+  _MergeTable.containerCacheEntries: 'containerCacheEntries',
+  _MergeTable.deploymentProjects: 'deploymentProjects',
+  _MergeTable.deploymentResources: 'deploymentResources',
+  _MergeTable.scriptSnippets: 'scriptSnippets',
+  _MergeTable.githubConnections: 'githubConnections',
+  _MergeTable.githubRepoPins: 'githubRepoPins',
+};
 
 /// Creates portable, password-encrypted snapshots of the user-managed data.
 ///
@@ -39,6 +64,204 @@ class DatabaseBackupService {
   Future<String> contentFingerprint() async {
     final archive = await _payload();
     return sha256.convert(utf8.encode(jsonEncode(archive))).toString();
+  }
+
+  /// Decrypts and compares two archives with the active vault passphrase.
+  ///
+  /// Records with different identities are unioned. A record changed on both
+  /// sides is auto-resolved only when one side has a strictly newer timestamp;
+  /// equal or missing timestamps remain a conflict rather than risking data
+  /// loss. The returned merged archive is encrypted again before it leaves
+  /// this service.
+  Future<CloudSyncArchiveMergeResult> compareAndMergeArchives({
+    required String localArchive,
+    required String remoteArchive,
+    required String password,
+  }) async {
+    final localPayload = _decodePayload(
+      await _vault.decryptPortable(localArchive, password),
+    );
+    final remotePayload = _decodePayload(
+      await _vault.decryptPortable(remoteArchive, password),
+    );
+    if (_canonicalJson(localPayload) == _canonicalJson(remotePayload)) {
+      return const CloudSyncArchiveMergeResult.identical();
+    }
+    final merged = _mergePayloads(localPayload, remotePayload);
+    if (merged == null) {
+      return const CloudSyncArchiveMergeResult.conflict();
+    }
+    return CloudSyncArchiveMergeResult.merged(
+      await _vault.encryptPortable(jsonEncode(merged), password),
+    );
+  }
+
+  Map<String, dynamic> _decodePayload(String clearText) {
+    final value = jsonDecode(clearText);
+    if (value is! Map) {
+      throw const FormatException('Unsupported MaidKit backup.');
+    }
+    final payload = Map<String, dynamic>.from(value);
+    if (payload['version'] != _formatVersion) {
+      throw const FormatException('Unsupported MaidKit backup.');
+    }
+    // Export timestamps describe the snapshot, not syncable content.
+    payload.remove('createdAt');
+    for (final key in _mergeTableNames.values) {
+      _records(payload, key);
+    }
+    return payload;
+  }
+
+  Map<String, dynamic>? _mergePayloads(
+    Map<String, dynamic> local,
+    Map<String, dynamic> remote,
+  ) {
+    if (local['version'] != remote['version']) return null;
+    final merged = <String, dynamic>{'version': local['version']};
+    for (final entry in _mergeTableNames.entries) {
+      final localRecords = _records(local, entry.value);
+      final remoteRecords = _records(remote, entry.value);
+      final records = _mergeRecords(entry.key, localRecords, remoteRecords);
+      if (records == null) return null;
+      merged[entry.value] = records;
+    }
+    return merged;
+  }
+
+  List<Map<String, dynamic>>? _mergeRecords(
+    _MergeTable table,
+    List<Map<String, dynamic>> local,
+    List<Map<String, dynamic>> remote,
+  ) {
+    final localByKey = <String, Map<String, dynamic>>{};
+    final remoteByKey = <String, Map<String, dynamic>>{};
+    for (final record in local) {
+      final key = _recordKey(table, record);
+      if (key == null || localByKey.containsKey(key)) return null;
+      localByKey[key] = record;
+    }
+    for (final record in remote) {
+      final key = _recordKey(table, record);
+      if (key == null || remoteByKey.containsKey(key)) return null;
+      remoteByKey[key] = record;
+    }
+
+    // A server's syncId is its real identity. A different syncId sharing the
+    // same numeric SQLite id is an unsafe collision, not two mergeable rows.
+    if (table == _MergeTable.servers) {
+      for (final localRecord in local) {
+        final id = localRecord['id'];
+        if (id == null) continue;
+        for (final remoteRecord in remote) {
+          if (remoteRecord['id'] == id &&
+              _recordKey(table, localRecord) !=
+                  _recordKey(table, remoteRecord) &&
+              _canonicalJson(localRecord) != _canonicalJson(remoteRecord)) {
+            return null;
+          }
+        }
+      }
+    }
+
+    final keys = {...localByKey.keys, ...remoteByKey.keys}.toList()..sort();
+    final merged = <Map<String, dynamic>>[];
+    for (final key in keys) {
+      final localRecord = localByKey[key];
+      final remoteRecord = remoteByKey[key];
+      if (localRecord == null) {
+        merged.add(remoteRecord!);
+      } else if (remoteRecord == null) {
+        merged.add(localRecord);
+      } else if (_canonicalJson(localRecord) == _canonicalJson(remoteRecord)) {
+        merged.add(localRecord);
+      } else {
+        final localTime = _recordTimestamp(table, localRecord);
+        final remoteTime = _recordTimestamp(table, remoteRecord);
+        if (localTime == null ||
+            remoteTime == null ||
+            localTime.isAtSameMomentAs(remoteTime)) {
+          return null;
+        }
+        merged.add(localTime.isAfter(remoteTime) ? localRecord : remoteRecord);
+      }
+    }
+    return merged;
+  }
+
+  String? _recordKey(_MergeTable table, Map<String, dynamic> record) {
+    String? value(Object? raw) =>
+        raw?.toString().trim().isEmpty == true ? null : raw?.toString();
+    switch (table) {
+      case _MergeTable.servers:
+        return value(record['syncId']) ?? _idKey(record['id']);
+      case _MergeTable.savedCredentials:
+      case _MergeTable.deploymentProjects:
+      case _MergeTable.deploymentResources:
+      case _MergeTable.scriptSnippets:
+        return _idKey(record['id']);
+      case _MergeTable.composeProjectLinks:
+        return _compoundKey([
+          record['serverId'],
+          record['directory'],
+          record['scope'],
+        ]);
+      case _MergeTable.containerCacheEntries:
+        return _compoundKey([
+          record['serverId'],
+          record['runtime'],
+          record['scope'],
+          record['containerId'],
+        ]);
+      case _MergeTable.githubConnections:
+        return value(record['accountLogin']);
+      case _MergeTable.githubRepoPins:
+        return _compoundKey([
+          record['connectionId'],
+          record['owner'],
+          record['name'],
+        ]);
+    }
+  }
+
+  String? _idKey(Object? id) => id == null ? null : 'id:$id';
+
+  String? _compoundKey(List<Object?> values) {
+    if (values.any((value) => value == null)) return null;
+    return values.map((value) => value.toString()).join('\u001f');
+  }
+
+  DateTime? _recordTimestamp(_MergeTable table, Map<String, dynamic> record) {
+    final fields = switch (table) {
+      _MergeTable.composeProjectLinks => ['linkedAt'],
+      _MergeTable.containerCacheEntries => ['cachedAt'],
+      _MergeTable.githubRepoPins => ['pinnedAt'],
+      _ => ['updatedAt', 'createdAt'],
+    };
+    for (final field in fields) {
+      final value = DateTime.tryParse(record[field]?.toString() ?? '');
+      if (value != null) return value.toUtc();
+    }
+    return null;
+  }
+
+  String _canonicalJson(Object? value) {
+    Object? canonical(Object? value) {
+      if (value is Map) {
+        final keys = value.keys.map((key) => key.toString()).toList()..sort();
+        return <String, Object?>{
+          for (final key in keys) key: canonical(value[key]),
+        };
+      }
+      if (value is List) {
+        final entries = value.map(canonical).toList();
+        entries.sort((a, b) => jsonEncode(a).compareTo(jsonEncode(b)));
+        return entries;
+      }
+      return value;
+    }
+
+    return jsonEncode(canonical(value));
   }
 
   Future<Map<String, Object?>> _payload() async {

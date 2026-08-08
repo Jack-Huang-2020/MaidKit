@@ -1803,6 +1803,13 @@ class SettingsPage extends ConsumerWidget {
       await service.sync(
         archive: archive,
         applyArchive: (archive) => backup.importArchive(archive, syncPassword),
+        compareAndMergeArchive:
+            ({required localArchive, required remoteArchive}) =>
+                backup.compareAndMergeArchives(
+                  localArchive: localArchive,
+                  remoteArchive: remoteArchive,
+                  password: syncPassword,
+                ),
         contentFingerprint: backup.contentFingerprint,
       );
       ref.invalidate(cloudSyncConfigurationForVaultProvider(vaultId));

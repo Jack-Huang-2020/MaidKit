@@ -67,6 +67,13 @@ class _VaultGateState extends ConsumerState<VaultGate>
       await sync.sync(
         archive: await backup.exportArchive(password),
         applyArchive: (archive) => backup.importArchive(archive, password),
+        compareAndMergeArchive:
+            ({required localArchive, required remoteArchive}) =>
+                backup.compareAndMergeArchives(
+                  localArchive: localArchive,
+                  remoteArchive: remoteArchive,
+                  password: password,
+                ),
         contentFingerprint: backup.contentFingerprint,
       );
       if (mounted) ref.invalidate(cloudSyncConfigurationProvider);
