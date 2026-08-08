@@ -14,6 +14,9 @@ import 'package:maid_kit/servers/server_providers.dart';
 import 'package:maid_kit/servers/terminal_session_adapter.dart';
 
 void main() {
+  test('macOS excludes local-machine management', () {
+    expect(localMachineSupported, Platform.isMacOS ? isFalse : isTrue);
+  });
   test('local machine preference persists the dashboard toggle', () async {
     final settings = InMemoryLocalMachineSettings();
     final container = ProviderContainer(
@@ -88,18 +91,27 @@ void main() {
 
       final handle = await manager.openTerminal(server);
       adapter.sendInput('echo maidkit-local-ok\n');
-      final zsh = Platform.environment['SHELL']?.endsWith('/zsh') ?? false;
+      final shell =
+          Platform.environment['SHELL'] ?? (Platform.isMacOS ? '/bin/zsh' : '');
+      final zsh = shell.endsWith('/zsh');
       if (Platform.isMacOS && zsh) {
         adapter.sendInput(
           'if [[ -o warncreateglobal ]]; then '
           'echo maidkit-warning-option-enabled; '
           'else echo maidkit-warning-option-disabled; fi\n',
         );
+        adapter.sendInput(
+          'setopt warncreateglobal\n'
+          'echo maidkit-warning-filter-ok\n',
+        );
       }
 
       final deadline = DateTime.now().add(const Duration(seconds: 15));
       String output = '';
-      while (!output.contains('maidkit-local-ok') &&
+      final expectedMarker = Platform.isMacOS && zsh
+          ? 'maidkit-warning-filter-ok'
+          : 'maidkit-local-ok';
+      while (!output.contains(expectedMarker) &&
           DateTime.now().isBefore(deadline)) {
         await Future<void>.delayed(const Duration(milliseconds: 100));
         output = utf8.decode(adapter.received.toBytes(), allowMalformed: true);
@@ -108,6 +120,8 @@ void main() {
       expect(output, contains('maidkit-local-ok'));
       if (Platform.isMacOS && zsh) {
         expect(output, contains('maidkit-warning-option-disabled'));
+        expect(output, contains('maidkit-warning-filter-ok'));
+        expect(output, isNot(contains('created globally in function')));
       }
       await manager.closeTerminal(handle.id);
     },

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 
@@ -13,9 +14,10 @@ import 'terminal_session_adapter.dart';
 const int localMachineServerId = 0;
 
 /// Whether the current host machine can appear as a server card. Local
-/// management is a desktop concept; mobile and web targets are excluded.
+/// management is available on Windows and Linux; macOS is excluded so the app
+/// can run inside the macOS sandbox without local process access.
 final bool localMachineSupported =
-    !kIsWeb && (Platform.isMacOS || Platform.isWindows || Platform.isLinux);
+    !kIsWeb && (Platform.isWindows || Platform.isLinux);
 
 /// Collects load, memory, disk, uptime, and OS identity from the machine
 /// MaidKit runs on, without any network transport.
@@ -292,8 +294,12 @@ class LocalConnectionManager {
     final terminalId = 'local-${_nextTerminalId++}';
     final binding = TerminalSessionBinding(
       adapter: terminal,
-      stdout: process.stdout.map(Uint8List.fromList),
-      stderr: process.stderr.map(Uint8List.fromList),
+      stdout: process.stdout
+          .transform(const _LocalShellWarningFilter())
+          .map(Uint8List.fromList),
+      stderr: process.stderr
+          .transform(const _LocalShellWarningFilter())
+          .map(Uint8List.fromList),
       send: process.stdin.add,
       resize: (_) {},
     );
@@ -473,6 +479,92 @@ class LocalConnectionManager {
       arguments.addAll(const ['+o', 'WARN_CREATE_GLOBAL']);
     }
     return arguments;
+  }
+}
+
+/// Removes only the known Spaceship/zsh global-scope diagnostics from local
+/// shell output. Other shell output, including prompts and real errors,
+/// remains visible immediately.
+class _LocalShellWarningFilter
+    extends StreamTransformerBase<List<int>, List<int>> {
+  const _LocalShellWarningFilter();
+
+  static const _prefix = <int>[
+    0x73,
+    0x70,
+    0x61,
+    0x63,
+    0x65,
+    0x73,
+    0x68,
+    0x69,
+    0x70,
+    0x3a,
+    0x3a,
+  ];
+
+  @override
+  Stream<List<int>> bind(Stream<List<int>> stream) {
+    final candidate = <int>[];
+    var atLineStart = true;
+    var suppressLine = false;
+    return stream.transform(
+      StreamTransformer<List<int>, List<int>>.fromHandlers(
+        handleData: (chunk, sink) {
+          final output = BytesBuilder(copy: false);
+          for (final byte in chunk) {
+            if (suppressLine) {
+              if (byte == 0x0a) {
+                suppressLine = false;
+                atLineStart = true;
+              }
+              continue;
+            }
+            if (atLineStart) {
+              candidate.add(byte);
+              if (_matchesPrefix(candidate)) {
+                candidate.clear();
+                suppressLine = true;
+                atLineStart = false;
+                continue;
+              }
+              if (_couldStillMatchPrefix(candidate)) {
+                continue;
+              }
+              output.add(candidate);
+              atLineStart = candidate.last == 0x0a;
+              candidate.clear();
+              continue;
+            }
+            output.addByte(byte);
+            if (byte == 0x0a) atLineStart = true;
+          }
+          if (output.length > 0) sink.add(output.takeBytes());
+        },
+        handleDone: (sink) {
+          if (!suppressLine && candidate.isNotEmpty) {
+            sink.add(Uint8List.fromList(candidate));
+          }
+          sink.close();
+        },
+      ),
+    );
+  }
+
+  bool _matchesPrefix(List<int> value) {
+    if (value.length != _prefix.length) return false;
+    for (var index = 0; index < value.length; index++) {
+      if (value[index] != _prefix[index]) return false;
+    }
+    return true;
+  }
+
+  bool _couldStillMatchPrefix(List<int> value) {
+    if (value.length >= _prefix.length) return false;
+    for (var index = 0; index < value.length; index++) {
+      if (value[index] != _prefix[index]) return false;
+    }
+    return true;
   }
 }
 
