@@ -19,6 +19,7 @@ class AutoServerMetricsCollector implements ServerMetricsCollector {
           const [
             LinuxProcfsMetricsCollector(),
             MacosSysctlMetricsCollector(),
+            WindowsPowerShellMetricsCollector(),
             UptimeMetricsCollector(),
           ];
 
@@ -73,6 +74,51 @@ echo --UPTIME--
 sysctl -n kern.boottime 2>/dev/null || true
 '""");
     return parseMacosMetricsOutput(output);
+  }
+}
+
+class WindowsPowerShellMetricsCollector implements ServerMetricsCollector {
+  const WindowsPowerShellMetricsCollector();
+
+  @override
+  String get id => 'windows-powershell';
+
+  @override
+  String get label => 'Windows PowerShell';
+
+  @override
+  Future<ServerStats?> collect(SSHClient client) async {
+    final output = await _run(
+      client,
+      encodePowerShellCommand(r'''
+$ErrorActionPreference = 'Stop'
+$os = Get-CimInstance Win32_OperatingSystem
+$processors = @(Get-CimInstance Win32_Processor)
+$cpuCount = [int](($processors | Measure-Object NumberOfLogicalProcessors -Sum).Sum)
+$loadPercent = [double](($processors | Measure-Object LoadPercentage -Average).Average)
+$load = if ($cpuCount -gt 0) { $loadPercent * $cpuCount / 100 } else { $null }
+$pageFiles = @(Get-CimInstance Win32_PageFileUsage)
+$swapTotalKb = [int64](($pageFiles | Measure-Object AllocatedBaseSize -Sum).Sum)
+$swapUsedKb = [int64](($pageFiles | Measure-Object CurrentUsage -Sum).Sum)
+$disk = Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'"
+Write-Output '--LOAD--'
+if ($null -ne $load) { $load.ToString('0.##', [Globalization.CultureInfo]::InvariantCulture) }
+Write-Output '--CPU--'
+$cpuCount
+Write-Output '--MEM--'
+"MemTotal: $($os.TotalVisibleMemorySize)"
+"MemAvailable: $($os.FreePhysicalMemory)"
+Write-Output '--SWAP--'
+"SwapTotal: $swapTotalKb"
+"SwapFree: $([math]::Max(0, $swapTotalKb - $swapUsedKb))"
+Write-Output '--DISK--'
+"DiskTotal: $([int64]($disk.Size / 1KB))"
+"DiskAvailable: $([int64]($disk.FreeSpace / 1KB))"
+Write-Output '--UPTIME--'
+[int64](([DateTime]::UtcNow - $os.LastBootUpTime.ToUniversalTime()).TotalSeconds)
+'''),
+    );
+    return parseWindowsMetricsOutput(output);
   }
 }
 
@@ -171,6 +217,37 @@ ServerStats? parseMacosMetricsOutput(String output, {DateTime? now}) {
   );
 }
 
+/// Parses the normalized output emitted by [WindowsPowerShellMetricsCollector].
+ServerStats? parseWindowsMetricsOutput(String output, {DateTime? now}) {
+  final load = double.tryParse(_metricSection(output, 'LOAD').trim());
+  if (load == null) return null;
+  int? value(String section, String label) {
+    final match = RegExp(
+      '^$label:\\s*(\\d+)',
+      multiLine: true,
+    ).firstMatch(_metricSection(output, section));
+    return match == null ? null : int.tryParse(match.group(1)!);
+  }
+
+  final currentTime = now ?? DateTime.now();
+  final uptimeSeconds = int.tryParse(_metricSection(output, 'UPTIME').trim());
+  return ServerStats(
+    collectorId: 'windows-powershell',
+    updatedAt: currentTime,
+    loadAverage: load,
+    cpuCount: int.tryParse(_metricSection(output, 'CPU').trim()),
+    memoryTotalKb: value('MEM', 'MemTotal'),
+    memoryAvailableKb: value('MEM', 'MemAvailable'),
+    swapTotalKb: value('SWAP', 'SwapTotal'),
+    swapFreeKb: value('SWAP', 'SwapFree'),
+    diskTotalKb: value('DISK', 'DiskTotal'),
+    diskAvailableKb: value('DISK', 'DiskAvailable'),
+    uptime: uptimeSeconds == null
+        ? null
+        : Duration(seconds: uptimeSeconds.clamp(0, 0x7fffffffffffffff)),
+  );
+}
+
 List<String> _lastDataRowFields(String output) {
   final lines = output
       .trim()
@@ -266,6 +343,20 @@ int? _parseMacosAvailableMemory(String output) {
   }
 
   return (value('total'), value('free'));
+}
+
+/// Encodes an ASCII PowerShell script for OpenSSH's Windows shell.
+///
+/// `-EncodedCommand` requires UTF-16LE rather than UTF-8.
+String encodePowerShellCommand(String script) {
+  final bytes = <int>[];
+  for (final codeUnit in script.codeUnits) {
+    bytes
+      ..add(codeUnit & 0xff)
+      ..add((codeUnit >> 8) & 0xff);
+  }
+  return 'powershell.exe -NoLogo -NoProfile -NonInteractive '
+      '-ExecutionPolicy Bypass -EncodedCommand ${base64.encode(bytes)}';
 }
 
 Future<String> _run(SSHClient client, String command) async {

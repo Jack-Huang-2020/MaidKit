@@ -78,6 +78,7 @@ class ActivityCounters {
     required this.at,
     this.cpuIdle,
     this.cpuTotal,
+    this.cpuPercent,
     this.load1,
     this.load5,
     this.load15,
@@ -96,6 +97,9 @@ class ActivityCounters {
   final DateTime at;
   final int? cpuIdle;
   final int? cpuTotal;
+
+  /// Direct CPU utilization for platforms without cumulative CPU counters.
+  final double? cpuPercent;
   final double? load1;
   final double? load5;
   final double? load15;
@@ -109,12 +113,12 @@ class ActivityCounters {
   final int? netRxBytes;
   final int? netTxBytes;
   final Duration? uptime;
-
   ActivitySample toSample({ActivityCounters? previous}) {
-    double? cpuPercent;
+    double? cpuPercent = this.cpuPercent;
     double? netRxBps;
     double? netTxBps;
-    if (previous != null &&
+    if (cpuPercent == null &&
+        previous != null &&
         cpuIdle != null &&
         cpuTotal != null &&
         previous.cpuIdle != null &&

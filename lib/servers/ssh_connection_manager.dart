@@ -393,6 +393,19 @@ class SshConnectionManager {
       // Sort once on the host so head keeps top CPU/RSS-relevant rows without
       // shipping the entire process table. Avoid polling this every few seconds
       // when the Processes tab is not visible.
+      final windowsResult = await _execute(
+        client,
+        _windowsProcessCommand(processListLimit),
+      );
+      if (windowsResult.exitCode == 0 &&
+          windowsResult.stdout.contains('--WINDOWS--')) {
+        return windowsResult.stdout
+            .split('\n')
+            .where((line) => !line.startsWith('--WINDOWS--'))
+            .map(_parseProcess)
+            .whereType<ServerProcess>()
+            .toList();
+      }
       final session = await client.execute('''sh -c '
 if ps -eo pid=,user=,%cpu=,%mem=,rss=,comm= --sort=-%cpu >/dev/null 2>&1; then
   ps -eo pid=,user=,%cpu=,%mem=,rss=,comm= --sort=-%cpu | head -n $processListLimit
@@ -644,12 +657,29 @@ else
 fi
 '
 ''');
+      final counters = _parseActivityCounters(result.stdout);
+      if (result.exitCode == 0 && _hasActivityData(counters)) {
+        return counters;
+      }
+      final windowsResult = await _execute(client, _windowsActivityCommand());
+      if (windowsResult.exitCode == 0 &&
+          windowsResult.stdout.contains('--WINDOWS--')) {
+        return _parseActivityCounters(windowsResult.stdout);
+      }
       if (result.exitCode != 0 && result.stdout.trim().isEmpty) {
         throw StateError(_commandError(result));
       }
-      return _parseActivityCounters(result.stdout);
+      return counters;
     });
   }
+
+  bool _hasActivityData(ActivityCounters counters) =>
+      counters.load1 != null ||
+      counters.cpuCount != null ||
+      counters.memoryTotalKb != null ||
+      counters.diskTotalKb != null ||
+      counters.netRxBytes != null ||
+      counters.uptime != null;
 
   ActivityCounters _parseActivityCounters(String output) {
     String section(String name) {
@@ -688,6 +718,7 @@ fi
         .map((match) => double.tryParse(match.group(0)!))
         .whereType<double>()
         .toList();
+    final directCpuPercent = double.tryParse(section('CPUUSAGE'));
     final memSection = section('MEM');
     int? memValue(String label) {
       final match = RegExp('$label:\\s+(\\d+)').firstMatch(memSection);
@@ -771,7 +802,40 @@ fi
       netTx += tx;
       hasNet = true;
     }
+    final windowsRx = int.tryParse(
+      RegExp(
+            r'^RxBytes:\s*(\d+)',
+            multiLine: true,
+          ).firstMatch(section('NET'))?.group(1) ??
+          '',
+    );
+    final windowsTx = int.tryParse(
+      RegExp(
+            r'^TxBytes:\s*(\d+)',
+            multiLine: true,
+          ).firstMatch(section('NET'))?.group(1) ??
+          '',
+    );
+    if (windowsRx != null && windowsTx != null) {
+      netRx = windowsRx;
+      netTx = windowsTx;
+      hasNet = true;
+    }
 
+    final windowsDiskTotal = int.tryParse(
+      RegExp(
+            r'^DiskTotal:\s*(\d+)',
+            multiLine: true,
+          ).firstMatch(section('DISK'))?.group(1) ??
+          '',
+    );
+    final windowsDiskAvailable = int.tryParse(
+      RegExp(
+            r'^DiskAvailable:\s*(\d+)',
+            multiLine: true,
+          ).firstMatch(section('DISK'))?.group(1) ??
+          '',
+    );
     final uptimeText = section('UPTIME');
     var uptimeSeconds = int.tryParse(uptimeText);
     if (uptimeSeconds == null) {
@@ -786,6 +850,7 @@ fi
       at: DateTime.now(),
       cpuIdle: cpuIdle,
       cpuTotal: cpuTotal,
+      cpuPercent: directCpuPercent,
       load1: loads.isNotEmpty ? loads[0] : null,
       load5: loads.length > 1 ? loads[1] : null,
       load15: loads.length > 2 ? loads[2] : null,
@@ -798,10 +863,12 @@ fi
           (macAvailableBytes() == null ? null : macAvailableBytes()! ~/ 1024),
       swapTotalKb: memValue('SwapTotal') ?? macSwapValue('total'),
       swapFreeKb: memValue('SwapFree') ?? macSwapValue('free'),
-      diskTotalKb: diskFields.length > 1 ? int.tryParse(diskFields[1]) : null,
-      diskAvailableKb: diskFields.length > 3
-          ? int.tryParse(diskFields[3])
-          : null,
+      diskTotalKb:
+          windowsDiskTotal ??
+          (diskFields.length > 1 ? int.tryParse(diskFields[1]) : null),
+      diskAvailableKb:
+          windowsDiskAvailable ??
+          (diskFields.length > 3 ? int.tryParse(diskFields[3]) : null),
       netRxBytes: hasNet ? netRx : null,
       netTxBytes: hasNet ? netTx : null,
       uptime: uptimeSeconds == null || uptimeSeconds < 0
@@ -3361,6 +3428,25 @@ fi
     SshSessionInfo state,
   ) async {
     try {
+      final windowsResult = await _execute(client, _windowsSystemInfoCommand());
+      if (windowsResult.exitCode == 0 &&
+          windowsResult.stdout.contains('--WINDOWS--')) {
+        final values = windowsResult.stdout
+            .split('\n')
+            .where((line) => line.isNotEmpty && line != '--WINDOWS--')
+            .toList();
+        if (values.isNotEmpty && identical(_sessions[state.serverId], client)) {
+          _set(
+            (_states[state.serverId] ?? state).copyWith(
+              systemInfo: ServerSystemInfo(
+                distribution: values.first,
+                kernel: values.length > 1 ? values[1] : null,
+              ),
+            ),
+          );
+        }
+        return;
+      }
       final session = await client.execute(r"""sh -c '
 if command -v sw_vers >/dev/null 2>&1; then
   printf "%s %s\n" "$(sw_vers -productName)" "$(sw_vers -productVersion)"
@@ -3741,3 +3827,68 @@ class _SshWebServerRemote implements WebServerRemote {
   @override
   String quote(String value) => quoteFn(value);
 }
+
+String _windowsActivityCommand() => encodePowerShellCommand(r'''
+$ErrorActionPreference = 'Stop'
+$os = Get-CimInstance Win32_OperatingSystem
+$processors = @(Get-CimInstance Win32_Processor)
+$cpuCount = [int](($processors | Measure-Object NumberOfLogicalProcessors -Sum).Sum)
+$loadPercent = [double](($processors | Measure-Object LoadPercentage -Average).Average)
+$load = if ($cpuCount -gt 0) { $loadPercent * $cpuCount / 100 } else { 0 }
+$pageFiles = @(Get-CimInstance Win32_PageFileUsage)
+$swapTotalKb = [int64](($pageFiles | Measure-Object AllocatedBaseSize -Sum).Sum)
+$swapUsedKb = [int64](($pageFiles | Measure-Object CurrentUsage -Sum).Sum)
+$disk = Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'"
+$net = @(Get-NetAdapterStatistics -ErrorAction SilentlyContinue)
+$rx = [int64](($net | Measure-Object ReceivedBytes -Sum).Sum)
+$tx = [int64](($net | Measure-Object SentBytes -Sum).Sum)
+Write-Output '--WINDOWS--'
+Write-Output '--CPUUSAGE--'
+$loadPercent
+Write-Output '--LOAD--'
+$load
+Write-Output '--CPU--'
+$cpuCount
+Write-Output '--MEM--'
+"MemTotal: $($os.TotalVisibleMemorySize)"
+"MemAvailable: $($os.FreePhysicalMemory)"
+Write-Output '--SWAP--'
+"SwapTotal: $swapTotalKb"
+"SwapFree: $([math]::Max(0, $swapTotalKb - $swapUsedKb))"
+Write-Output '--DISK--'
+if ($null -ne $disk) {
+  "DiskTotal: $([int64]($disk.Size / 1KB))"
+  "DiskAvailable: $([int64]($disk.FreeSpace / 1KB))"
+}
+Write-Output '--NET--'
+"RxBytes: $rx"
+"TxBytes: $tx"
+Write-Output '--UPTIME--'
+[int64](([DateTime]::UtcNow - $os.LastBootUpTime.ToUniversalTime()).TotalSeconds)
+''');
+
+String _windowsProcessCommand(int limit) => encodePowerShellCommand('''
+\$ErrorActionPreference = 'Stop'
+\$os = Get-CimInstance Win32_OperatingSystem
+\$totalMemory = [double]\$os.TotalVisibleMemorySize * 1KB
+Write-Output '--WINDOWS--'
+Get-Process |
+  Sort-Object WorkingSet64 -Descending |
+  Select-Object -First $limit |
+  ForEach-Object {
+    \$memoryPercent = if (\$totalMemory -gt 0) {
+      100 * \$_.WorkingSet64 / \$totalMemory
+    } else { 0 }
+    '{0} {1} 0 {2} {3} {4}' -f \$_.Id, \$env:USERNAME,
+      ([math]::Round(\$memoryPercent, 2)),
+      ([int64](\$_.WorkingSet64 / 1KB)), \$_.ProcessName
+  }
+''');
+
+String _windowsSystemInfoCommand() => encodePowerShellCommand(r'''
+$ErrorActionPreference = 'Stop'
+$os = Get-CimInstance Win32_OperatingSystem
+Write-Output '--WINDOWS--'
+$os.Caption
+$os.Version
+''');
