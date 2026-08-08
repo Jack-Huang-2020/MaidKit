@@ -5,8 +5,9 @@ import 'package:uuid/uuid.dart';
 
 /// Owns vault database files after they have been selected by the user.
 ///
-/// Keeping a private copy in the app's Documents directory makes vaults work
-/// the same way on desktop and mobile, where picker paths are not durable.
+/// Keeping a private copy in the application support directory makes vaults
+/// work the same way on desktop and mobile, where picker paths are not
+/// durable, without placing app data in the user's Documents folder.
 class VaultFileStorage {
   static const _directoryName = 'vaults';
   static const _extension = '.maidkit';
@@ -47,10 +48,8 @@ class VaultFileStorage {
   }
 
   Future<Directory> _vaultDirectory() async {
-    final documents = await getApplicationDocumentsDirectory();
-    return Directory(
-      '${documents.path}/$_directoryName',
-    ).create(recursive: true);
+    final support = await getApplicationSupportDirectory();
+    return Directory('${support.path}/$_directoryName').create(recursive: true);
   }
 
   /// The final path segment, tolerating both '/' and '\' separators.
