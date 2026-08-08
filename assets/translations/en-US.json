@@ -1013,6 +1013,8 @@
   "serversAddSheetTitle": "Add SSH server",
   "serversArrange": "Arrange servers",
   "serversArrangeHint": "Drag a server onto another server to place it before that server.",
+  "serversCompactView": "Compact view",
+  "serversDetailedView": "Detailed view",
   "serversCollectionDisabled": "Information collection is disabled for this server.",
   "serversConnect": "Connect",
   "serversConnectToViewStats": "Connect to view load, memory, and uptime.",

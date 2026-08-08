@@ -1013,6 +1013,8 @@
   "serversAddSheetTitle": "添加 SSH 服务器",
   "serversArrange": "排列服务器",
   "serversArrangeHint": "将服务器拖到另一台服务器上，即可排在该服务器之前。",
+  "serversCompactView": "紧凑视图",
+  "serversDetailedView": "详细视图",
   "serversCollectionDisabled": "此服务器已禁用信息收集。",
   "serversConnect": "连接",
   "serversConnectToViewStats": "连接后查看负载、内存和运行时间。",

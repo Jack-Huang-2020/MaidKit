@@ -1013,6 +1013,8 @@
   "serversAddSheetTitle": "新增 SSH 伺服器",
   "serversArrange": "排列伺服器",
   "serversArrangeHint": "將伺服器拖曳到另一臺伺服器上，即可排在該伺服器之前。",
+  "serversCompactView": "緊湊檢視",
+  "serversDetailedView": "詳細檢視",
   "serversCollectionDisabled": "此伺服器已停用資訊收集。",
   "serversConnect": "連線",
   "serversConnectToViewStats": "連線後檢視負載、記憶體和執行時間。",

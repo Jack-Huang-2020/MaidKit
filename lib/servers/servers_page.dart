@@ -292,6 +292,7 @@ class _ServerGrid extends StatefulWidget {
 class _ServerGridState extends State<_ServerGrid> {
   var _isReconnecting = false;
   var _isArranging = false;
+  var _isCompactView = false;
   var _isSavingOrder = false;
   final _selectedTags = <String>{};
   List<int>? _pendingOrder;
@@ -395,33 +396,7 @@ class _ServerGridState extends State<_ServerGrid> {
                 )
               : const SizedBox.shrink(key: ValueKey('servers-reconnect-none')),
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: _ArrangeServersControl(
-              isArranging: _isArranging,
-              canArrange: widget.servers.length > 1,
-              onPressed: _isArranging
-                  ? () => setState(() => _isArranging = false)
-                  : _startArranging,
-            ),
-          ),
-        ),
-        if (_isArranging)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'serversArrangeHint'.tr(),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          )
-        else if (allTags.isNotEmpty)
+        if (allTags.isNotEmpty)
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
             child: Align(
@@ -456,6 +431,7 @@ class _ServerGridState extends State<_ServerGrid> {
                   hasScrollBody: false,
                   child: Center(child: _NoServersMatch()),
                 ),
+                SliverToBoxAdapter(child: _arrangeServersFooter(context)),
               ],
             ),
           )
@@ -467,19 +443,19 @@ class _ServerGridState extends State<_ServerGrid> {
                 SliverPadding(
                   padding: const EdgeInsets.all(24),
                   sliver: SliverGrid(
-                    gridDelegate:
-                        const SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: 380,
-                          mainAxisExtent: 320,
-                          mainAxisSpacing: 16,
-                          crossAxisSpacing: 16,
-                        ),
+                    gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 380,
+                      mainAxisExtent: _isCompactView ? 280 : 320,
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                    ),
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final server = visibleServers[index];
                       final session = sessionsByServerId[server.id];
                       final card = _ServerCard(
                         server: server,
                         session: session,
+                        compact: _isCompactView,
                         onConnect: () => widget.onConnect(server),
                         onOpenDetail: () => widget.onOpenDetail(server),
                         onOpenTerminal: () => widget.onOpenTerminal(server),
@@ -523,10 +499,59 @@ class _ServerGridState extends State<_ServerGrid> {
                     }, childCount: visibleServers.length),
                   ),
                 ),
+                SliverToBoxAdapter(child: _arrangeServersFooter(context)),
               ],
             ),
           ),
       ],
+    );
+  }
+
+  Widget _arrangeServersFooter(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () =>
+                    setState(() => _isCompactView = !_isCompactView),
+                icon: Icon(
+                  _isCompactView ? Symbols.view_agenda : Symbols.view_compact,
+                ),
+                label: Text(
+                  _isCompactView
+                      ? 'serversDetailedView'.tr()
+                      : 'serversCompactView'.tr(),
+                ),
+              ),
+              const SizedBox(width: 8),
+              _ArrangeServersControl(
+                isArranging: _isArranging,
+                canArrange: widget.servers.length > 1,
+                onPressed: _isArranging
+                    ? () => setState(() => _isArranging = false)
+                    : _startArranging,
+              ),
+            ],
+          ),
+          if (_isArranging) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'serversArrangeHint'.tr(),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -748,6 +773,7 @@ class _ServerCard extends ConsumerWidget {
   const _ServerCard({
     required this.server,
     required this.session,
+    required this.compact,
     required this.onConnect,
     required this.onOpenDetail,
     required this.onOpenTerminal,
@@ -757,6 +783,7 @@ class _ServerCard extends ConsumerWidget {
 
   final Server server;
   final SshSessionInfo? session;
+  final bool compact;
   final VoidCallback onConnect;
   final VoidCallback onOpenDetail;
   final VoidCallback onOpenTerminal;
@@ -875,6 +902,7 @@ class _ServerCard extends ConsumerWidget {
                       ? _ServerStats(
                           stats: session?.stats,
                           systemInfo: session?.systemInfo,
+                          compact: compact,
                           collectStats: server.collectStats,
                           collectSystemInfo: server.collectSystemInfo,
                         )
@@ -1169,12 +1197,14 @@ class _ServerStats extends StatelessWidget {
   const _ServerStats({
     required this.stats,
     required this.systemInfo,
+    required this.compact,
     required this.collectStats,
     required this.collectSystemInfo,
   });
 
   final ServerStats? stats;
   final ServerSystemInfo? systemInfo;
+  final bool compact;
   final bool collectStats;
   final bool collectSystemInfo;
 
@@ -1242,14 +1272,16 @@ class _ServerStats extends StatelessWidget {
                   valueColor: _memoryColor(memoryRatio, colorScheme),
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _StatTile(
-                  label: 'detailUptime'.tr(),
-                  value: _formatUptime(stats!.uptime),
-                  detail: _uptimeDetail(stats!.uptime),
+              if (!compact) ...[
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _StatTile(
+                    label: 'detailUptime'.tr(),
+                    value: _formatUptime(stats!.uptime),
+                    detail: _uptimeDetail(stats!.uptime),
+                  ),
                 ),
-              ),
+              ],
             ],
           )
         else if (collectStats)
