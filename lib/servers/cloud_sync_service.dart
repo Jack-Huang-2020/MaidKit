@@ -624,6 +624,22 @@ class CloudSyncService {
     if (session.refreshToken == null || session.refreshToken!.isEmpty) {
       return null;
     }
+    final inFlight = _refreshFuture;
+    if (inFlight != null) return inFlight;
+    final refresh = _refreshSession(session);
+    _refreshFuture = refresh;
+    try {
+      return await refresh;
+    } finally {
+      if (identical(_refreshFuture, refresh)) _refreshFuture = null;
+    }
+  }
+
+  // The account session is shared by every vault-specific service instance.
+  // Keep refresh-token rotation single-use within this process.
+  static Future<_Session?>? _refreshFuture;
+
+  Future<_Session?> _refreshSession(_Session session) async {
     try {
       final refreshed = await _exchange((await _discover()).tokenEndpoint, {
         'grant_type': 'refresh_token',
@@ -632,9 +648,29 @@ class CloudSyncService {
       }, previous: session);
       await _saveSession(refreshed);
       return refreshed;
-    } on DioException {
+    } on DioException catch (error) {
+      if (_isInvalidRefreshResponse(error)) {
+        await _clearSessionIfUnchanged(session);
+      }
       return null;
     }
+  }
+
+  bool _isInvalidRefreshResponse(DioException error) {
+    final status = error.response?.statusCode;
+    // OAuth token endpoints use 400 (invalid_grant) for an expired, rotated,
+    // or otherwise invalid refresh token. A 401 is likewise unrecoverable.
+    return status == 400 || status == 401;
+  }
+
+  Future<void> _clearSessionIfUnchanged(_Session session) async {
+    final current = await _readSession();
+    if (current == null ||
+        current.accessToken != session.accessToken ||
+        current.refreshToken != session.refreshToken) {
+      return;
+    }
+    await _storage.delete(key: _sessionKey);
   }
 
   Future<_OidcConfiguration> _discover() async {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
@@ -290,5 +291,108 @@ void main() {
 
     expect(user?.name, 'Little Sheep');
     expect(requestedPaths, ['/stargate/accounts/me']);
+  });
+
+  test('shares one in-flight refresh across service instances', () async {
+    final storage = _MemoryStorage();
+    var tokenExchanges = 0;
+    final tokenStarted = Completer<void>();
+    final releaseToken = Completer<void>();
+    final dio = Dio()
+      ..httpClientAdapter = _CannedAdapter((options) async {
+        switch (options.uri.path) {
+          case '/.well-known/openid-configuration':
+            return _json({
+              'authorization_endpoint': 'https://id.solian.app/authorize',
+              'token_endpoint': 'https://id.solian.app/token',
+            }, 200);
+          case '/token':
+            tokenExchanges++;
+            if (tokenExchanges == 1) {
+              tokenStarted.complete();
+              await releaseToken.future;
+              return _json({
+                'access_token': 'fresh-token',
+                'refresh_token': 'rotated-refresh',
+                'expires_in': 3600,
+              }, 200);
+            }
+            return _json({'error': 'invalid_grant'}, 400);
+          default:
+            return _json({}, 404);
+        }
+      });
+    storage.values[_sessionKey] = jsonEncode({
+      'access_token': 'stale-token',
+      'refresh_token': 'stale-refresh',
+      'expires_at': DateTime.now()
+          .subtract(const Duration(minutes: 1))
+          .toUtc()
+          .toIso8601String(),
+    });
+    final firstService = CloudSyncService(
+      vaultId: 'first-vault',
+      secureStorage: storage,
+      dio: dio,
+    );
+    final secondService = CloudSyncService(
+      vaultId: 'second-vault',
+      secureStorage: storage,
+      dio: dio,
+    );
+
+    final first = firstService.accessToken();
+    await tokenStarted.future;
+    final second = secondService.accessToken();
+    releaseToken.complete();
+
+    expect(await Future.wait([first, second]), ['fresh-token', 'fresh-token']);
+    expect(tokenExchanges, 1);
+    expect(
+      storage.values[_sessionKey],
+      contains('rotated-refresh'),
+      reason: 'the rotated refresh token must be persisted',
+    );
+  });
+
+  test('drops a session after an invalid refresh grant', () async {
+    final storage = _MemoryStorage();
+    var tokenExchanges = 0;
+    final dio = Dio()
+      ..httpClientAdapter = _CannedAdapter((options) async {
+        switch (options.uri.path) {
+          case '/.well-known/openid-configuration':
+            return _json({
+              'authorization_endpoint': 'https://id.solian.app/authorize',
+              'token_endpoint': 'https://id.solian.app/token',
+            }, 200);
+          case '/token':
+            tokenExchanges++;
+            return _json({
+              'error': 'invalid_grant',
+              'error_description': 'Refresh token has been invalidated',
+            }, 400);
+          default:
+            return _json({}, 404);
+        }
+      });
+    storage.values[_sessionKey] = jsonEncode({
+      'access_token': 'stale-token',
+      'refresh_token': 'invalid-refresh',
+      'expires_at': DateTime.now()
+          .subtract(const Duration(minutes: 1))
+          .toUtc()
+          .toIso8601String(),
+    });
+    final service = CloudSyncService(
+      vaultId: 'test-vault',
+      secureStorage: storage,
+      dio: dio,
+    );
+
+    expect(await service.accessToken(), isNull);
+    expect(storage.values.containsKey(_sessionKey), isFalse);
+    expect(await service.accessToken(), isNull);
+    expect(tokenExchanges, 1);
   });
 }
