@@ -441,13 +441,13 @@ class _ServerGridState extends State<_ServerGrid> {
               slivers: [
                 const SliverToBoxAdapter(child: GithubWorkflowStatusStrip()),
                 SliverPadding(
-                  padding: const EdgeInsets.all(24),
+                  padding: EdgeInsets.all(_isCompactView ? 16 : 24),
                   sliver: SliverGrid(
                     gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: 380,
-                      mainAxisExtent: _isCompactView ? 280 : 320,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
+                      maxCrossAxisExtent: _isCompactView ? 320 : 380,
+                      mainAxisExtent: _isCompactView ? 264 : 320,
+                      mainAxisSpacing: _isCompactView ? 12 : 16,
+                      crossAxisSpacing: _isCompactView ? 12 : 16,
                     ),
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final server = visibleServers[index];
@@ -514,7 +514,7 @@ class _ServerGridState extends State<_ServerGrid> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
               OutlinedButton.icon(
                 onPressed: () =>
@@ -812,23 +812,26 @@ class _ServerCard extends ConsumerWidget {
         // card itself (terminal, files, refresh).
         onTap: isLocal ? null : onOpenDetail,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: EdgeInsets.symmetric(vertical: compact ? 8 : 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Padding(
-                padding: const EdgeInsets.only(left: 16, right: 8),
+                padding: EdgeInsets.only(
+                  left: compact ? 12 : 16,
+                  right: compact ? 4 : 8,
+                ),
                 child: Row(
                   children: [
                     Icon(
                       isLocal ? Symbols.computer : Symbols.dns,
                       fill: connected ? 1 : 0,
-                      size: 22,
+                      size: compact ? 20 : 22,
                       color: connected
                           ? colorScheme.primary
                           : colorScheme.onSurfaceVariant,
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: compact ? 8 : 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -889,10 +892,10 @@ class _ServerCard extends ConsumerWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: compact ? 8 : 12),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 12),
                   child: isSerial
                       ? _StatsMessage(
                           icon: Symbols.usb,
@@ -912,11 +915,11 @@ class _ServerCard extends ConsumerWidget {
                         ),
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: compact ? 8 : 12),
               const Divider(height: 1),
-              const SizedBox(height: 10),
+              SizedBox(height: compact ? 6 : 10),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: EdgeInsets.symmetric(horizontal: compact ? 12 : 16),
                 child: Row(
                   children: [
                     _ConnectionStatus(
@@ -943,10 +946,11 @@ class _ServerCard extends ConsumerWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: compact ? 4 : 8),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: EdgeInsets.symmetric(horizontal: compact ? 12 : 16),
                 child: _ServerQuickActions(
+                  compact: compact,
                   onOpenTerminal: connecting ? null : onOpenTerminal,
                   onOpenFiles: connecting || isSerial ? null : onOpenFiles,
                 ),
@@ -1012,8 +1016,13 @@ class _ServerBadges extends StatelessWidget {
 }
 
 class _ServerQuickActions extends StatelessWidget {
-  const _ServerQuickActions({this.onOpenTerminal, this.onOpenFiles});
+  const _ServerQuickActions({
+    this.compact = false,
+    this.onOpenTerminal,
+    this.onOpenFiles,
+  });
 
+  final bool compact;
   final VoidCallback? onOpenTerminal;
   final VoidCallback? onOpenFiles;
 
@@ -1027,6 +1036,9 @@ class _ServerQuickActions extends StatelessWidget {
               Expanded(
                 child: FilledButton.icon(
                   onPressed: onOpenTerminal,
+                  style: ButtonStyle(
+                    visualDensity: compact ? VisualDensity.compact : null,
+                  ),
                   icon: const Icon(Symbols.terminal, size: 18),
                   label: Text('sessionsNewTerminal'.tr()),
                 ),
@@ -1036,6 +1048,7 @@ class _ServerQuickActions extends StatelessWidget {
                 message: 'sessionsOpenFileManagement'.tr(),
                 child: IconButton.outlined(
                   onPressed: onOpenFiles,
+                  visualDensity: compact ? VisualDensity.compact : null,
                   icon: const Icon(Symbols.folder, size: 18),
                 ),
               ),
@@ -1048,8 +1061,9 @@ class _ServerQuickActions extends StatelessWidget {
             Expanded(
               child: FilledButton.icon(
                 onPressed: onOpenTerminal,
-                style: const ButtonStyle(
-                  padding: WidgetStatePropertyAll(
+                style: ButtonStyle(
+                  visualDensity: compact ? VisualDensity.compact : null,
+                  padding: const WidgetStatePropertyAll(
                     EdgeInsets.symmetric(horizontal: 8),
                   ),
                 ),
@@ -1061,8 +1075,9 @@ class _ServerQuickActions extends StatelessWidget {
             Expanded(
               child: OutlinedButton.icon(
                 onPressed: onOpenFiles,
-                style: const ButtonStyle(
-                  padding: WidgetStatePropertyAll(
+                style: ButtonStyle(
+                  visualDensity: compact ? VisualDensity.compact : null,
+                  padding: const WidgetStatePropertyAll(
                     EdgeInsets.symmetric(horizontal: 8),
                   ),
                 ),
@@ -1253,18 +1268,23 @@ class _ServerStats extends StatelessWidget {
             children: [
               Expanded(
                 child: _StatTile(
+                  compact: compact,
                   label: 'detailLoadAverage'.tr(),
                   value: stats!.loadAverage?.toStringAsFixed(2) ?? '—',
-                  detail: _loadDetail(stats!.loadAverage),
+                  detail: compact ? null : _loadDetail(stats!.loadAverage),
                   valueColor: _loadColor(stats!.loadAverage, colorScheme),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _StatTile(
+                  compact: compact,
                   label: 'detailMemory'.tr(),
                   value: memoryPercent == null ? '—' : '$memoryPercent%',
-                  detail: usedMemoryKb == null || stats!.memoryTotalKb == null
+                  detail:
+                      compact ||
+                          usedMemoryKb == null ||
+                          stats!.memoryTotalKb == null
                       ? null
                       : '${_formatBytes(usedMemoryKb * 1024)} / ${_formatBytes(stats!.memoryTotalKb! * 1024)}',
                   progress: memoryRatio,
@@ -1289,7 +1309,7 @@ class _ServerStats extends StatelessWidget {
             icon: Symbols.query_stats,
             message: 'serversStatsUnavailable'.tr(),
           ),
-        if (systemLabel.isNotEmpty) ...[
+        if (!compact && systemLabel.isNotEmpty) ...[
           const SizedBox(height: 8),
           Text(
             systemLabel,
@@ -1300,7 +1320,7 @@ class _ServerStats extends StatelessWidget {
             ),
           ).padding(horizontal: 4),
         ],
-        if (stats?.updatedAt != null) ...[
+        if (!compact && stats?.updatedAt != null) ...[
           Text(
             'detailRefreshDetailsAt'.tr(
               args: [_formatRelative(stats!.updatedAt)],
@@ -1385,6 +1405,7 @@ class _StatTile extends StatelessWidget {
   const _StatTile({
     required this.label,
     required this.value,
+    this.compact = false,
     this.detail,
     this.progress,
     this.progressColor,
@@ -1393,6 +1414,7 @@ class _StatTile extends StatelessWidget {
 
   final String label;
   final String value;
+  final bool compact;
   final String? detail;
   final double? progress;
   final Color? progressColor;
@@ -1411,7 +1433,12 @@ class _StatTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+        padding: EdgeInsets.fromLTRB(
+          compact ? 8 : 10,
+          compact ? 7 : 10,
+          compact ? 8 : 10,
+          compact ? 7 : 10,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1423,17 +1450,18 @@ class _StatTile extends StatelessWidget {
                 color: colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: compact ? 2 : 4),
             Text(
               value,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: textTheme.titleMedium?.copyWith(
-                color: resolvedValueColor,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
+              style: (compact ? textTheme.titleSmall : textTheme.titleMedium)
+                  ?.copyWith(
+                    color: resolvedValueColor,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: compact ? 4 : 8),
             if (progress != null)
               ClipRRect(
                 borderRadius: BorderRadius.circular(999),
@@ -1447,16 +1475,18 @@ class _StatTile extends StatelessWidget {
                 ),
               )
             else
-              const SizedBox(height: 4),
-            const SizedBox(height: 6),
-            Text(
-              detail ?? ' ',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: textTheme.labelSmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
+              SizedBox(height: compact ? 0 : 4),
+            if (!compact) ...[
+              const SizedBox(height: 6),
+              Text(
+                detail ?? ' ',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: textTheme.labelSmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),
