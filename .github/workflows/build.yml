@@ -198,6 +198,21 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
+      - name: Check R2 upload credentials
+        id: check-r2-secrets
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+          S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+        run: |
+          if [ -n "$R2_ACCOUNT_ID" ] && [ -n "$S3_ACCESS_KEY_ID" ] && [ -n "$S3_SECRET_ACCESS_KEY" ] && [ -n "$S3_BUCKET_NAME" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+            echo "R2 upload credentials are configured."
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "R2 upload credentials are NOT configured; skipping R2 upload."
+          fi
       - if: needs.build-windows.result == 'success'
         name: Download Windows installer artifact
         uses: actions/download-artifact@v4
@@ -242,7 +257,7 @@ jobs:
         run: |
           mkdir -p ./artifacts/android-r2
           find ./artifacts/android -type f -name 'app-*-release.apk' -exec cp {} ./artifacts/android-r2/ \;
-      - if: needs.build-windows.result == 'success'
+      - if: needs.build-windows.result == 'success' && steps.check-r2-secrets.outputs.configured == 'true'
         name: Upload Windows installer to R2
         uses: ryand56/r2-upload-action@latest
         with:
@@ -252,7 +267,7 @@ jobs:
           r2-bucket: ${{ secrets.S3_BUCKET_NAME }}
           source-dir: ./artifacts/build-output-windows-installer.zip
           destination-dir: maidkit
-      - if: needs.build-linux.result == 'success'
+      - if: needs.build-linux.result == 'success' && steps.check-r2-secrets.outputs.configured == 'true'
         name: Upload Linux to R2
         uses: ryand56/r2-upload-action@latest
         with:
@@ -262,7 +277,7 @@ jobs:
           r2-bucket: ${{ secrets.S3_BUCKET_NAME }}
           source-dir: ./artifacts/build-output-linux-appimage.zip
           destination-dir: maidkit
-      - if: needs.build-macos.result == 'success'
+      - if: needs.build-macos.result == 'success' && steps.check-r2-secrets.outputs.configured == 'true'
         name: Upload macOS to R2
         uses: ryand56/r2-upload-action@latest
         with:
@@ -272,7 +287,7 @@ jobs:
           r2-bucket: ${{ secrets.S3_BUCKET_NAME }}
           source-dir: ./artifacts/build-output-macos.zip
           destination-dir: maidkit
-      - if: needs.build-android.result == 'success'
+      - if: needs.build-android.result == 'success' && steps.check-r2-secrets.outputs.configured == 'true'
         name: Upload Android split APKs to R2
         uses: ryand56/r2-upload-action@latest
         with:
