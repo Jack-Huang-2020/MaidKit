@@ -131,7 +131,11 @@ jobs:
           cache: true
       - run: flutter pub get
       - run: dart run build_runner build --delete-conflicting-outputs
-      - run: flutter build macos --release
+      # macOS CI runners have no Apple signing certificate/provisioning
+      # profile for dev.solsynth.maid, so the Release build falls back to
+      # --no-codesign. The unsigned .app is still archived as an artifact;
+      # sign and notarize it locally before distributing.
+      - run: flutter build macos --release --no-codesign
       - name: Archive production artifacts
         uses: actions/upload-artifact@v4
         with:
