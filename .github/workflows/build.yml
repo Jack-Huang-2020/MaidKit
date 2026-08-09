@@ -139,7 +139,11 @@ jobs:
         with:
           channel: stable
           cache: true
+      # Only attempt release signing when the keystore secret is configured.
+      # Without it the build falls back to the Android debug signing config
+      # (see android/app/build.gradle.kts), so CI still succeeds.
       - name: Configure Android signing
+        if: secrets.ANDROID_KEYSTORE_BASE64 != ''
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
