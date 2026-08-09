@@ -498,7 +498,7 @@ class _PaneTabBar extends ConsumerWidget {
                         .read(terminalTabsProvider.notifier)
                         .splitEmpty(SessionSplitAxis.horizontal);
                   },
-                  icon: const Icon(Symbols.vertical_split, size: 20),
+                  icon: const Icon(Symbols.vertical_split_rounded, size: 20),
                 ),
                 IconButton(
                   tooltip: 'sessionsSplitDown'.tr(),
@@ -514,7 +514,7 @@ class _PaneTabBar extends ConsumerWidget {
                         .read(terminalTabsProvider.notifier)
                         .splitEmpty(SessionSplitAxis.vertical);
                   },
-                  icon: const Icon(Symbols.horizontal_split, size: 20),
+                  icon: const Icon(Symbols.horizontal_split_rounded, size: 20),
                 ),
                 IconButton(
                   tooltip: 'sessionsSessionActions'.tr(),
@@ -528,7 +528,7 @@ class _PaneTabBar extends ConsumerWidget {
                     ref.read(terminalTabsProvider.notifier).focusPane(paneId);
                     showTerminalCommandPalette(context, ref);
                   },
-                  icon: const Icon(Symbols.add, size: 20),
+                  icon: const Icon(Symbols.add_rounded, size: 20),
                 ),
                 if (showClosePane)
                   IconButton(
@@ -542,7 +542,7 @@ class _PaneTabBar extends ConsumerWidget {
                     onPressed: () => ref
                         .read(terminalTabsProvider.notifier)
                         .closePane(paneId),
-                    icon: const Icon(Symbols.close, size: 18),
+                    icon: const Icon(Symbols.close_rounded, size: 18),
                   ),
                 const SizedBox(width: 4),
               ],
@@ -729,7 +729,7 @@ class _PaneTabChip extends StatelessWidget {
                         minHeight: 28,
                       ),
                       onPressed: onClose,
-                      icon: const Icon(Symbols.close, size: 16),
+                      icon: const Icon(Symbols.close_rounded, size: 16),
                     ),
                 ],
               ),
@@ -766,7 +766,7 @@ class _TabActivityIcon extends StatelessWidget {
               ),
             );
           }
-          return Icon(Symbols.terminal, size: 16, color: color);
+          return Icon(Symbols.terminal_rounded, size: 16, color: color);
         },
       );
     }
@@ -892,11 +892,11 @@ class _SessionTabBody extends ConsumerWidget {
 }
 
 IconData _tabIcon(SessionTab tab) => switch (tab.type) {
-  SessionTabType.dashboard => Symbols.dashboard,
-  SessionTabType.serverDetail => Symbols.dns,
-  SessionTabType.terminal => Symbols.terminal,
-  SessionTabType.fileManagement => Symbols.folder,
-  SessionTabType.fileEditor => Symbols.edit_document,
+  SessionTabType.dashboard => Symbols.dashboard_rounded,
+  SessionTabType.serverDetail => Symbols.dns_rounded,
+  SessionTabType.terminal => Symbols.terminal_rounded,
+  SessionTabType.fileManagement => Symbols.folder_rounded,
+  SessionTabType.fileEditor => Symbols.edit_document_rounded,
 };
 
 String _tabLabel(SessionTab tab) {
@@ -1037,7 +1037,7 @@ class _TerminalStatusBarState extends ConsumerState<_TerminalStatusBar> {
         _StatusBarIdentity(session: activeSession),
       if (_latency case final latency?)
         _StatusBarMetric(
-          icon: Symbols.network_ping,
+          icon: Symbols.network_ping_rounded,
           tooltip: 'terminalSshPing'.tr(),
           value: '${latency.inMilliseconds} ms',
           valueColor: _statusBarPingColor(latency, scheme),
@@ -1046,7 +1046,7 @@ class _TerminalStatusBarState extends ConsumerState<_TerminalStatusBar> {
         ),
       if (stats?.loadAverage case final load?)
         _StatusBarMetric(
-          icon: Symbols.speed,
+          icon: Symbols.speed_rounded,
           tooltip: 'detailLoadAverage'.tr(),
           value: load.toStringAsFixed(2),
           valueColor: _statusBarLoadColor(load, scheme),
@@ -1055,7 +1055,7 @@ class _TerminalStatusBarState extends ConsumerState<_TerminalStatusBar> {
         ),
       if (usedMemoryKb != null && memoryTotalKb != null)
         _StatusBarMetric(
-          icon: Symbols.memory_alt,
+          icon: Symbols.memory_alt_rounded,
           tooltip: 'detailMemory'.tr(),
           value: _formatMemory(usedMemoryKb, memoryTotalKb),
           valueColor: _statusBarMemoryColor(memoryRatio, scheme),
@@ -1064,7 +1064,7 @@ class _TerminalStatusBarState extends ConsumerState<_TerminalStatusBar> {
         ),
       if (stats?.uptime case final uptime?)
         _StatusBarMetric(
-          icon: Symbols.schedule,
+          icon: Symbols.schedule_rounded,
           tooltip: 'detailUptime'.tr(),
           value: _formatUptime(uptime),
           mutedStyle: mutedStyle,
@@ -1219,7 +1219,7 @@ class _TerminalQuickKeysState extends State<_TerminalQuickKeys> {
                 ? 'terminalKeysFewer'.tr()
                 : 'terminalKeysMore'.tr(),
             onPressed: _toggle,
-            icon: Icon(_expanded ? Symbols.expand_less : Symbols.expand_more),
+            icon: Icon(_expanded ? Symbols.expand_less_rounded : Symbols.expand_more_rounded),
           ),
         ],
       ),
@@ -1366,7 +1366,7 @@ class _SessionIntro extends StatelessWidget {
         ? Center(
             child: FilledButton.icon(
               onPressed: () => AutoTabsRouter.of(context).setActiveIndex(0),
-              icon: const Icon(Symbols.add),
+              icon: const Icon(Symbols.add_rounded),
               label: Text('serversAddServer'.tr()),
             ),
           )
@@ -1419,7 +1419,7 @@ class _TerminalServerGrid extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Symbols.terminal, size: 22),
+                const Icon(Symbols.terminal_rounded, size: 22),
                 const SizedBox(height: 12),
                 Text(
                   server.name,
@@ -1482,13 +1482,13 @@ class _ServerCardActions extends StatelessWidget {
                 tooltip: 'sessionsNewTerminal'.tr(),
                 visualDensity: VisualDensity.compact,
                 onPressed: onOpenTerminal,
-                icon: const Icon(Symbols.add, size: 20),
+                icon: const Icon(Symbols.add_rounded, size: 20),
               ),
               IconButton(
                 tooltip: 'sessionsOpenFileManagement'.tr(),
                 visualDensity: VisualDensity.compact,
                 onPressed: onOpenFiles,
-                icon: const Icon(Symbols.folder, size: 20),
+                icon: const Icon(Symbols.folder_rounded, size: 20),
               ),
             ],
           );
@@ -1502,14 +1502,14 @@ class _ServerCardActions extends StatelessWidget {
             const Spacer(),
             FilledButton.tonalIcon(
               onPressed: onOpenTerminal,
-              icon: const Icon(Symbols.add),
+              icon: const Icon(Symbols.add_rounded),
               label: Text('sessionsNewTerminal'.tr()),
             ),
             const SizedBox(width: 8),
             IconButton(
               tooltip: 'sessionsOpenFileManagement'.tr(),
               onPressed: onOpenFiles,
-              icon: const Icon(Symbols.folder),
+              icon: const Icon(Symbols.folder_rounded),
             ),
           ],
         );

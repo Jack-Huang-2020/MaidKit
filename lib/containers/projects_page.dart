@@ -127,7 +127,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
         showStyledSnackBar(
           message: 'deploymentExportSuccess'.tr(),
           title: 'deploymentExportComplete'.tr(),
-          icon: Symbols.check_circle,
+          icon: Symbols.check_circle_rounded,
         );
       }
     } catch (error) {
@@ -135,7 +135,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
         showStyledSnackBar(
           message: '$error',
           title: 'deploymentExportError'.tr(),
-          icon: Symbols.error,
+          icon: Symbols.error_rounded,
           accentColor: Theme.of(context).colorScheme.error,
         );
       }
@@ -159,7 +159,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
               ? 'deploymentImportSuccessOne'.tr()
               : 'deploymentImportSuccessOther'.tr(args: ['$count']),
           title: 'deploymentImportComplete'.tr(),
-          icon: Symbols.check_circle,
+          icon: Symbols.check_circle_rounded,
         );
       }
     } catch (error) {
@@ -167,7 +167,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
         showStyledSnackBar(
           message: '$error',
           title: 'deploymentImportError'.tr(),
-          icon: Symbols.error,
+          icon: Symbols.error_rounded,
           accentColor: Theme.of(context).colorScheme.error,
         );
       }
@@ -291,12 +291,12 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
                           child: Text('deploymentExportCatalog'.tr()),
                         ),
                       ],
-                      icon: const Icon(Symbols.import_export),
+                      icon: const Icon(Symbols.import_export_rounded),
                     ),
                     const SizedBox(width: 8),
                     FilledButton.icon(
                       onPressed: _create,
-                      icon: const Icon(Symbols.add, size: 18),
+                      icon: const Icon(Symbols.add_rounded, size: 18),
                       label: Text('deploymentNewProject'.tr()),
                     ),
                   ],
@@ -313,12 +313,12 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
                           decoration: InputDecoration(
                             isDense: true,
                             hintText: 'deploymentSearchHint'.tr(),
-                            prefixIcon: const Icon(Symbols.search, size: 20),
+                            prefixIcon: const Icon(Symbols.search_rounded, size: 20),
                             suffixIcon: _query.isEmpty
                                 ? null
                                 : IconButton(
                                     tooltip: 'deploymentClearTooltip'.tr(),
-                                    icon: const Icon(Symbols.close, size: 18),
+                                    icon: const Icon(Symbols.close_rounded, size: 18),
                                     onPressed: () {
                                       _searchController.clear();
                                       setState(() => _query = '');
@@ -364,7 +364,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                Symbols.sort,
+                                Symbols.sort_rounded,
                                 size: 18,
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
@@ -421,7 +421,7 @@ class _ProjectsPageState extends ConsumerState<ProjectsPage> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              Symbols.search_off,
+                              Symbols.search_off_rounded,
                               size: 36,
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
@@ -680,7 +680,7 @@ class _ProjectCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(Symbols.deployed_code, color: scheme.primary),
+                  Icon(Symbols.deployed_code_rounded, color: scheme.primary),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -710,7 +710,7 @@ class _ProjectCard extends StatelessWidget {
                       ),
                     ],
                     icon: Icon(
-                      Symbols.more_vert,
+                      Symbols.more_vert_rounded,
                       size: 20,
                       color: scheme.onSurfaceVariant,
                     ),
@@ -749,7 +749,7 @@ class _ProjectCard extends StatelessWidget {
                       ),
                     if (orderedKinds.length > 4)
                       _KindChip(
-                        icon: Symbols.more_horiz,
+                        icon: Symbols.more_horiz_rounded,
                         label: '+${orderedKinds.length - 4}',
                       ),
                   ],
@@ -777,7 +777,7 @@ class _ProjectCard extends StatelessWidget {
                         color: scheme.onSurfaceVariant,
                       ),
                     ),
-                    Icon(Symbols.dns, size: 14, color: scheme.onSurfaceVariant),
+                    Icon(Symbols.dns_rounded, size: 14, color: scheme.onSurfaceVariant),
                     const SizedBox(width: 4),
                     Flexible(
                       child: Text(
@@ -791,7 +791,7 @@ class _ProjectCard extends StatelessWidget {
                   ],
                   const Spacer(),
                   Icon(
-                    Symbols.chevron_right,
+                    Symbols.chevron_right_rounded,
                     size: 18,
                     color: scheme.onSurfaceVariant,
                   ),
@@ -846,7 +846,7 @@ class _EmptyState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Symbols.deployed_code,
+              Symbols.deployed_code_rounded,
               size: 40,
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -869,12 +869,12 @@ class _EmptyState extends StatelessWidget {
               children: [
                 FilledButton.icon(
                   onPressed: onCreate,
-                  icon: const Icon(Symbols.add, size: 18),
+                  icon: const Icon(Symbols.add_rounded, size: 18),
                   label: Text('deploymentNewProject'.tr()),
                 ),
                 OutlinedButton.icon(
                   onPressed: onImport,
-                  icon: const Icon(Symbols.upload, size: 18),
+                  icon: const Icon(Symbols.upload_rounded, size: 18),
                   label: Text('deploymentImportToml'.tr()),
                 ),
               ],

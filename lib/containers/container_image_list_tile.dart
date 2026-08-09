@@ -51,7 +51,7 @@ class ContainerImageListTile extends StatelessWidget {
             child: Row(
               children: [
                 Icon(
-                  image.isDangling ? Symbols.broken_image : Symbols.image,
+                  image.isDangling ? Symbols.broken_image_rounded : Symbols.image_rounded,
                   size: 18,
                   color: mutedIcon ? scheme.onSurfaceVariant : scheme.primary,
                 ),
@@ -146,7 +146,7 @@ class ContainerImageListTile extends StatelessWidget {
           ] else if (onOpen != null) ...[
             const SizedBox(width: 4),
             Icon(
-              Symbols.chevron_right,
+              Symbols.chevron_right_rounded,
               size: 18,
               color: scheme.onSurfaceVariant,
             ),

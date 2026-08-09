@@ -353,7 +353,7 @@ class _ComposeDetailPageState extends ConsumerState<ComposeDetailPage> {
       showStyledSnackBar(
         title: 'composeDetailActionSuccess'.tr(args: [action.label]),
         message: widget.projectName,
-        icon: Symbols.check_circle,
+        icon: Symbols.check_circle_rounded,
         accentColor: Theme.of(context).colorScheme.primary,
       );
       await _loadContainers();
@@ -362,7 +362,7 @@ class _ComposeDetailPageState extends ConsumerState<ComposeDetailPage> {
       showStyledSnackBar(
         title: 'composeDetailActionError'.tr(args: [action.label]),
         message: error.toString(),
-        icon: Symbols.error,
+        icon: Symbols.error_rounded,
         accentColor: Theme.of(context).colorScheme.error,
       );
     } finally {
@@ -389,7 +389,7 @@ class _ComposeDetailPageState extends ConsumerState<ComposeDetailPage> {
       showStyledSnackBar(
         title: 'deploymentContainerSuccess'.tr(args: [action.pastLabel]),
         message: container.name,
-        icon: Symbols.check_circle,
+        icon: Symbols.check_circle_rounded,
         accentColor: Theme.of(context).colorScheme.primary,
       );
       await _loadContainers();
@@ -398,7 +398,7 @@ class _ComposeDetailPageState extends ConsumerState<ComposeDetailPage> {
       showStyledSnackBar(
         title: 'deploymentActionFailed'.tr(),
         message: error.toString(),
-        icon: Symbols.error,
+        icon: Symbols.error_rounded,
         accentColor: Theme.of(context).colorScheme.error,
       );
     }
@@ -423,7 +423,7 @@ class _ComposeDetailPageState extends ConsumerState<ComposeDetailPage> {
     showStyledSnackBar(
       title: title,
       message: 'commonCopiedToClipboard'.tr(),
-      icon: Symbols.content_copy,
+      icon: Symbols.content_copy_rounded,
       accentColor: Theme.of(context).colorScheme.primary,
     );
   }
@@ -449,7 +449,7 @@ class _ComposeDetailPageState extends ConsumerState<ComposeDetailPage> {
             onPressed: connected && !_actionBusy
                 ? () => unawaited(_bootstrap())
                 : null,
-            icon: const Icon(Symbols.refresh),
+            icon: const Icon(Symbols.refresh_rounded),
           ),
           PopupMenuButton<String>(
             enabled: connected && !_actionBusy,
@@ -496,7 +496,7 @@ class _ComposeDetailPageState extends ConsumerState<ComposeDetailPage> {
       ),
       body: !connected && containers == null
           ? _EmptyBody(
-              icon: Symbols.link_off,
+              icon: Symbols.link_off_rounded,
               message: session?.error ?? 'composeDetailConnectToInspect'.tr(),
               actionLabel: 'commonConnect'.tr(),
               onAction: _connect,
@@ -704,7 +704,7 @@ class _ComposeOverviewPanel extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(
-                runningCount > 0 ? Symbols.play_circle : Symbols.stop_circle,
+                runningCount > 0 ? Symbols.play_circle_rounded : Symbols.stop_circle_rounded,
                 color: runningCount > 0
                     ? scheme.primary
                     : scheme.onSurfaceVariant,
@@ -783,7 +783,7 @@ class _ComposeOverviewPanel extends StatelessWidget {
           const SizedBox(height: 16),
           FilledButton.icon(
             onPressed: onConnect,
-            icon: const Icon(Symbols.link, size: 18),
+            icon: const Icon(Symbols.link_rounded, size: 18),
             label: const Text('commonConnect').tr(),
           ),
         ] else ...[
@@ -796,21 +796,21 @@ class _ComposeOverviewPanel extends StatelessWidget {
                 onPressed: actionBusy
                     ? null
                     : () => onAction(ComposeProjectAction.up),
-                icon: const Icon(Symbols.play_arrow, size: 18),
+                icon: const Icon(Symbols.play_arrow_rounded, size: 18),
                 label: const Text('deploymentQuickActionStart').tr(),
               ),
               OutlinedButton.icon(
                 onPressed: actionBusy
                     ? null
                     : () => onAction(ComposeProjectAction.stop),
-                icon: const Icon(Symbols.stop, size: 18),
+                icon: const Icon(Symbols.stop_rounded, size: 18),
                 label: const Text('deploymentQuickActionStop').tr(),
               ),
               OutlinedButton.icon(
                 onPressed: actionBusy
                     ? null
                     : () => onAction(ComposeProjectAction.restart),
-                icon: const Icon(Symbols.restart_alt, size: 18),
+                icon: const Icon(Symbols.restart_alt_rounded, size: 18),
                 label: const Text('deploymentQuickActionRestart').tr(),
               ),
             ],
@@ -818,7 +818,7 @@ class _ComposeOverviewPanel extends StatelessWidget {
           const SizedBox(height: 8),
           OutlinedButton.icon(
             onPressed: onRefresh,
-            icon: const Icon(Symbols.refresh, size: 18),
+            icon: const Icon(Symbols.refresh_rounded, size: 18),
             label: Text('commonRefresh'.tr()),
           ),
         ],
@@ -932,15 +932,15 @@ class _ComposeDetailTabs extends StatelessWidget {
             dividerColor: scheme.outlineVariant,
             tabs: [
               Tab(
-                icon: const Icon(Symbols.deployed_code, size: 18),
+                icon: const Icon(Symbols.deployed_code_rounded, size: 18),
                 text: 'composeDetailServices'.tr(),
               ),
               Tab(
-                icon: const Icon(Symbols.terminal, size: 18),
+                icon: const Icon(Symbols.terminal_rounded, size: 18),
                 text: 'containerLogs'.tr(),
               ),
               Tab(
-                icon: const Icon(Symbols.description, size: 18),
+                icon: const Icon(Symbols.description_rounded, size: 18),
                 text: 'composeDetailComposeFile'.tr(),
               ),
             ],
@@ -1030,7 +1030,7 @@ class _ServicesPane extends StatelessWidget {
               IconButton(
                 tooltip: 'deploymentRefreshContainers'.tr(),
                 onPressed: onRefresh,
-                icon: const Icon(Symbols.refresh, size: 18),
+                icon: const Icon(Symbols.refresh_rounded, size: 18),
               ),
             ],
           ),
@@ -1041,7 +1041,7 @@ class _ServicesPane extends StatelessWidget {
               ? const Center(child: CircularProgressIndicator())
               : error != null && containers.isEmpty
               ? _EmptyBody(
-                  icon: Symbols.error_outline,
+                  icon: Symbols.error_outline_rounded,
                   message: 'deploymentStackLoadError'.tr(
                     args: [error.toString()],
                   ),
@@ -1050,7 +1050,7 @@ class _ServicesPane extends StatelessWidget {
                 )
               : containers.isEmpty
               ? _EmptyBody(
-                  icon: Symbols.inventory_2,
+                  icon: Symbols.inventory_2_rounded,
                   message: 'deploymentNoComposeContainers'.tr(),
                   actionLabel: 'commonRefresh'.tr(),
                   onAction: () async => onRefresh(),
@@ -1178,7 +1178,7 @@ class _ComposeLogsPane extends StatelessWidget {
                 const SizedBox(width: 8),
                 Chip(
                   avatar: Icon(
-                    Symbols.sensors,
+                    Symbols.sensors_rounded,
                     size: 16,
                     color: scheme.primary,
                   ),
@@ -1195,7 +1195,7 @@ class _ComposeLogsPane extends StatelessWidget {
                 onPressed: logs == null || logs!.isEmpty
                     ? null
                     : () => onCopy(logs!, title: 'containerLogsCopied'.tr()),
-                icon: const Icon(Symbols.content_copy),
+                icon: const Icon(Symbols.content_copy_rounded),
               ),
               IconButton(
                 tooltip: following
@@ -1208,7 +1208,7 @@ class _ComposeLogsPane extends StatelessWidget {
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Icon(Symbols.refresh),
+                    : const Icon(Symbols.refresh_rounded),
               ),
             ],
           ),
@@ -1219,7 +1219,7 @@ class _ComposeLogsPane extends StatelessWidget {
               ? const Center(child: CircularProgressIndicator())
               : error != null && logs == null
               ? _EmptyBody(
-                  icon: Symbols.error_outline,
+                  icon: Symbols.error_outline_rounded,
                   message: 'containerLogsError'.tr(args: [error.toString()]),
                   actionLabel: 'commonRetry'.tr(),
                   onAction: () async => onRefresh(),
@@ -1230,7 +1230,7 @@ class _ComposeLogsPane extends StatelessWidget {
                   child: AnsiLogView(text: logs ?? '', streaming: true),
                 )
               : _EmptyBody(
-                  icon: Symbols.terminal,
+                  icon: Symbols.terminal_rounded,
                   message: 'containerNoLogsYet'.tr(),
                   actionLabel: 'containerFollowLogs'.tr(),
                   onAction: () async => onRefresh(),
@@ -1283,12 +1283,12 @@ class _ComposeFilePane extends StatelessWidget {
                         file!.$1,
                         title: 'composeDetailFileCopied'.tr(),
                       ),
-                icon: const Icon(Symbols.content_copy),
+                icon: const Icon(Symbols.content_copy_rounded),
               ),
               IconButton(
                 tooltip: 'commonRefresh'.tr(),
                 onPressed: onRefresh,
-                icon: const Icon(Symbols.refresh, size: 18),
+                icon: const Icon(Symbols.refresh_rounded, size: 18),
               ),
             ],
           ),
@@ -1299,7 +1299,7 @@ class _ComposeFilePane extends StatelessWidget {
               ? const Center(child: CircularProgressIndicator())
               : error != null && file == null
               ? _EmptyBody(
-                  icon: Symbols.error_outline,
+                  icon: Symbols.error_outline_rounded,
                   message: 'composeDetailComposeFileError'.tr(
                     args: [error.toString()],
                   ),
@@ -1308,7 +1308,7 @@ class _ComposeFilePane extends StatelessWidget {
                 )
               : file == null
               ? _EmptyBody(
-                  icon: Symbols.description,
+                  icon: Symbols.description_rounded,
                   message: 'composeDetailNoComposeFile'.tr(),
                 )
               : ListView(

@@ -133,7 +133,7 @@ class _SystemdTabState extends ConsumerState<SystemdTab> {
       showStyledSnackBar(
         message: error.toString(),
         title: 'systemdServiceActionFailed'.tr(),
-        icon: Symbols.error,
+        icon: Symbols.error_rounded,
         accentColor: Theme.of(context).colorScheme.error,
       );
     } finally {
@@ -304,7 +304,7 @@ class _SystemdTabState extends ConsumerState<SystemdTab> {
   Widget build(BuildContext context) {
     if (!widget.connected) {
       return _ServicesEmpty(
-        icon: Symbols.link_off,
+        icon: Symbols.link_off_rounded,
         message: widget.connectionError ?? 'systemdConnectToManage'.tr(),
         actionLabel: 'commonConnect'.tr(),
         onAction: widget.onConnect,
@@ -315,7 +315,7 @@ class _SystemdTabState extends ConsumerState<SystemdTab> {
     return _snapshot.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => _ServicesEmpty(
-        icon: Symbols.error_outline,
+        icon: Symbols.error_outline_rounded,
         message: 'systemdLoadError'.tr(args: ['$error']),
         actionLabel: 'systemdTryAgain'.tr(),
         onAction: _load,
@@ -323,7 +323,7 @@ class _SystemdTabState extends ConsumerState<SystemdTab> {
       data: (snapshot) {
         if (!snapshot.available) {
           return _ServicesEmpty(
-            icon: Symbols.settings_applications,
+            icon: Symbols.settings_applications_rounded,
             message: snapshot.error ?? 'systemdNotAvailable'.tr(),
             actionLabel: 'commonRefresh'.tr(),
             onAction: _load,
@@ -345,7 +345,7 @@ class _SystemdTabState extends ConsumerState<SystemdTab> {
                   Row(
                     children: [
                       Icon(
-                        Symbols.settings_applications,
+                        Symbols.settings_applications_rounded,
                         size: 20,
                         color: scheme.primary,
                       ),
@@ -377,7 +377,7 @@ class _SystemdTabState extends ConsumerState<SystemdTab> {
                         tooltip: 'commonRefresh'.tr(),
                         visualDensity: VisualDensity.compact,
                         onPressed: _busy ? null : _load,
-                        icon: const Icon(Symbols.refresh),
+                        icon: const Icon(Symbols.refresh_rounded),
                       ),
                     ],
                   ),
@@ -388,13 +388,13 @@ class _SystemdTabState extends ConsumerState<SystemdTab> {
                     decoration: InputDecoration(
                       isDense: true,
                       hintText: 'systemdFilterHint'.tr(),
-                      prefixIcon: const Icon(Symbols.search, size: 20),
+                      prefixIcon: const Icon(Symbols.search_rounded, size: 20),
                       suffixIcon: _searchController.text.isEmpty
                           ? null
                           : IconButton(
                               tooltip: 'systemdClearFilter'.tr(),
                               onPressed: () => _searchController.clear(),
-                              icon: const Icon(Symbols.close, size: 18),
+                              icon: const Icon(Symbols.close_rounded, size: 18),
                             ),
                       filled: false,
                       contentPadding: const EdgeInsets.symmetric(vertical: 10),
@@ -425,7 +425,7 @@ class _SystemdTabState extends ConsumerState<SystemdTab> {
             Expanded(
               child: filtered.isEmpty
                   ? _ServicesEmpty(
-                      icon: Symbols.settings_applications,
+                      icon: Symbols.settings_applications_rounded,
                       message: snapshot.units.isEmpty
                           ? 'systemdNoServices'.tr()
                           : 'systemdNoFilterMatch'.tr(),
@@ -497,47 +497,47 @@ class _ServiceTile extends StatelessWidget {
       if (!unit.isActive)
         MenuAction(
           title: 'systemdStart'.tr(),
-          image: MenuImage.icon(Symbols.play_arrow),
+          image: MenuImage.icon(Symbols.play_arrow_rounded),
           callback: () => onAction(SystemdUnitAction.start),
         ),
       if (unit.isActive) ...[
         MenuAction(
           title: 'systemdStop'.tr(),
-          image: MenuImage.icon(Symbols.stop),
+          image: MenuImage.icon(Symbols.stop_rounded),
           callback: () => onAction(SystemdUnitAction.stop),
         ),
         MenuAction(
           title: 'systemdRestart'.tr(),
-          image: MenuImage.icon(Symbols.restart_alt),
+          image: MenuImage.icon(Symbols.restart_alt_rounded),
           callback: () => onAction(SystemdUnitAction.restart),
         ),
         MenuAction(
           title: 'systemdReload'.tr(),
-          image: MenuImage.icon(Symbols.sync),
+          image: MenuImage.icon(Symbols.sync_rounded),
           callback: () => onAction(SystemdUnitAction.reload),
         ),
       ],
       if (unit.canEnable)
         MenuAction(
           title: 'systemdEnableBoot'.tr(),
-          image: MenuImage.icon(Symbols.toggle_on),
+          image: MenuImage.icon(Symbols.toggle_on_rounded),
           callback: () => onAction(SystemdUnitAction.enable),
         ),
       if (unit.canDisable)
         MenuAction(
           title: 'systemdDisableBoot'.tr(),
-          image: MenuImage.icon(Symbols.toggle_off),
+          image: MenuImage.icon(Symbols.toggle_off_rounded),
           callback: () => onAction(SystemdUnitAction.disable),
         ),
       MenuSeparator(),
       MenuAction(
         title: 'systemdStatus'.tr(),
-        image: MenuImage.icon(Symbols.info),
+        image: MenuImage.icon(Symbols.info_rounded),
         callback: onStatus,
       ),
       MenuAction(
         title: 'systemdLogs'.tr(),
-        image: MenuImage.icon(Symbols.terminal),
+        image: MenuImage.icon(Symbols.terminal_rounded),
         callback: onLogs,
       ),
     ],
@@ -581,10 +581,10 @@ class _ServiceTile extends StatelessWidget {
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         leading: Icon(
           unit.isFailed
-              ? Symbols.error
+              ? Symbols.error_rounded
               : unit.isActive
-              ? Symbols.play_circle
-              : Symbols.stop_circle,
+              ? Symbols.play_circle_rounded
+              : Symbols.stop_circle_rounded,
           color: statusColor,
         ),
         title: Text(
@@ -725,7 +725,7 @@ class _UnitTextSheetState extends State<_UnitTextSheet> {
         IconButton(
           tooltip: 'commonCopy'.tr(),
           onPressed: canCopy ? _copy : null,
-          icon: const Icon(Symbols.content_copy),
+          icon: const Icon(Symbols.content_copy_rounded),
           style: IconButton.styleFrom(minimumSize: const Size(36, 36)),
         ),
       ],

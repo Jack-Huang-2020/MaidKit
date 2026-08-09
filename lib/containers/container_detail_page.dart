@@ -350,7 +350,7 @@ class _ContainerDetailPageState extends ConsumerState<ContainerDetailPage> {
       showStyledSnackBar(
         title: 'containerActionSuccess'.tr(args: [action.pastLabel]),
         message: name,
-        icon: Symbols.check_circle,
+        icon: Symbols.check_circle_rounded,
         accentColor: Theme.of(context).colorScheme.primary,
       );
       if (action == ContainerAction.remove) {
@@ -363,7 +363,7 @@ class _ContainerDetailPageState extends ConsumerState<ContainerDetailPage> {
       showStyledSnackBar(
         title: 'containerActionError'.tr(args: [action.label.toLowerCase()]),
         message: error.toString(),
-        icon: Symbols.error,
+        icon: Symbols.error_rounded,
         accentColor: Theme.of(context).colorScheme.error,
       );
     } finally {
@@ -377,7 +377,7 @@ class _ContainerDetailPageState extends ConsumerState<ContainerDetailPage> {
     showStyledSnackBar(
       title: title,
       message: 'commonCopiedToClipboard'.tr(),
-      icon: Symbols.content_copy,
+      icon: Symbols.content_copy_rounded,
       accentColor: Theme.of(context).colorScheme.primary,
     );
   }
@@ -443,7 +443,7 @@ class _ContainerDetailPageState extends ConsumerState<ContainerDetailPage> {
       showStyledSnackBar(
         title: 'containerRecreateSuccess'.tr(),
         message: cleanName,
-        icon: Symbols.check_circle,
+        icon: Symbols.check_circle_rounded,
         accentColor: Theme.of(context).colorScheme.primary,
       );
       // The old id is gone; pop so the caller can refresh its list.
@@ -453,7 +453,7 @@ class _ContainerDetailPageState extends ConsumerState<ContainerDetailPage> {
       showStyledSnackBar(
         title: 'containerRecreateError'.tr(),
         message: error.toString(),
-        icon: Symbols.error,
+        icon: Symbols.error_rounded,
         accentColor: Theme.of(context).colorScheme.error,
       );
     } finally {
@@ -529,7 +529,7 @@ class _ContainerDetailPageState extends ConsumerState<ContainerDetailPage> {
             onPressed: connected && !_actionBusy
                 ? () => unawaited(_bootstrap())
                 : null,
-            icon: const Icon(Symbols.refresh),
+            icon: const Icon(Symbols.refresh_rounded),
           ),
           PopupMenuButton<String>(
             enabled: connected && !_actionBusy,
@@ -610,7 +610,7 @@ class _ContainerDetailPageState extends ConsumerState<ContainerDetailPage> {
       ),
       body: !connected && inspect == null
           ? _EmptyBody(
-              icon: Symbols.link_off,
+              icon: Symbols.link_off_rounded,
               message: session?.error ?? 'containerConnectToInspect'.tr(),
               actionLabel: 'commonConnect'.tr(),
               onAction: _connect,
@@ -868,14 +868,14 @@ class _OverviewPanel extends StatelessWidget {
           const SizedBox(height: 16),
           FilledButton.icon(
             onPressed: onConnect,
-            icon: const Icon(Symbols.link, size: 18),
+            icon: const Icon(Symbols.link_rounded, size: 18),
             label: const Text('commonConnect').tr(),
           ),
         ] else ...[
           const SizedBox(height: 8),
           OutlinedButton.icon(
             onPressed: onRefresh,
-            icon: const Icon(Symbols.refresh, size: 18),
+            icon: const Icon(Symbols.refresh_rounded, size: 18),
             label: Text('commonRefresh'.tr()),
           ),
         ],
@@ -928,7 +928,7 @@ class _IdentityBlock extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(
-          running ? Symbols.play_circle : Symbols.stop_circle,
+          running ? Symbols.play_circle_rounded : Symbols.stop_circle_rounded,
           color: running ? scheme.primary : scheme.onSurfaceVariant,
         ),
         const SizedBox(width: 12),
@@ -1144,15 +1144,15 @@ class _InspectorTabs extends StatelessWidget {
             dividerColor: scheme.outlineVariant,
             tabs: [
               Tab(
-                icon: const Icon(Symbols.terminal, size: 18),
+                icon: const Icon(Symbols.terminal_rounded, size: 18),
                 text: 'containerLogs'.tr(),
               ),
               Tab(
-                icon: const Icon(Symbols.replay, size: 18),
+                icon: const Icon(Symbols.replay_rounded, size: 18),
                 text: 'containerReRunCommand'.tr(),
               ),
               Tab(
-                icon: const Icon(Symbols.info, size: 18),
+                icon: const Icon(Symbols.info_rounded, size: 18),
                 text: 'containerDetails'.tr(),
               ),
             ],
@@ -1260,7 +1260,7 @@ class _LogsPane extends StatelessWidget {
                 const SizedBox(width: 8),
                 Chip(
                   avatar: Icon(
-                    Symbols.sensors,
+                    Symbols.sensors_rounded,
                     size: 16,
                     color: scheme.primary,
                   ),
@@ -1277,7 +1277,7 @@ class _LogsPane extends StatelessWidget {
                 onPressed: logs == null || logs!.isEmpty
                     ? null
                     : () => onCopy(logs!, title: 'containerLogsCopied'.tr()),
-                icon: const Icon(Symbols.content_copy),
+                icon: const Icon(Symbols.content_copy_rounded),
               ),
               IconButton(
                 tooltip: following
@@ -1290,7 +1290,7 @@ class _LogsPane extends StatelessWidget {
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Icon(Symbols.refresh),
+                    : const Icon(Symbols.refresh_rounded),
               ),
             ],
           ),
@@ -1301,7 +1301,7 @@ class _LogsPane extends StatelessWidget {
               ? const Center(child: CircularProgressIndicator())
               : error != null && logs == null
               ? _EmptyBody(
-                  icon: Symbols.error_outline,
+                  icon: Symbols.error_outline_rounded,
                   message: 'containerLogsError'.tr(args: [error.toString()]),
                   actionLabel: 'commonRetry'.tr(),
                   onAction: () async => onRefresh(),
@@ -1312,7 +1312,7 @@ class _LogsPane extends StatelessWidget {
                   child: AnsiLogView(text: logs ?? '', streaming: true),
                 )
               : _EmptyBody(
-                  icon: Symbols.terminal,
+                  icon: Symbols.terminal_rounded,
                   message: 'containerNoLogsYet'.tr(),
                   actionLabel: 'containerFollowLogs'.tr(),
                   onAction: () async => onRefresh(),
@@ -1342,7 +1342,7 @@ class _RerunPane extends StatelessWidget {
     final scheme = theme.colorScheme;
     if (inspect == null) {
       return _EmptyBody(
-        icon: Symbols.replay,
+        icon: Symbols.replay_rounded,
         message: 'containerInspectToGenerate'.tr(),
       );
     }
@@ -1380,13 +1380,13 @@ class _RerunPane extends StatelessWidget {
             FilledButton.icon(
               onPressed: () =>
                   onCopy(command, title: 'containerCommandCopied'.tr()),
-              icon: const Icon(Symbols.content_copy, size: 18),
+              icon: const Icon(Symbols.content_copy_rounded, size: 18),
               label: const Text('containerCopyCommand').tr(),
             ),
             const SizedBox(width: 8),
             OutlinedButton.icon(
               onPressed: onRecreate,
-              icon: const Icon(Symbols.replay, size: 18),
+              icon: const Icon(Symbols.replay_rounded, size: 18),
               label: const Text('containerReCreateInspect').tr(),
             ),
           ],
@@ -1487,7 +1487,7 @@ class _DetailsPane extends StatelessWidget {
     }
     if (inspect == null) {
       return _EmptyBody(
-        icon: Symbols.error_outline,
+        icon: Symbols.error_outline_rounded,
         message: error == null
             ? 'containerNoDetailsAvailable'.tr()
             : 'containerCouldNotInspect'.tr(args: [error.toString()]),
@@ -1519,12 +1519,12 @@ class _DetailsPane extends StatelessWidget {
               tooltip: 'containerCopyJson'.tr(),
               onPressed: () =>
                   onCopy(prettyJson, title: 'containerInspectJsonCopied'.tr()),
-              icon: const Icon(Symbols.content_copy, size: 18),
+              icon: const Icon(Symbols.content_copy_rounded, size: 18),
             ),
             IconButton(
               tooltip: 'commonRefresh'.tr(),
               onPressed: onRefresh,
-              icon: const Icon(Symbols.refresh, size: 18),
+              icon: const Icon(Symbols.refresh_rounded, size: 18),
             ),
           ],
         ),

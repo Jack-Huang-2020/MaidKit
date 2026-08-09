@@ -43,7 +43,7 @@ class _GitHubSectionState extends ConsumerState<GitHubSection> {
         Row(
           children: [
             Icon(
-              Symbols.rocket_launch,
+              Symbols.rocket_launch_rounded,
               size: 20,
               color: theme.colorScheme.primary,
             ),
@@ -88,7 +88,7 @@ class _SignedOutView extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Icon(Symbols.rocket_launch, size: 48, color: scheme.primary),
+              Icon(Symbols.rocket_launch_rounded, size: 48, color: scheme.primary),
               const SizedBox(height: 16),
               Text(
                 'githubSignInTitle'.tr(),
@@ -144,7 +144,7 @@ class _SignedOutView extends ConsumerWidget {
                 FilledButton.icon(
                   onPressed: () =>
                       ref.read(githubSignInProvider.notifier).start(),
-                  icon: const Icon(Symbols.login),
+                  icon: const Icon(Symbols.login_rounded),
                   label: Text('githubSignIn'.tr()),
                 ),
             ],
@@ -210,7 +210,7 @@ class _DeviceCodeCard extends ConsumerWidget {
                       showSnackBar('commonCopiedToClipboard'.tr());
                     }
                   },
-                  icon: const Icon(Symbols.content_copy, size: 18),
+                  icon: const Icon(Symbols.content_copy_rounded, size: 18),
                 ),
               ],
             ),
@@ -223,7 +223,7 @@ class _DeviceCodeCard extends ConsumerWidget {
                   child: OutlinedButton.icon(
                     onPressed: () =>
                         launchUrl(Uri.parse(signIn.verificationUri!)),
-                    icon: const Icon(Symbols.open_in_new, size: 18),
+                    icon: const Icon(Symbols.open_in_new_rounded, size: 18),
                     label: Text('githubOpenBrowser'.tr()),
                   ),
                 ),
@@ -285,7 +285,7 @@ class _SignedInView extends ConsumerWidget {
       children: [
         _AccountHeader(connection: connection),
         const SizedBox(height: 20),
-        _SectionHeader(icon: Symbols.push_pin, title: 'githubPinnedRepos'.tr()),
+        _SectionHeader(icon: Symbols.push_pin_rounded, title: 'githubPinnedRepos'.tr()),
         const SizedBox(height: 8),
         if (pinned.isEmpty)
           Text(
@@ -302,7 +302,7 @@ class _SignedInView extends ConsumerWidget {
               for (final pin in pinned)
                 InputChip(
                   label: Text('${pin.owner}/${pin.name}'),
-                  avatar: const Icon(Symbols.inventory_2, size: 18),
+                  avatar: const Icon(Symbols.inventory_2_rounded, size: 18),
                   onDeleted: () =>
                       ref.read(githubRepositoryProvider).unpinRepo(pin),
                 ),
@@ -312,7 +312,7 @@ class _SignedInView extends ConsumerWidget {
         Align(
           alignment: Alignment.centerLeft,
           child: ActionChip(
-            avatar: const Icon(Symbols.add, size: 18),
+            avatar: const Icon(Symbols.add_rounded, size: 18),
             label: Text('githubAddRepo'.tr()),
             onPressed: () => _openRepoPicker(context, ref, pinned),
           ),
@@ -321,7 +321,7 @@ class _SignedInView extends ConsumerWidget {
         Row(
           children: [
             _SectionHeader(
-              icon: Symbols.rocket_launch,
+              icon: Symbols.rocket_launch_rounded,
               title: 'githubRuns'.tr(),
             ),
             const Spacer(),
@@ -329,7 +329,7 @@ class _SignedInView extends ConsumerWidget {
               tooltip: 'githubRefresh'.tr(),
               onPressed: () =>
                   ref.read(githubRefreshTickProvider.notifier).refresh(),
-              icon: const Icon(Symbols.refresh),
+              icon: const Icon(Symbols.refresh_rounded),
             ),
           ],
         ),
@@ -361,7 +361,7 @@ class _SignedInView extends ConsumerWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Symbols.warning, size: 16, color: scheme.error),
+                  Icon(Symbols.warning_rounded, size: 16, color: scheme.error),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -422,7 +422,7 @@ class _AccountHeader extends ConsumerWidget {
               ? null
               : NetworkImage(connection.avatarUrl),
           child: connection.avatarUrl.isEmpty
-              ? const Icon(Symbols.person, size: 20)
+              ? const Icon(Symbols.person_rounded, size: 20)
               : null,
         ),
         const SizedBox(width: 12),
@@ -450,7 +450,7 @@ class _AccountHeader extends ConsumerWidget {
             await ref.read(githubSignInProvider.notifier).signOut();
             showSnackBar('githubSignedOut'.tr());
           },
-          icon: const Icon(Symbols.logout, size: 18),
+          icon: const Icon(Symbols.logout_rounded, size: 18),
           label: Text('githubSignOut'.tr()),
         ),
       ],
@@ -560,7 +560,7 @@ class _RunTile extends StatelessWidget {
             if (run.conclusion != null)
               _ConclusionChip(conclusion: run.conclusion!),
             const SizedBox(width: 4),
-            const Icon(Symbols.chevron_right, size: 20),
+            const Icon(Symbols.chevron_right_rounded, size: 20),
           ],
         ),
         onTap: () => context.router.push(
@@ -622,12 +622,12 @@ class _RepoPickerSheetState extends ConsumerState<_RepoPickerSheet> {
                 decoration: InputDecoration(
                   isDense: true,
                   hintText: 'githubSearchRepos'.tr(),
-                  prefixIcon: const Icon(Symbols.search, size: 20),
+                  prefixIcon: const Icon(Symbols.search_rounded, size: 20),
                   suffixIcon: _query.isEmpty
                       ? null
                       : IconButton(
                           tooltip: 'commonClearSearch'.tr(),
-                          icon: const Icon(Symbols.close, size: 18),
+                          icon: const Icon(Symbols.close_rounded, size: 18),
                           onPressed: () {
                             _search.clear();
                             setState(() => _query = '');
@@ -647,7 +647,7 @@ class _RepoPickerSheetState extends ConsumerState<_RepoPickerSheet> {
                         final pinned = widget.pinnedSlugs.contains(repo.slug);
                         return ListTile(
                           leading: Icon(
-                            repo.private ? Symbols.lock : Symbols.inventory_2,
+                            repo.private ? Symbols.lock_rounded : Symbols.inventory_2_rounded,
                             size: 20,
                           ),
                           title: Text(repo.slug),
@@ -659,7 +659,7 @@ class _RepoPickerSheetState extends ConsumerState<_RepoPickerSheet> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                           trailing: pinned
-                              ? const Icon(Symbols.check_circle, size: 18)
+                              ? const Icon(Symbols.check_circle_rounded, size: 18)
                               : null,
                           enabled: !pinned,
                           onTap: pinned

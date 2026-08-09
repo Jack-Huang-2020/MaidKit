@@ -327,7 +327,7 @@ class _DeployTerminalModalState extends ConsumerState<_DeployTerminalModal> {
           IconButton(
             tooltip: 'Hide (keeps running)',
             onPressed: _hide,
-            icon: const Icon(Symbols.keyboard_arrow_down),
+            icon: const Icon(Symbols.keyboard_arrow_down_rounded),
           ),
       ],
       child: Column(
@@ -355,12 +355,12 @@ class _DeployTerminalModalState extends ConsumerState<_DeployTerminalModal> {
                         iconMargin: const EdgeInsets.only(right: 6),
                         icon: Icon(
                           item.status == DeploySessionStatus.running
-                              ? Symbols.progress_activity
+                              ? Symbols.progress_activity_rounded
                               : item.status == DeploySessionStatus.succeeded
-                              ? Symbols.check_circle
+                              ? Symbols.check_circle_rounded
                               : item.status == DeploySessionStatus.cancelled
-                              ? Symbols.cancel
-                              : Symbols.error,
+                              ? Symbols.cancel_rounded
+                              : Symbols.error_rounded,
                           size: 16,
                         ),
                         text: item.subtitle,
@@ -385,10 +385,10 @@ class _DeployTerminalModalState extends ConsumerState<_DeployTerminalModal> {
                 else
                   Icon(
                     session.status == DeploySessionStatus.succeeded
-                        ? Symbols.check_circle
+                        ? Symbols.check_circle_rounded
                         : session.status == DeploySessionStatus.cancelled
-                        ? Symbols.cancel
-                        : Symbols.error,
+                        ? Symbols.cancel_rounded
+                        : Symbols.error_rounded,
                     size: 16,
                     color: statusColor,
                   ),
@@ -493,14 +493,14 @@ class _DeployTerminalModalState extends ConsumerState<_DeployTerminalModal> {
                             .read(deploySessionsProvider.notifier)
                             .terminate(session.id),
                       ),
-                      icon: const Icon(Symbols.stop_circle, size: 18),
+                      icon: const Icon(Symbols.stop_circle_rounded, size: 18),
                       label: Text('deployTerminate'.tr()),
                     ),
                 if (session.isRunning) const SizedBox(width: 8),
                 if (session.isRunning)
                   OutlinedButton.icon(
                     onPressed: _hide,
-                    icon: const Icon(Symbols.keyboard_arrow_down, size: 18),
+                    icon: const Icon(Symbols.keyboard_arrow_down_rounded, size: 18),
                     label: Text('deployHide'.tr()),
                   )
                 else
@@ -607,7 +607,7 @@ class DeploySessionsRailButton extends ConsumerWidget {
                   Stack(
                     alignment: Alignment.center,
                     children: [
-                      Icon(Symbols.terminal, color: color),
+                      Icon(Symbols.terminal_rounded, color: color),
                       if (running)
                         Positioned(
                           right: 10,

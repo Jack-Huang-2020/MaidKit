@@ -568,7 +568,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
       showStyledSnackBar(
         message: 'The server for this file session is no longer available.',
         title: 'Could not open terminal',
-        icon: Symbols.error,
+        icon: Symbols.error_rounded,
         accentColor: Theme.of(context).colorScheme.error,
       );
       return;
@@ -823,7 +823,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
           decoration: InputDecoration(
             hintText: 'fileManagerSearch'.tr(),
             isDense: true,
-            prefixIcon: const Icon(Symbols.search, size: 16),
+            prefixIcon: const Icon(Symbols.search_rounded, size: 16),
             suffixIcon: controller.text.isEmpty
                 ? null
                 : IconButton(
@@ -834,7 +834,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
                       minWidth: 28,
                       minHeight: 28,
                     ),
-                    icon: const Icon(Symbols.close, size: 16),
+                    icon: const Icon(Symbols.close_rounded, size: 16),
                     onPressed: () => setState(() => controller.clear()),
                   ),
             border: const OutlineInputBorder(),
@@ -857,7 +857,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
       onPressed: () => _toggleSearch(side),
-      icon: Icon(open ? Symbols.close : Symbols.search, size: 18),
+      icon: Icon(open ? Symbols.close_rounded : Symbols.search_rounded, size: 18),
     );
   }
 
@@ -1019,7 +1019,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
         showStyledSnackBar(
           message: name,
           title: 'fileManagerRenamed'.tr(),
-          icon: Symbols.check_circle,
+          icon: Symbols.check_circle_rounded,
           accentColor: Theme.of(context).colorScheme.primary,
         );
       }
@@ -1028,7 +1028,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
         showStyledSnackBar(
           message: error.toString(),
           title: 'fileManagerRenameFailed'.tr(),
-          icon: Symbols.error,
+          icon: Symbols.error_rounded,
           accentColor: Theme.of(context).colorScheme.error,
         );
       }
@@ -1069,7 +1069,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
         showStyledSnackBar(
           message: name,
           title: 'fileManagerFolderCreated'.tr(),
-          icon: Symbols.check_circle,
+          icon: Symbols.check_circle_rounded,
           accentColor: Theme.of(context).colorScheme.primary,
         );
       }
@@ -1078,7 +1078,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
         showStyledSnackBar(
           message: error.toString(),
           title: 'fileManagerCreateFolderFailed'.tr(),
-          icon: Symbols.error,
+          icon: Symbols.error_rounded,
           accentColor: Theme.of(context).colorScheme.error,
         );
       }
@@ -1105,8 +1105,8 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
           ? 'fileManagerCopied'.tr()
           : 'fileManagerCut'.tr(),
       icon: mode == _ClipboardMode.copy
-          ? Symbols.content_copy
-          : Symbols.content_cut,
+          ? Symbols.content_copy_rounded
+          : Symbols.content_cut_rounded,
       accentColor: Theme.of(context).colorScheme.primary,
     );
   }
@@ -1151,7 +1151,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
               ? data.entries.first.name
               : '${data.entries.length} items',
           title: 'fileManagerTransferQueued'.tr(),
-          icon: Symbols.schedule,
+          icon: Symbols.schedule_rounded,
           accentColor: Theme.of(context).colorScheme.primary,
         );
       }
@@ -1160,7 +1160,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
         showStyledSnackBar(
           message: error.toString(),
           title: 'fileManagerDropFailed'.tr(),
-          icon: Symbols.error,
+          icon: Symbols.error_rounded,
           accentColor: Theme.of(context).colorScheme.error,
         );
       }
@@ -1194,7 +1194,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
           title: transferPaste
               ? 'fileManagerTransferQueued'.tr()
               : 'fileManagerDone'.tr(),
-          icon: transferPaste ? Symbols.schedule : Symbols.check_circle,
+          icon: transferPaste ? Symbols.schedule_rounded : Symbols.check_circle_rounded,
           accentColor: Theme.of(context).colorScheme.primary,
         );
       }
@@ -1203,7 +1203,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
         showStyledSnackBar(
           message: error.toString(),
           title: 'fileManagerPasteFailed'.tr(),
-          icon: Symbols.error,
+          icon: Symbols.error_rounded,
           accentColor: Theme.of(context).colorScheme.error,
         );
       }
@@ -1534,7 +1534,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
         showStyledSnackBar(
           message: result.isEmpty ? title : result,
           title: 'fileManagerUtilityCompleted'.tr(),
-          icon: Symbols.check_circle,
+          icon: Symbols.check_circle_rounded,
           accentColor: Theme.of(context).colorScheme.primary,
         );
       }
@@ -1543,7 +1543,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
         showStyledSnackBar(
           message: error.toString(),
           title: 'fileManagerUtilityFailed'.tr(args: [title]),
-          icon: Symbols.error,
+          icon: Symbols.error_rounded,
           accentColor: Theme.of(context).colorScheme.error,
         );
       }
@@ -1796,7 +1796,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
               ? entries.first.name
               : '${entries.length} items',
           title: 'fileManagerDeleted'.tr(),
-          icon: Symbols.delete,
+          icon: Symbols.delete_rounded,
           accentColor: Theme.of(context).colorScheme.primary,
         );
       }
@@ -1805,7 +1805,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
         showStyledSnackBar(
           message: error.toString(),
           title: 'fileManagerDeleteFailed'.tr(),
-          icon: Symbols.error,
+          icon: Symbols.error_rounded,
           accentColor: Theme.of(context).colorScheme.error,
         );
       }
@@ -2464,7 +2464,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
         showStyledSnackBar(
           message: transfer.title,
           title: 'fileManagerTransferComplete'.tr(),
-          icon: Symbols.check_circle,
+          icon: Symbols.check_circle_rounded,
           accentColor: Theme.of(context).colorScheme.primary,
         );
       }
@@ -2478,7 +2478,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
         showStyledSnackBar(
           message: error.toString(),
           title: 'fileManagerTransferFailed'.tr(),
-          icon: Symbols.error,
+          icon: Symbols.error_rounded,
           accentColor: Theme.of(context).colorScheme.error,
         );
       }
@@ -2554,7 +2554,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
       showStyledSnackBar(
         message: 'The server for this file session is no longer available.',
         title: 'fileManagerCouldNotOpen'.tr(args: ['']),
-        icon: Symbols.error,
+        icon: Symbols.error_rounded,
         accentColor: Theme.of(context).colorScheme.error,
       );
     }
@@ -3320,7 +3320,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
                 onPressed: _workingPath == null
                     ? () => _createFolder(_FileSide.local)
                     : null,
-                icon: const Icon(Symbols.create_new_folder, size: 18),
+                icon: const Icon(Symbols.create_new_folder_rounded, size: 18),
               ),
               IconButton(
                 tooltip: 'fileManagerUseAnotherServer'.tr(),
@@ -3328,7 +3328,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                 onPressed: _chooseLeftServer,
-                icon: const Icon(Symbols.swap_horiz, size: 18),
+                icon: const Icon(Symbols.swap_horiz_rounded, size: 18),
               ),
               // Keep local visible on mobile; collapse is desktop/wide only.
               if (!_isMobileLayout)
@@ -3349,7 +3349,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
                       _dropTargetSide = null;
                     }
                   }),
-                  icon: const Icon(Symbols.left_panel_close, size: 18),
+                  icon: const Icon(Symbols.left_panel_close_rounded, size: 18),
                 ),
             ],
             child: _LocalFileList(
@@ -3435,7 +3435,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
           onPressed: _workingPath == null
               ? () => _createFolder(_FileSide.remote)
               : null,
-          icon: const Icon(Symbols.create_new_folder, size: 18),
+          icon: const Icon(Symbols.create_new_folder_rounded, size: 18),
         ),
         if (_localCollapsed && !_isMobileLayout)
           IconButton(
@@ -3444,7 +3444,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
             onPressed: () => setState(() => _localCollapsed = false),
-            icon: const Icon(Symbols.left_panel_open, size: 18),
+            icon: const Icon(Symbols.left_panel_open_rounded, size: 18),
           ),
       ],
       child: _RemoteFileList(
@@ -3546,7 +3546,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          Symbols.upload_file,
+                          Symbols.upload_file_rounded,
                           size: 32,
                           color: scheme.primary,
                         ),
@@ -3634,7 +3634,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
           onPressed: _workingPath == null
               ? () => _createFolder(_FileSide.local)
               : null,
-          icon: const Icon(Symbols.create_new_folder, size: 18),
+          icon: const Icon(Symbols.create_new_folder_rounded, size: 18),
         ),
         IconButton(
           tooltip: 'fileManagerChangeServer'.tr(),
@@ -3642,7 +3642,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
           onPressed: _chooseLeftServer,
-          icon: const Icon(Symbols.swap_horiz, size: 18),
+          icon: const Icon(Symbols.swap_horiz_rounded, size: 18),
         ),
         if (!_isMobileLayout)
           IconButton(
@@ -3651,7 +3651,7 @@ class _FileManagementTabViewState extends ConsumerState<FileManagementTabView> {
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
             onPressed: () => setState(() => _localCollapsed = true),
-            icon: const Icon(Symbols.left_panel_close, size: 18),
+            icon: const Icon(Symbols.left_panel_close_rounded, size: 18),
           ),
       ],
       child: _RemoteFileList(
@@ -3958,7 +3958,7 @@ class _FilePane extends StatelessWidget {
                               minHeight: 28,
                             ),
                             onPressed: canGoUp ? onGoUp : null,
-                            icon: const Icon(Symbols.arrow_upward, size: 18),
+                            icon: const Icon(Symbols.arrow_upward_rounded, size: 18),
                           ),
                           if (onCopyPath != null)
                             IconButton(
@@ -3970,7 +3970,7 @@ class _FilePane extends StatelessWidget {
                                 minHeight: 28,
                               ),
                               onPressed: () => onCopyPath!(),
-                              icon: const Icon(Symbols.content_copy, size: 18),
+                              icon: const Icon(Symbols.content_copy_rounded, size: 18),
                             ),
                           if (onOpenTerminal != null)
                             IconButton(
@@ -3982,7 +3982,7 @@ class _FilePane extends StatelessWidget {
                                 minHeight: 28,
                               ),
                               onPressed: () => onOpenTerminal!(),
-                              icon: const Icon(Symbols.terminal, size: 18),
+                              icon: const Icon(Symbols.terminal_rounded, size: 18),
                             ),
                           IconButton(
                             tooltip: 'commonRefresh'.tr(),
@@ -3993,7 +3993,7 @@ class _FilePane extends StatelessWidget {
                               minHeight: 28,
                             ),
                             onPressed: loading ? null : onRefresh,
-                            icon: const Icon(Symbols.refresh, size: 18),
+                            icon: const Icon(Symbols.refresh_rounded, size: 18),
                           ),
                         ],
                       ),
@@ -4074,7 +4074,7 @@ class _LocalFileList extends StatelessWidget {
           },
           child: _DraggableFileRow(
             dragData: dragData,
-            icon: isDirectory ? Symbols.folder : Symbols.description,
+            icon: isDirectory ? Symbols.folder_rounded : Symbols.description_rounded,
             name: name,
             detail: isDirectory ? 'fileManagerFolder'.tr() : null,
             selected: selected,
@@ -4143,7 +4143,7 @@ class _RemoteFileList extends StatelessWidget {
           },
           child: _DraggableFileRow(
             dragData: dragData,
-            icon: isDirectory ? Symbols.folder : Symbols.description,
+            icon: isDirectory ? Symbols.folder_rounded : Symbols.description_rounded,
             name: entry.filename,
             detail: isDirectory
                 ? 'fileManagerFolder'.tr()

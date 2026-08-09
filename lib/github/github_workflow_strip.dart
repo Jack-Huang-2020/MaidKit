@@ -55,7 +55,7 @@ class GithubWorkflowStatusStrip extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 12, 12, 10),
               child: Row(
                 children: [
-                  Icon(Symbols.rocket_launch, size: 18, color: scheme.primary),
+                  Icon(Symbols.rocket_launch_rounded, size: 18, color: scheme.primary),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(

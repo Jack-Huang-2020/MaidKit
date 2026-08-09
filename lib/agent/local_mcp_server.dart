@@ -1013,7 +1013,7 @@ class LocalMcpToolExecutor implements LocalMcpToolInvoker {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Icon(
-                      Symbols.verified_user,
+                      Symbols.verified_user_rounded,
                       color: Theme.of(context).colorScheme.primary,
                       size: 36,
                     ),
@@ -1119,7 +1119,7 @@ class _McpApprovalCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Symbols.rule, color: scheme.primary, size: 36),
+              Icon(Symbols.rule_rounded, color: scheme.primary, size: 36),
               const SizedBox(height: 16),
               Text(
                 'mcpApprovalTitle'.tr(),
@@ -1132,14 +1132,14 @@ class _McpApprovalCard extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               _ReviewInfoRow(
-                icon: Symbols.smart_toy,
+                icon: Symbols.smart_toy_rounded,
                 label: 'mcpApprovalCaller'.tr(),
                 value: callerLabel ?? 'mcpApprovalCallerUnknown'.tr(),
               ),
               if (targetLabel != null) ...[
                 const SizedBox(height: 8),
                 _ReviewInfoRow(
-                  icon: Symbols.dns,
+                  icon: Symbols.dns_rounded,
                   label: 'mcpApprovalTarget'.tr(),
                   value: targetLabel,
                 ),

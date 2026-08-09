@@ -93,44 +93,44 @@ class _ServerTabsShell extends ConsumerWidget {
                             IconButton(
                               tooltip: 'tabSettings'.tr(),
                               onPressed: () => tabsRouter.setActiveIndex(5),
-                              icon: const Icon(Symbols.settings),
+                              icon: const Icon(Symbols.settings_rounded),
                             ),
                           ],
                         ),
                       ),
                       destinations: [
                         NavigationRailDestination(
-                          icon: const Icon(Symbols.dns),
-                          selectedIcon: const Icon(Symbols.dns, fill: 1),
+                          icon: const Icon(Symbols.dns_rounded),
+                          selectedIcon: const Icon(Symbols.dns_rounded, fill: 1),
                           label: Text('tabServers').tr(),
                         ),
                         NavigationRailDestination(
                           icon: Badge(
                             isLabelVisible: githubHasFailures,
-                            child: const Icon(Symbols.inventory_2),
+                            child: const Icon(Symbols.inventory_2_rounded),
                           ),
                           selectedIcon: Badge(
                             isLabelVisible: githubHasFailures,
-                            child: const Icon(Symbols.inventory_2, fill: 1),
+                            child: const Icon(Symbols.inventory_2_rounded, fill: 1),
                           ),
                           label: Text('tabAssets').tr(),
                         ),
                         NavigationRailDestination(
-                          icon: const Icon(Symbols.deployed_code),
+                          icon: const Icon(Symbols.deployed_code_rounded),
                           selectedIcon: const Icon(
-                            Symbols.deployed_code,
+                            Symbols.deployed_code_rounded,
                             fill: 1,
                           ),
                           label: Text('tabProjects').tr(),
                         ),
                         NavigationRailDestination(
-                          icon: const Icon(Symbols.code),
-                          selectedIcon: const Icon(Symbols.code, fill: 1),
+                          icon: const Icon(Symbols.code_rounded),
+                          selectedIcon: const Icon(Symbols.code_rounded, fill: 1),
                           label: Text('tabSnippets').tr(),
                         ),
                         const NavigationRailDestination(
-                          icon: Icon(Symbols.smart_toy),
-                          selectedIcon: Icon(Symbols.smart_toy, fill: 1),
+                          icon: Icon(Symbols.smart_toy_rounded),
+                          selectedIcon: Icon(Symbols.smart_toy_rounded, fill: 1),
                           label: Text('Agent'),
                         ),
                       ],
@@ -164,42 +164,42 @@ class _ServerTabsShell extends ConsumerWidget {
                     onDestinationSelected: tabsRouter.setActiveIndex,
                     destinations: [
                       NavigationDestination(
-                        icon: const Icon(Symbols.dns),
-                        selectedIcon: const Icon(Symbols.dns, fill: 1),
+                        icon: const Icon(Symbols.dns_rounded),
+                        selectedIcon: const Icon(Symbols.dns_rounded, fill: 1),
                         label: 'tabServers'.tr(),
                       ),
                       NavigationDestination(
                         icon: Badge(
                           isLabelVisible: githubHasFailures,
-                          child: const Icon(Symbols.inventory_2),
+                          child: const Icon(Symbols.inventory_2_rounded),
                         ),
                         selectedIcon: Badge(
                           isLabelVisible: githubHasFailures,
-                          child: const Icon(Symbols.inventory_2, fill: 1),
+                          child: const Icon(Symbols.inventory_2_rounded, fill: 1),
                         ),
                         label: 'tabAssets'.tr(),
                       ),
                       NavigationDestination(
-                        icon: const Icon(Symbols.deployed_code),
+                        icon: const Icon(Symbols.deployed_code_rounded),
                         selectedIcon: const Icon(
-                          Symbols.deployed_code,
+                          Symbols.deployed_code_rounded,
                           fill: 1,
                         ),
                         label: 'tabProjects'.tr(),
                       ),
                       NavigationDestination(
-                        icon: const Icon(Symbols.code),
-                        selectedIcon: const Icon(Symbols.code, fill: 1),
+                        icon: const Icon(Symbols.code_rounded),
+                        selectedIcon: const Icon(Symbols.code_rounded, fill: 1),
                         label: 'tabSnippets'.tr(),
                       ),
                       const NavigationDestination(
-                        icon: Icon(Symbols.smart_toy),
-                        selectedIcon: Icon(Symbols.smart_toy, fill: 1),
+                        icon: Icon(Symbols.smart_toy_rounded),
+                        selectedIcon: Icon(Symbols.smart_toy_rounded, fill: 1),
                         label: 'Agent',
                       ),
                       NavigationDestination(
-                        icon: const Icon(Symbols.settings, fill: 1),
-                        selectedIcon: const Icon(Symbols.settings),
+                        icon: const Icon(Symbols.settings_rounded, fill: 1),
+                        selectedIcon: const Icon(Symbols.settings_rounded),
                         label: 'tabSettings'.tr(),
                       ),
                     ],
@@ -230,7 +230,7 @@ class _CloudAccountRailButton extends ConsumerWidget {
             ? null
             : NetworkImage(user!.avatarUrl!),
         child: user == null
-            ? const Icon(Symbols.person, size: 18)
+            ? const Icon(Symbols.person_rounded, size: 18)
             : Text(
                 user.initials,
                 style: Theme.of(context).textTheme.labelSmall,
@@ -251,7 +251,7 @@ class _PortForwardRailIndicator extends ConsumerWidget {
       label: Text('portForwardCount').tr(args: ['${forwards.length}']),
       child: PopupMenuButton<ActivePortForward>(
         tooltip: 'activePortForwards'.plural(forwards.length),
-        icon: const Icon(Symbols.swap_horiz),
+        icon: const Icon(Symbols.swap_horiz_rounded),
         onSelected: (forward) =>
             ref.read(connectionManagerProvider).stopPortForward(forward.id),
         itemBuilder: (context) => [
@@ -262,10 +262,10 @@ class _PortForwardRailIndicator extends ConsumerWidget {
                 width: 260,
                 child: ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Symbols.swap_horiz),
+                  leading: const Icon(Symbols.swap_horiz_rounded),
                   title: Text(forward.serverName),
                   subtitle: Text(forward.summary),
-                  trailing: const Icon(Symbols.stop_circle),
+                  trailing: const Icon(Symbols.stop_circle_rounded),
                 ),
               ),
             ),

@@ -298,7 +298,7 @@ class _VaultGateState extends ConsumerState<VaultGate>
                                                         .colorScheme
                                                         .surfaceContainerHighest,
                                                     child: Icon(
-                                                      Symbols.lock,
+                                                      Symbols.lock_rounded,
                                                       size: 36,
                                                       color: theme
                                                           .colorScheme
@@ -386,7 +386,7 @@ class _VaultGateState extends ConsumerState<VaultGate>
                                               suffix: showBiometricUnlock
                                                   ? IconButton(
                                                       icon: const Icon(
-                                                        Symbols.fingerprint,
+                                                        Symbols.fingerprint_rounded,
                                                       ),
                                                       onPressed: _busy
                                                           ? null
@@ -450,7 +450,7 @@ class _VaultGateState extends ConsumerState<VaultGate>
                                           onPressed: _busy
                                               ? null
                                               : _openVaultFile,
-                                          icon: const Icon(Symbols.folder_open),
+                                          icon: const Icon(Symbols.folder_open_rounded),
                                           label: Text(
                                             'vaultOpenFileAction'.tr(),
                                           ),

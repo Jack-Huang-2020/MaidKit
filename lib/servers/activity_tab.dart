@@ -110,7 +110,7 @@ class _ActivityTabState extends ConsumerState<ActivityTab> {
   Widget build(BuildContext context) {
     if (!widget.connected) {
       return _ActivityEmpty(
-        icon: Symbols.link_off,
+        icon: Symbols.link_off_rounded,
         message: widget.connectionError ?? 'activityConnectToStream'.tr(),
         actionLabel: 'detailConnectForMetrics'.tr(),
         onAction: widget.onConnect,
@@ -119,7 +119,7 @@ class _ActivityTabState extends ConsumerState<ActivityTab> {
     }
     if (_error != null && _history.isEmpty) {
       return _ActivityEmpty(
-        icon: Symbols.error_outline,
+        icon: Symbols.error_outline_rounded,
         message: 'activityError'.tr(args: [_error!]),
         actionLabel: 'commonRetry'.tr(),
         onAction: _poll,
@@ -159,7 +159,7 @@ class _ActivityTabState extends ConsumerState<ActivityTab> {
                 tooltip: 'activityRefreshNow'.tr(),
                 visualDensity: VisualDensity.compact,
                 onPressed: _poll,
-                icon: const Icon(Symbols.refresh),
+                icon: const Icon(Symbols.refresh_rounded),
               ),
             ],
           ),
@@ -909,7 +909,7 @@ class _ActivityEmpty extends StatelessWidget {
               if (filled)
                 FilledButton.icon(
                   onPressed: onAction,
-                  icon: const Icon(Symbols.link),
+                  icon: const Icon(Symbols.link_rounded),
                   label: Text(actionLabel!),
                 )
               else

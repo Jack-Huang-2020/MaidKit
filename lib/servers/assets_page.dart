@@ -53,7 +53,7 @@ class ServerAssetsSection extends ConsumerWidget {
             ),
             FilledButton.icon(
               onPressed: () => _add(context, ref),
-              icon: const Icon(Symbols.add),
+              icon: const Icon(Symbols.add_rounded),
               label: Text('serversAddServer'.tr()),
             ),
           ],
@@ -193,7 +193,7 @@ class _ServerAssetRow extends ConsumerWidget {
     final hideAddresses = ref.watch(hideServerAddressesProvider);
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      leading: const Icon(Symbols.dns),
+      leading: const Icon(Symbols.dns_rounded),
       title: Text(server.name),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -224,12 +224,12 @@ class _ServerAssetRow extends ConsumerWidget {
           IconButton(
             tooltip: 'serversEditServer'.tr(),
             onPressed: onEdit,
-            icon: const Icon(Symbols.edit),
+            icon: const Icon(Symbols.edit_rounded),
           ),
           IconButton(
             tooltip: 'commonDelete'.tr(),
             onPressed: onDelete,
-            icon: const Icon(Symbols.delete_outline),
+            icon: const Icon(Symbols.delete_outline_rounded),
           ),
         ],
       ),
@@ -248,5 +248,5 @@ class _AssetTag extends StatelessWidget {
 }
 
 void _showError(BuildContext context, Object error) {
-  showStyledSnackBar(message: '$error', icon: Symbols.error);
+  showStyledSnackBar(message: '$error', icon: Symbols.error_rounded);
 }

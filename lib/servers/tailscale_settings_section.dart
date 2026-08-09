@@ -106,7 +106,7 @@ class TailscaleSettingsSection extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
-                  Symbols.warning,
+                  Symbols.warning_rounded,
                   size: 16,
                   color: Theme.of(context).colorScheme.error,
                 ),
@@ -132,11 +132,11 @@ class TailscaleSettingsSection extends ConsumerWidget {
           ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 16),
             leading: Icon(switch (nodeState) {
-              NodeState.running => Symbols.lan,
-              NodeState.starting => Symbols.sync,
+              NodeState.running => Symbols.lan_rounded,
+              NodeState.starting => Symbols.sync_rounded,
               NodeState.needsLogin ||
-              NodeState.needsMachineAuth => Symbols.manage_accounts,
-              _ => Symbols.lan,
+              NodeState.needsMachineAuth => Symbols.manage_accounts_rounded,
+              _ => Symbols.lan_rounded,
             }),
             title: Text(_stateLabel(context, nodeState)),
             subtitle: Text(
@@ -162,7 +162,7 @@ class TailscaleSettingsSection extends ConsumerWidget {
                 alignment: Alignment.centerLeft,
                 child: TextButton.icon(
                   onPressed: () => launchUrl(status.authUrl!),
-                  icon: const Icon(Symbols.open_in_new),
+                  icon: const Icon(Symbols.open_in_new_rounded),
                   label: Text('tailscaleOpenBrowser'.tr()),
                 ),
               ),
@@ -181,14 +181,14 @@ class TailscaleSettingsSection extends ConsumerWidget {
             ListTile(
               dense: true,
               contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-              leading: const Icon(Symbols.dns, size: 20),
+              leading: const Icon(Symbols.dns_rounded, size: 20),
               title: Text(node.hostName),
               subtitle: Text(
                 node.tailscaleIPs.where((ip) => !ip.contains(':')).join(', '),
               ),
               trailing: IconButton(
                 tooltip: 'tailscaleCopyIp'.tr(),
-                icon: const Icon(Symbols.content_copy, size: 18),
+                icon: const Icon(Symbols.content_copy_rounded, size: 18),
                 onPressed: () {
                   final ip = node.ipv4;
                   if (ip != null) {

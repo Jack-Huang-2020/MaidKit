@@ -1035,7 +1035,7 @@ class _UpdateSheetState extends State<_UpdateSheet> {
                             fallbackUrl: widget.release.htmlUrl,
                           );
                         },
-                        icon: const Icon(Symbols.update),
+                        icon: const Icon(Symbols.update_rounded),
                         label: Text('installUpdate'.tr()),
                       ),
                     ),
@@ -1050,7 +1050,7 @@ class _UpdateSheetState extends State<_UpdateSheet> {
                             widget.windowsUpdateUrl!,
                           );
                         },
-                        icon: const Icon(Symbols.update),
+                        icon: const Icon(Symbols.update_rounded),
                         label: Text('installUpdate'.tr()),
                       ),
                     ),
@@ -1065,14 +1065,14 @@ class _UpdateSheetState extends State<_UpdateSheet> {
                             widget.linuxUpdateUrl!,
                           );
                         },
-                        icon: const Icon(Symbols.update),
+                        icon: const Icon(Symbols.update_rounded),
                         label: Text('installUpdate'.tr()),
                       ),
                     ),
                   Expanded(
                     child: FilledButton.icon(
                       onPressed: widget.onOpen,
-                      icon: const Icon(Icons.open_in_new),
+                      icon: const Icon(Symbols.open_in_new_rounded),
                       label: Text('openReleasePage'.tr()),
                     ),
                   ),

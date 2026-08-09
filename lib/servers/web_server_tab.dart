@@ -371,7 +371,7 @@ class _WebServerTabState extends ConsumerState<WebServerTab> {
             children: [
               for (final item in projects)
                 ListTile(
-                  leading: const Icon(Symbols.deployed_code),
+                  leading: const Icon(Symbols.deployed_code_rounded),
                   title: Text(item.name),
                   subtitle: item.description == null
                       ? null
@@ -420,7 +420,7 @@ class _WebServerTabState extends ConsumerState<WebServerTab> {
   Widget build(BuildContext context) {
     if (!widget.connected) {
       return _WebEmpty(
-        icon: Symbols.link_off,
+        icon: Symbols.link_off_rounded,
         message: widget.connectionError ?? 'webServerConnectToManage'.tr(),
         actionLabel: 'commonConnect'.tr(),
         onAction: widget.onConnect,
@@ -431,7 +431,7 @@ class _WebServerTabState extends ConsumerState<WebServerTab> {
     return _detections.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => _WebEmpty(
-        icon: Symbols.error_outline,
+        icon: Symbols.error_outline_rounded,
         message: 'webServerLoadError'.tr(args: ['$error']),
         actionLabel: 'commonRetry'.tr(),
         onAction: _loadDetections,
@@ -440,7 +440,7 @@ class _WebServerTabState extends ConsumerState<WebServerTab> {
         final installed = detections.where((d) => d.installed).toList();
         if (installed.isEmpty) {
           return _WebEmpty(
-            icon: Symbols.language,
+            icon: Symbols.language_rounded,
             message: 'webServerNoneFound'.tr(),
             actionLabel: 'commonRefresh'.tr(),
             onAction: _loadDetections,
@@ -467,7 +467,7 @@ class _WebServerTabState extends ConsumerState<WebServerTab> {
             children: [
               Row(
                 children: [
-                  Icon(Symbols.language, size: 20, color: scheme.primary),
+                  Icon(Symbols.language_rounded, size: 20, color: scheme.primary),
                   const SizedBox(width: 8),
                   DropdownButton<String>(
                     isDense: true,
@@ -501,7 +501,7 @@ class _WebServerTabState extends ConsumerState<WebServerTab> {
                         : () => _addToDeploymentProject(
                             statusAsync!.asData!.value,
                           ),
-                    icon: const Icon(Symbols.add_link),
+                    icon: const Icon(Symbols.add_link_rounded),
                   ),
                   const Spacer(),
                   if (_busy)
@@ -517,7 +517,7 @@ class _WebServerTabState extends ConsumerState<WebServerTab> {
                     tooltip: 'commonRefresh'.tr(),
                     visualDensity: VisualDensity.compact,
                     onPressed: _busy ? null : _loadDetections,
-                    icon: const Icon(Symbols.refresh),
+                    icon: const Icon(Symbols.refresh_rounded),
                   ),
                 ],
               ),
@@ -571,7 +571,7 @@ class _WebServerTabState extends ConsumerState<WebServerTab> {
     return statusAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => _WebEmpty(
-        icon: Symbols.error_outline,
+        icon: Symbols.error_outline_rounded,
         message: 'webServerLoadError'.tr(args: ['$error']),
         actionLabel: 'commonRetry'.tr(),
         onAction: () {
@@ -583,7 +583,7 @@ class _WebServerTabState extends ConsumerState<WebServerTab> {
       data: (status) {
         if (status.sites.isEmpty) {
           return _WebEmpty(
-            icon: Symbols.language,
+            icon: Symbols.language_rounded,
             message: 'webServerNoSites'.tr(args: [status.label]),
             actionLabel: 'webServerEditConfig'.tr(),
             onAction: () => _editConfig(),
@@ -626,7 +626,7 @@ class _LastTaskBanner extends StatelessWidget {
         ? scheme.secondaryContainer.withValues(alpha: 0.65)
         : scheme.errorContainer.withValues(alpha: 0.65);
     final fg = ok ? scheme.onSecondaryContainer : scheme.onErrorContainer;
-    final icon = ok ? Symbols.check_circle : Symbols.error;
+    final icon = ok ? Symbols.check_circle_rounded : Symbols.error_rounded;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -678,7 +678,7 @@ class _LastTaskBanner extends StatelessWidget {
               tooltip: 'commonClose'.tr(),
               visualDensity: VisualDensity.compact,
               onPressed: onDismiss,
-              icon: Icon(Symbols.close, size: 18, color: fg),
+              icon: Icon(Symbols.close_rounded, size: 18, color: fg),
             ),
           ],
         ),
@@ -709,7 +709,7 @@ class _StepChip extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            step.success ? Symbols.check : Symbols.close,
+            step.success ? Symbols.check_rounded : Symbols.close_rounded,
             size: 12,
             color: color,
           ),
@@ -766,7 +766,7 @@ class _StatusHeader extends StatelessWidget {
             if (status.configValid != null) ...[
               const SizedBox(width: 8),
               Icon(
-                status.configValid! ? Symbols.check_circle : Symbols.error,
+                status.configValid! ? Symbols.check_circle_rounded : Symbols.error_rounded,
                 size: 16,
                 color: status.configValid! ? scheme.primary : scheme.error,
               ),
@@ -802,55 +802,55 @@ class _StatusHeader extends StatelessWidget {
           children: [
             if (!status.running)
               _ActionChip(
-                icon: Symbols.play_arrow,
+                icon: Symbols.play_arrow_rounded,
                 label: 'webServerStart'.tr(),
                 onPressed: busy ? null : () => onAction(WebServerAction.start),
               ),
             if (status.running) ...[
               _ActionChip(
-                icon: Symbols.stop,
+                icon: Symbols.stop_rounded,
                 label: 'webServerStop'.tr(),
                 onPressed: busy ? null : () => onAction(WebServerAction.stop),
               ),
               _ActionChip(
-                icon: Symbols.restart_alt,
+                icon: Symbols.restart_alt_rounded,
                 label: 'webServerRestart'.tr(),
                 onPressed: busy
                     ? null
                     : () => onAction(WebServerAction.restart),
               ),
               _ActionChip(
-                icon: Symbols.sync,
+                icon: Symbols.sync_rounded,
                 label: 'webServerReload'.tr(),
                 onPressed: busy ? null : () => onAction(WebServerAction.reload),
               ),
             ],
             if (!status.enabled)
               _ActionChip(
-                icon: Symbols.toggle_on,
+                icon: Symbols.toggle_on_rounded,
                 label: 'webServerEnable'.tr(),
                 onPressed: busy ? null : () => onAction(WebServerAction.enable),
               )
             else
               _ActionChip(
-                icon: Symbols.toggle_off,
+                icon: Symbols.toggle_off_rounded,
                 label: 'webServerDisable'.tr(),
                 onPressed: busy
                     ? null
                     : () => onAction(WebServerAction.disable),
               ),
             _ActionChip(
-              icon: Symbols.rule,
+              icon: Symbols.rule_rounded,
               label: 'webServerValidate'.tr(),
               onPressed: busy ? null : onValidate,
             ),
             _ActionChip(
-              icon: Symbols.edit,
+              icon: Symbols.edit_rounded,
               label: 'webServerEditConfig'.tr(),
               onPressed: busy ? null : onEditConfig,
             ),
             _ActionChip(
-              icon: Symbols.terminal,
+              icon: Symbols.terminal_rounded,
               label: 'webServerLogs'.tr(),
               onPressed: busy ? null : onLogs,
             ),
@@ -927,7 +927,7 @@ class _SiteTile extends StatelessWidget {
     children: [
       MenuAction(
         title: 'webServerEditConfig'.tr(),
-        image: MenuImage.icon(Symbols.edit),
+        image: MenuImage.icon(Symbols.edit_rounded),
         callback: onEdit,
       ),
     ],
@@ -948,8 +948,8 @@ class _SiteTile extends StatelessWidget {
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         leading: Icon(
           site.kind == WebServerSiteKind.main
-              ? Symbols.settings
-              : Symbols.public,
+              ? Symbols.settings_rounded
+              : Symbols.public_rounded,
           color: site.enabled ? scheme.primary : scheme.onSurfaceVariant,
         ),
         title: Text(
@@ -970,7 +970,7 @@ class _SiteTile extends StatelessWidget {
         trailing: IconButton(
           tooltip: 'webServerEditConfig'.tr(),
           onPressed: busy ? null : onEdit,
-          icon: const Icon(Symbols.edit, size: 20),
+          icon: const Icon(Symbols.edit_rounded, size: 20),
         ),
         onTap: busy ? null : onEdit,
       ),
@@ -1072,14 +1072,14 @@ class _WebServerConfigEditorState extends State<_WebServerConfigEditor> {
         showStyledSnackBar(
           message: result.summary,
           title: 'webServerResultSuccess'.tr(),
-          icon: Symbols.check_circle,
+          icon: Symbols.check_circle_rounded,
           accentColor: Theme.of(context).colorScheme.primary,
         );
       } else {
         showStyledSnackBar(
           message: result.summary,
           title: 'webServerResultFailed'.tr(),
-          icon: Symbols.error,
+          icon: Symbols.error_rounded,
           accentColor: Theme.of(context).colorScheme.error,
         );
       }
@@ -1189,7 +1189,7 @@ class _WebServerConfigEditorState extends State<_WebServerConfigEditor> {
                           height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Icon(Symbols.published_with_changes, size: 18),
+                      : const Icon(Symbols.published_with_changes_rounded, size: 18),
                   label: Text('webServerSaveCheckReload'.tr()),
                 ),
               ],
@@ -1351,7 +1351,7 @@ class _TextSheetState extends State<_TextSheet> {
                   onPressed: _text.asData == null
                       ? null
                       : () => _copy(_text.asData!.value),
-                  icon: const Icon(Symbols.content_copy, size: 18),
+                  icon: const Icon(Symbols.content_copy_rounded, size: 18),
                   label: Text('commonCopy'.tr()),
                 ),
               ],

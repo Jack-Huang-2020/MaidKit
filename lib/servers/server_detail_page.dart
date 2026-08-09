@@ -177,7 +177,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> {
           IconButton(
             tooltip: 'detailRefreshDetails'.tr(),
             onPressed: connected ? _refresh : null,
-            icon: const Icon(Symbols.refresh),
+            icon: const Icon(Symbols.refresh_rounded),
           ),
           const SizedBox(width: 8),
         ],
@@ -347,26 +347,26 @@ class _ServerSpecifications extends StatelessWidget {
     final scheme = theme.colorScheme;
     final specs = [
       _SpecItem(
-        icon: Symbols.memory,
+        icon: Symbols.memory_rounded,
         label: 'detailCpu',
         value: stats?.cpuCount == null ? '—' : '${stats!.cpuCount} cores',
       ),
       _SpecItem(
-        icon: Symbols.developer_board,
+        icon: Symbols.developer_board_rounded,
         label: 'detailMemory',
         value: stats?.memoryTotalKb == null
             ? '—'
             : _formatKb(stats!.memoryTotalKb!),
       ),
       _SpecItem(
-        icon: Symbols.storage,
+        icon: Symbols.storage_rounded,
         label: 'detailRootDisk',
         value: stats?.diskTotalKb == null
             ? '—'
             : _formatKb(stats!.diskTotalKb!),
       ),
       _SpecItem(
-        icon: Symbols.terminal,
+        icon: Symbols.terminal_rounded,
         label: 'detailSystem',
         value: [
           systemInfo?.distribution,
@@ -519,40 +519,40 @@ class _InspectorTabsState extends State<_InspectorTabs>
           dividerColor: scheme.outlineVariant,
           tabs: [
             Tab(
-              icon: Icon(Symbols.monitoring, size: 18),
+              icon: Icon(Symbols.monitoring_rounded, size: 18),
               text: 'detailActivity'.tr(),
             ),
             Tab(
-              icon: Icon(Symbols.terminal, size: 18),
+              icon: Icon(Symbols.terminal_rounded, size: 18),
               text: 'detailProcesses'.tr(),
             ),
             Tab(
-              icon: Icon(Symbols.settings_applications, size: 18),
+              icon: Icon(Symbols.settings_applications_rounded, size: 18),
               text: 'detailServices'.tr(),
             ),
             Tab(
-              icon: Icon(Symbols.language, size: 18),
+              icon: Icon(Symbols.language_rounded, size: 18),
               text: 'detailWebServers'.tr(),
             ),
             Tab(
-              icon: Icon(Symbols.deployed_code, size: 18),
+              icon: Icon(Symbols.deployed_code_rounded, size: 18),
               text: 'detailContainers'.tr(),
             ),
-            Tab(icon: Icon(Symbols.image, size: 18), text: 'detailImages'.tr()),
+            Tab(icon: Icon(Symbols.image_rounded, size: 18), text: 'detailImages'.tr()),
             Tab(
-              icon: Icon(Symbols.schedule, size: 18),
+              icon: Icon(Symbols.schedule_rounded, size: 18),
               text: 'detailCrontab'.tr(),
             ),
             Tab(
-              icon: Icon(Symbols.inventory_2, size: 18),
+              icon: Icon(Symbols.inventory_2_rounded, size: 18),
               text: 'detailPackages'.tr(),
             ),
             Tab(
-              icon: Icon(Symbols.shield, size: 18),
+              icon: Icon(Symbols.shield_rounded, size: 18),
               text: 'detailFirewall'.tr(),
             ),
             Tab(
-              icon: Icon(Symbols.swap_horiz, size: 18),
+              icon: Icon(Symbols.swap_horiz_rounded, size: 18),
               text: 'detailPortForwarding'.tr(),
             ),
           ],
@@ -653,7 +653,7 @@ class _ServerIdentity extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(
-          Symbols.dns,
+          Symbols.dns_rounded,
           size: 22,
           fill: connected ? 1 : 0,
           color: connected ? scheme.primary : scheme.onSurfaceVariant,
@@ -762,11 +762,11 @@ class _ConnectionPrompt extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => _EmptyPanel(
-    icon: Symbols.link_off,
+    icon: Symbols.link_off_rounded,
     message: message,
     actionLabel: 'detailConnectForMetrics'.tr(),
     onAction: onConnect,
-    actionIcon: Symbols.link,
+    actionIcon: Symbols.link_rounded,
     filledAction: true,
   );
 }
@@ -780,7 +780,7 @@ class _MetricGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     if (stats == null) {
       return _EmptyPanel(
-        icon: Symbols.monitoring,
+        icon: Symbols.monitoring_rounded,
         message: 'detailMetricsCollecting'.tr(),
         compact: true,
       );
@@ -799,7 +799,7 @@ class _MetricGrid extends StatelessWidget {
     return Column(
       children: [
         _MetricCard(
-          icon: Symbols.speed,
+          icon: Symbols.speed_rounded,
           label: 'detailLoadAverage',
           value: _loadLabel(stats!),
           detail: stats!.cpuCount == null
@@ -808,7 +808,7 @@ class _MetricGrid extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         _MetricCard(
-          icon: Symbols.memory,
+          icon: Symbols.memory_rounded,
           label: 'detailMemory',
           value: memoryUsed == null ? '—' : _formatKb(memoryUsed),
           detail: stats!.memoryTotalKb == null
@@ -818,7 +818,7 @@ class _MetricGrid extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         _MetricCard(
-          icon: Symbols.storage,
+          icon: Symbols.storage_rounded,
           label: 'detailRootDisk',
           value: diskUsed == null ? '—' : _formatKb(diskUsed),
           detail: stats!.diskTotalKb == null
@@ -828,7 +828,7 @@ class _MetricGrid extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         _MetricCard(
-          icon: Symbols.timer,
+          icon: Symbols.timer_rounded,
           label: 'detailUptime',
           value: _formatUptime(stats!.uptime),
           detail: swapUsed == null || stats!.swapTotalKb == null
@@ -924,14 +924,14 @@ class _ProcessTable extends StatelessWidget {
   Widget build(BuildContext context) => processes.when(
     loading: () => const Center(child: CircularProgressIndicator()),
     error: (error, _) => _EmptyPanel(
-      icon: Symbols.error_outline,
+      icon: Symbols.error_outline_rounded,
       message: 'detailCouldNotRetrieveProcesses'.tr(args: ['$error']),
       actionLabel: 'commonRetry'.tr(),
       onAction: onRefresh,
     ),
     data: (items) => items.isEmpty
         ? _EmptyPanel(
-            icon: Symbols.terminal,
+            icon: Symbols.terminal_rounded,
             message: 'detailNoProcessesAvailable'.tr(),
             actionLabel: 'commonRefresh'.tr(),
             onAction: onRefresh,
@@ -1005,7 +1005,7 @@ class _ProcessListState extends ConsumerState<_ProcessList> {
     final approved = await showMaidKitConfirmAlert(
       'detailKillProcessMessage'.tr(args: [process.command, '${process.pid}']),
       'detailKillProcessConfirm'.tr(args: [process.command]),
-      icon: Symbols.dangerous,
+      icon: Symbols.dangerous_rounded,
       isDanger: true,
     );
     if (!approved || !mounted) return;
@@ -1030,7 +1030,7 @@ class _ProcessListState extends ConsumerState<_ProcessList> {
       showStyledSnackBar(
         title: 'detailKillProcessSuccess'.tr(args: ['${process.pid}']),
         message: process.command,
-        icon: Symbols.check_circle,
+        icon: Symbols.check_circle_rounded,
         accentColor: Theme.of(context).colorScheme.primary,
       );
       await widget.onRefresh();
@@ -1039,7 +1039,7 @@ class _ProcessListState extends ConsumerState<_ProcessList> {
       showStyledSnackBar(
         title: 'detailKillProcessError'.tr(args: ['$error']),
         message: '${process.command} (pid ${process.pid})',
-        icon: Symbols.error,
+        icon: Symbols.error_rounded,
         accentColor: Theme.of(context).colorScheme.error,
       );
     } finally {
@@ -1070,7 +1070,7 @@ class _ProcessListState extends ConsumerState<_ProcessList> {
                 tooltip: 'detailRefreshProcesses'.tr(),
                 visualDensity: VisualDensity.compact,
                 onPressed: widget.onRefresh,
-                icon: const Icon(Symbols.refresh),
+                icon: const Icon(Symbols.refresh_rounded),
               ),
             ],
           ),
@@ -1242,7 +1242,7 @@ class _SortHeader extends StatelessWidget {
             if (active) ...[
               const SizedBox(width: 2),
               Icon(
-                ascending ? Symbols.arrow_upward : Symbols.arrow_downward,
+                ascending ? Symbols.arrow_upward_rounded : Symbols.arrow_downward_rounded,
                 size: 14,
                 color: color,
               ),
@@ -1271,7 +1271,7 @@ class _ProcessRow extends StatelessWidget {
     children: [
       MenuAction(
         title: 'detailKillProcess'.tr(),
-        image: MenuImage.icon(Symbols.dangerous),
+        image: MenuImage.icon(Symbols.dangerous_rounded),
         attributes: MenuActionAttributes(
           destructive: true,
           disabled: !killEnabled,
@@ -1404,7 +1404,7 @@ class _EmptyPanel extends StatelessWidget {
           if (filledAction)
             FilledButton.icon(
               onPressed: onAction,
-              icon: Icon(actionIcon ?? Symbols.refresh),
+              icon: Icon(actionIcon ?? Symbols.refresh_rounded),
               label: Text(actionLabel!),
             )
           else

@@ -74,7 +74,7 @@ Future<bool> connectForStatistics(
       showStyledSnackBar(
         message: error.toString(),
         title: 'serverCannotConnect'.tr(),
-        icon: Symbols.link_off,
+        icon: Symbols.link_off_rounded,
         accentColor: Theme.of(context).colorScheme.error,
       );
     }
@@ -141,7 +141,7 @@ Future<bool> openTerminalSession(
       showStyledSnackBar(
         message: error.toString(),
         title: 'serverCannotOpenTerminal'.tr(),
-        icon: Symbols.terminal,
+        icon: Symbols.terminal_rounded,
         accentColor: Theme.of(context).colorScheme.error,
       );
     }
@@ -181,7 +181,7 @@ Future<bool> openSerialTerminalSession(
       showStyledSnackBar(
         message: 'serverSerialNotSupported'.tr(),
         title: 'serverCannotOpenSerialTerminal'.tr(),
-        icon: Symbols.terminal,
+        icon: Symbols.terminal_rounded,
         accentColor: Theme.of(context).colorScheme.error,
       );
     }
@@ -201,7 +201,7 @@ Future<bool> openSerialTerminalSession(
       showStyledSnackBar(
         message: error.toString(),
         title: 'serverCannotOpenSerialTerminal'.tr(),
-        icon: Symbols.terminal,
+        icon: Symbols.terminal_rounded,
         accentColor: Theme.of(context).colorScheme.error,
       );
     }
@@ -235,7 +235,7 @@ Future<bool> openLocalTerminalSession(
       showStyledSnackBar(
         message: error.toString(),
         title: 'serverCannotOpenTerminal'.tr(),
-        icon: Symbols.terminal,
+        icon: Symbols.terminal_rounded,
         accentColor: Theme.of(context).colorScheme.error,
       );
     }
@@ -260,7 +260,7 @@ Future<bool> _approveHostKey(BuildContext context, HostKeyPrompt prompt) async {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(
-                    Symbols.verified_user,
+                    Symbols.verified_user_rounded,
                     color: Theme.of(context).colorScheme.primary,
                     size: 36,
                   ),

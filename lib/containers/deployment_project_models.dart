@@ -44,16 +44,16 @@ String deploymentResourceKindLabel(DeploymentResourceKind kind) =>
 
 IconData deploymentResourceKindIcon(DeploymentResourceKind kind) =>
     switch (kind) {
-      DeploymentResourceKind.server => Symbols.dns,
-      DeploymentResourceKind.serverFolder => Symbols.folder,
-      DeploymentResourceKind.compose => Symbols.deployed_code,
-      DeploymentResourceKind.container => Symbols.deployed_code,
-      DeploymentResourceKind.webServer => Symbols.language,
-      DeploymentResourceKind.firewallRule => Symbols.security,
-      DeploymentResourceKind.systemdService => Symbols.settings,
-      DeploymentResourceKind.database => Symbols.database,
-      DeploymentResourceKind.githubWorkflow => Symbols.rocket_launch,
-      DeploymentResourceKind.other => Symbols.extension,
+      DeploymentResourceKind.server => Symbols.dns_rounded,
+      DeploymentResourceKind.serverFolder => Symbols.folder_rounded,
+      DeploymentResourceKind.compose => Symbols.deployed_code_rounded,
+      DeploymentResourceKind.container => Symbols.deployed_code_rounded,
+      DeploymentResourceKind.webServer => Symbols.language_rounded,
+      DeploymentResourceKind.firewallRule => Symbols.security_rounded,
+      DeploymentResourceKind.systemdService => Symbols.settings_rounded,
+      DeploymentResourceKind.database => Symbols.database_rounded,
+      DeploymentResourceKind.githubWorkflow => Symbols.rocket_launch_rounded,
+      DeploymentResourceKind.other => Symbols.extension_rounded,
     };
 
 /// Compact one-line summary of portable configuration for list tiles.

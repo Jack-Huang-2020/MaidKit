@@ -189,7 +189,7 @@ class _ContainerManagementTabState
       showStyledSnackBar(
         title: 'containerActionSuccess'.tr(args: [action.pastLabel]),
         message: container.name,
-        icon: Symbols.check_circle,
+        icon: Symbols.check_circle_rounded,
         accentColor: Theme.of(context).colorScheme.primary,
       );
       await _load();
@@ -198,7 +198,7 @@ class _ContainerManagementTabState
       showStyledSnackBar(
         title: 'containerActionError'.tr(args: [action.label.toLowerCase()]),
         message: error.toString(),
-        icon: Symbols.error,
+        icon: Symbols.error_rounded,
         accentColor: Theme.of(context).colorScheme.error,
       );
     }
@@ -218,7 +218,7 @@ class _ContainerManagementTabState
       showStyledSnackBar(
         title: 'runtimeInstallSuccess'.tr(args: [runtime.name]),
         message: 'runtimeInstallRefreshing'.tr(),
-        icon: Symbols.check_circle,
+        icon: Symbols.check_circle_rounded,
         accentColor: Theme.of(context).colorScheme.primary,
       );
       await _load();
@@ -227,7 +227,7 @@ class _ContainerManagementTabState
       showStyledSnackBar(
         title: 'runtimeInstallError'.tr(args: [runtime.name]),
         message: error.toString(),
-        icon: Symbols.error,
+        icon: Symbols.error_rounded,
         accentColor: Theme.of(context).colorScheme.error,
       );
     }
@@ -237,18 +237,18 @@ class _ContainerManagementTabState
   Widget build(BuildContext context) {
     if (!widget.connected) {
       return _ContainerEmptyPanel(
-        icon: Symbols.link_off,
+        icon: Symbols.link_off_rounded,
         message: widget.connectionError ?? 'containersConnectToManage'.tr(),
         actionLabel: 'commonConnect'.tr(),
         onAction: widget.onConnect,
         filledAction: true,
-        actionIcon: Symbols.link,
+        actionIcon: Symbols.link_rounded,
       );
     }
     return _environments.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => _ContainerEmptyPanel(
-        icon: Symbols.error_outline,
+        icon: Symbols.error_outline_rounded,
         message: 'containersLoadError'.tr(args: [error.toString()]),
         actionLabel: 'commonRetry'.tr(),
         onAction: _load,
@@ -410,12 +410,12 @@ class _ContainerEnvironments extends ConsumerWidget {
 
     if (environments.isEmpty) {
       return _ContainerEmptyPanel(
-        icon: Symbols.deployed_code,
+        icon: Symbols.deployed_code_rounded,
         message: 'containersNotInstalled'.tr(),
         actionLabel: 'containersInstallRuntimeShort'.tr(),
         onAction: onInstallRuntime,
         filledAction: true,
-        actionIcon: Symbols.download,
+        actionIcon: Symbols.download_rounded,
       );
     }
 
@@ -474,7 +474,7 @@ class _ContainerEnvironments extends ConsumerWidget {
                 tooltip: 'containersRefreshTooltip'.tr(),
                 visualDensity: VisualDensity.compact,
                 onPressed: onRefresh,
-                icon: const Icon(Symbols.refresh),
+                icon: const Icon(Symbols.refresh_rounded),
               ),
             ],
           ),
@@ -664,7 +664,7 @@ class _ProjectCollapsibleTile extends StatelessWidget {
                   onPressed: () => context.router.push(
                     ProjectDetailRoute(linkId: project.link!.id),
                   ),
-                  icon: const Icon(Symbols.open_in_new, size: 20),
+                  icon: const Icon(Symbols.open_in_new_rounded, size: 20),
                 ),
           children: [
             Divider(height: 1, color: scheme.outlineVariant),
@@ -728,8 +728,8 @@ class _ContainerEnvironmentSection extends StatelessWidget {
       : 'commonUser'.tr();
 
   IconData get _runtimeIcon => switch (environment.runtime) {
-    ContainerRuntime.docker => Symbols.deployed_code,
-    ContainerRuntime.podman => Symbols.package_2,
+    ContainerRuntime.docker => Symbols.deployed_code_rounded,
+    ContainerRuntime.podman => Symbols.package_2_rounded,
   };
 
   @override
@@ -774,7 +774,7 @@ class _ContainerEnvironmentSection extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Symbols.info, size: 16, color: scheme.onSurfaceVariant),
+                  Icon(Symbols.info_rounded, size: 16, color: scheme.onSurfaceVariant),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -861,37 +861,37 @@ class _ContainerActionTile extends StatelessWidget {
       children: [
         MenuAction(
           title: ContainerAction.start.label,
-          image: MenuImage.icon(Symbols.play_arrow),
+          image: MenuImage.icon(Symbols.play_arrow_rounded),
           attributes: MenuActionAttributes(disabled: running),
           callback: () => onAction(ContainerAction.start),
         ),
         MenuAction(
           title: ContainerAction.stop.label,
-          image: MenuImage.icon(Symbols.stop),
+          image: MenuImage.icon(Symbols.stop_rounded),
           attributes: MenuActionAttributes(disabled: !running),
           callback: () => onAction(ContainerAction.stop),
         ),
         MenuAction(
           title: ContainerAction.restart.label,
-          image: MenuImage.icon(Symbols.restart_alt),
+          image: MenuImage.icon(Symbols.restart_alt_rounded),
           callback: () => onAction(ContainerAction.restart),
         ),
         MenuAction(
           title: ContainerAction.pause.label,
-          image: MenuImage.icon(Symbols.pause),
+          image: MenuImage.icon(Symbols.pause_rounded),
           attributes: MenuActionAttributes(disabled: !canPause),
           callback: () => onAction(ContainerAction.pause),
         ),
         MenuAction(
           title: ContainerAction.unpause.label,
-          image: MenuImage.icon(Symbols.play_circle),
+          image: MenuImage.icon(Symbols.play_circle_rounded),
           attributes: MenuActionAttributes(disabled: !canUnpause),
           callback: () => onAction(ContainerAction.unpause),
         ),
         MenuSeparator(),
         MenuAction(
           title: ContainerAction.kill.label,
-          image: MenuImage.icon(Symbols.dangerous),
+          image: MenuImage.icon(Symbols.dangerous_rounded),
           attributes: MenuActionAttributes(
             destructive: true,
             disabled: !running,
@@ -900,7 +900,7 @@ class _ContainerActionTile extends StatelessWidget {
         ),
         MenuAction(
           title: ContainerAction.remove.label,
-          image: MenuImage.icon(Symbols.delete),
+          image: MenuImage.icon(Symbols.delete_rounded),
           attributes: const MenuActionAttributes(destructive: true),
           callback: () => onAction(ContainerAction.remove),
         ),
@@ -928,14 +928,14 @@ class _ContainerActionTile extends StatelessWidget {
               value: ContainerAction.start,
               enabled: !running,
               child: Row(
-                children: menuRows(ContainerAction.start, Symbols.play_arrow),
+                children: menuRows(ContainerAction.start, Symbols.play_arrow_rounded),
               ),
             ),
             PopupMenuItem(
               value: ContainerAction.stop,
               enabled: running,
               child: Row(
-                children: menuRows(ContainerAction.stop, Symbols.stop),
+                children: menuRows(ContainerAction.stop, Symbols.stop_rounded),
               ),
             ),
             PopupMenuItem(
@@ -943,7 +943,7 @@ class _ContainerActionTile extends StatelessWidget {
               child: Row(
                 children: menuRows(
                   ContainerAction.restart,
-                  Symbols.restart_alt,
+                  Symbols.restart_alt_rounded,
                 ),
               ),
             ),
@@ -951,7 +951,7 @@ class _ContainerActionTile extends StatelessWidget {
               value: ContainerAction.pause,
               enabled: canPause,
               child: Row(
-                children: menuRows(ContainerAction.pause, Symbols.pause),
+                children: menuRows(ContainerAction.pause, Symbols.pause_rounded),
               ),
             ),
             PopupMenuItem(
@@ -960,7 +960,7 @@ class _ContainerActionTile extends StatelessWidget {
               child: Row(
                 children: menuRows(
                   ContainerAction.unpause,
-                  Symbols.play_circle,
+                  Symbols.play_circle_rounded,
                 ),
               ),
             ),
@@ -969,17 +969,17 @@ class _ContainerActionTile extends StatelessWidget {
               value: ContainerAction.kill,
               enabled: running,
               child: Row(
-                children: menuRows(ContainerAction.kill, Symbols.dangerous),
+                children: menuRows(ContainerAction.kill, Symbols.dangerous_rounded),
               ),
             ),
             PopupMenuItem(
               value: ContainerAction.remove,
               child: Row(
-                children: menuRows(ContainerAction.remove, Symbols.delete),
+                children: menuRows(ContainerAction.remove, Symbols.delete_rounded),
               ),
             ),
           ],
-          icon: const Icon(Symbols.more_vert),
+          icon: const Icon(Symbols.more_vert_rounded),
         ),
       ),
     );
@@ -1053,7 +1053,7 @@ class _ContainerEmptyPanel extends StatelessWidget {
               if (filledAction)
                 FilledButton.icon(
                   onPressed: onAction,
-                  icon: Icon(actionIcon ?? Symbols.refresh),
+                  icon: Icon(actionIcon ?? Symbols.refresh_rounded),
                   label: Text(actionLabel!),
                 )
               else

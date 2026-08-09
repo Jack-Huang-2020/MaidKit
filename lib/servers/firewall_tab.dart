@@ -108,7 +108,7 @@ class _FirewallTabState extends ConsumerState<FirewallTab> {
       showStyledSnackBar(
         message: error.toString(),
         title: 'firewallActionFailed'.tr(),
-        icon: Symbols.error,
+        icon: Symbols.error_rounded,
         accentColor: Theme.of(context).colorScheme.error,
       );
     } finally {
@@ -253,7 +253,7 @@ class _FirewallTabState extends ConsumerState<FirewallTab> {
   Widget build(BuildContext context) {
     if (!widget.connected) {
       return _FirewallEmpty(
-        icon: Symbols.link_off,
+        icon: Symbols.link_off_rounded,
         message: widget.connectionError ?? 'firewallConnectToManage'.tr(),
         actionLabel: 'commonConnect'.tr(),
         onAction: widget.onConnect,
@@ -264,7 +264,7 @@ class _FirewallTabState extends ConsumerState<FirewallTab> {
     return _status.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => _FirewallEmpty(
-        icon: Symbols.error_outline,
+        icon: Symbols.error_outline_rounded,
         message: 'firewallLoadError'.tr(args: [error.toString()]),
         actionLabel: 'commonRefresh'.tr(),
         onAction: _load,
@@ -284,7 +284,7 @@ class _FirewallTabState extends ConsumerState<FirewallTab> {
                   Row(
                     children: [
                       Icon(
-                        Symbols.shield,
+                        Symbols.shield_rounded,
                         size: 20,
                         color: status.active
                             ? scheme.primary
@@ -318,14 +318,14 @@ class _FirewallTabState extends ConsumerState<FirewallTab> {
                         tooltip: 'commonRefresh'.tr(),
                         visualDensity: VisualDensity.compact,
                         onPressed: _busy ? null : _load,
-                        icon: const Icon(Symbols.refresh),
+                        icon: const Icon(Symbols.refresh_rounded),
                       ),
                       if (editable)
                         IconButton(
                           tooltip: 'firewallAddRule'.tr(),
                           visualDensity: VisualDensity.compact,
                           onPressed: _busy || !status.active ? null : _addRule,
-                          icon: const Icon(Symbols.add),
+                          icon: const Icon(Symbols.add_rounded),
                         ),
                     ],
                   ),
@@ -375,14 +375,14 @@ class _FirewallTabState extends ConsumerState<FirewallTab> {
             Expanded(
               child: status.backend == FirewallBackend.none
                   ? _FirewallEmpty(
-                      icon: Symbols.shield,
+                      icon: Symbols.shield_rounded,
                       message: status.error ?? 'firewallNoToolFound'.tr(),
                       actionLabel: 'commonRefresh'.tr(),
                       onAction: _load,
                     )
                   : status.rules.isEmpty
                   ? _FirewallEmpty(
-                      icon: Symbols.shield,
+                      icon: Symbols.shield_rounded,
                       message: status.active
                           ? 'firewallNoRules'.tr(args: [status.backend.label])
                           : 'firewallInactive'.tr(args: [status.backend.label]),
@@ -426,7 +426,7 @@ class _FirewallTabState extends ConsumerState<FirewallTab> {
                                   onPressed: _busy
                                       ? null
                                       : () => _deleteRule(rule),
-                                  icon: const Icon(Symbols.delete, size: 20),
+                                  icon: const Icon(Symbols.delete_rounded, size: 20),
                                 )
                               : Text(
                                   '#${rule.id}',
@@ -445,10 +445,10 @@ class _FirewallTabState extends ConsumerState<FirewallTab> {
   }
 
   IconData _actionIcon(FirewallAction? action) => switch (action) {
-    FirewallAction.allow => Symbols.check_circle,
-    FirewallAction.deny || FirewallAction.drop => Symbols.block,
-    FirewallAction.reject => Symbols.cancel,
-    null => Symbols.rule,
+    FirewallAction.allow => Symbols.check_circle_rounded,
+    FirewallAction.deny || FirewallAction.drop => Symbols.block_rounded,
+    FirewallAction.reject => Symbols.cancel_rounded,
+    null => Symbols.rule_rounded,
   };
 
   Color _actionColor(ColorScheme scheme, FirewallAction? action) =>
@@ -677,7 +677,7 @@ class _FirewallEmpty extends StatelessWidget {
               if (filled)
                 FilledButton.icon(
                   onPressed: onAction,
-                  icon: const Icon(Symbols.link),
+                  icon: const Icon(Symbols.link_rounded),
                   label: Text(actionLabel!),
                 )
               else

@@ -332,7 +332,7 @@ Future<bool> showMaidKitReconnectAlert(String serverName) async {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(
-              Symbols.link_off,
+              Symbols.link_off_rounded,
               size: 48,
               color: Theme.of(context).colorScheme.error,
             ),

@@ -61,7 +61,7 @@ class AboutPage extends ConsumerWidget {
                             alignment: Alignment.center,
                             color: colorScheme.surfaceContainerHighest,
                             child: Icon(
-                              Symbols.dns,
+                              Symbols.dns_rounded,
                               size: 48,
                               color: colorScheme.primary,
                             ),
@@ -107,20 +107,20 @@ class AboutPage extends ConsumerWidget {
                     child: Column(
                       children: [
                         ListTile(
-                          leading: const Icon(Symbols.info),
+                          leading: const Icon(Symbols.info_rounded),
                           title: Text('aboutVersion'.tr()),
                           subtitle: Text(info.version),
                         ),
                         const Divider(height: 1),
                         ListTile(
-                          leading: const Icon(Symbols.build),
+                          leading: const Icon(Symbols.build_rounded),
                           title: Text('aboutBuild'.tr()),
                           subtitle: Text(info.buildNumber),
                         ),
                         if (info.packageName.isNotEmpty) ...[
                           const Divider(height: 1),
                           ListTile(
-                            leading: const Icon(Symbols.inventory_2),
+                            leading: const Icon(Symbols.inventory_2_rounded),
                             title: Text('aboutPackageName'.tr()),
                             subtitle: SelectableText(info.packageName),
                           ),
@@ -137,10 +137,10 @@ class AboutPage extends ConsumerWidget {
                   Card(
                     clipBehavior: Clip.antiAlias,
                     child: ListTile(
-                      leading: const Icon(Symbols.update),
+                      leading: const Icon(Symbols.update_rounded),
                       title: Text('checkForUpdates'.tr()),
                       subtitle: Text('checkForUpdatesHint'.tr()),
-                      trailing: const Icon(Symbols.chevron_right),
+                      trailing: const Icon(Symbols.chevron_right_rounded),
                       onTap: () async {
                         await UpdateService().checkForUpdates(context);
                       },
@@ -166,7 +166,7 @@ class AboutPage extends ConsumerWidget {
                             height: 40,
                             color: colorScheme.surfaceContainerHighest,
                             child: Icon(
-                              Symbols.diversity_3,
+                              Symbols.diversity_3_rounded,
                               size: 24,
                               color: colorScheme.primary,
                             ),
@@ -195,10 +195,10 @@ class AboutPage extends ConsumerWidget {
                   Card(
                     clipBehavior: Clip.antiAlias,
                     child: ListTile(
-                      leading: const Icon(Symbols.description),
+                      leading: const Icon(Symbols.description_rounded),
                       title: Text('aboutOpenSourceLicenses'.tr()),
                       subtitle: Text('aboutOpenSourceLicensesHint'.tr()),
-                      trailing: const Icon(Symbols.chevron_right),
+                      trailing: const Icon(Symbols.chevron_right_rounded),
                       onTap: () {
                         showLicensePage(
                           context: context,
@@ -211,7 +211,7 @@ class AboutPage extends ConsumerWidget {
                               width: 48,
                               height: 48,
                               errorBuilder: (_, _, _) =>
-                                  const Icon(Symbols.dns, size: 48),
+                                  const Icon(Symbols.dns_rounded, size: 48),
                             ),
                           ),
                         );

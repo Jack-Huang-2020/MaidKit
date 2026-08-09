@@ -104,7 +104,7 @@ class _ContainerRuntimeInstallSheetState
             alignment: Alignment.centerRight,
             child: FilledButton.icon(
               onPressed: () => Navigator.pop(context, _runtime),
-              icon: const Icon(Symbols.download),
+              icon: const Icon(Symbols.download_rounded),
               label: const Text('runtimeInstallSubmit').tr(),
             ),
           ),

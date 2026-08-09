@@ -47,7 +47,7 @@ class DeploymentCatalogStrip extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(Symbols.deployed_code, color: scheme.primary),
+                Icon(Symbols.deployed_code_rounded, color: scheme.primary),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(

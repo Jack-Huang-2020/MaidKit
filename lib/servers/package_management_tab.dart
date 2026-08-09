@@ -176,7 +176,7 @@ class _PackageManagementTabState extends ConsumerState<PackageManagementTab> {
         showStyledSnackBar(
           message: error.toString(),
           title: 'packageActionFailed'.tr(),
-          icon: Symbols.error,
+          icon: Symbols.error_rounded,
           accentColor: Theme.of(context).colorScheme.error,
         );
       }
@@ -238,7 +238,7 @@ class _PackageManagementTabState extends ConsumerState<PackageManagementTab> {
   Widget build(BuildContext context) {
     if (!widget.connected) {
       return _PackageEmpty(
-        icon: Symbols.link_off,
+        icon: Symbols.link_off_rounded,
         message: widget.connectionError ?? 'packageConnectToManage'.tr(),
         actionLabel: 'commonConnect'.tr(),
         onAction: widget.onConnect,
@@ -247,14 +247,14 @@ class _PackageManagementTabState extends ConsumerState<PackageManagementTab> {
     return _status.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => _PackageEmpty(
-        icon: Symbols.error_outline,
+        icon: Symbols.error_outline_rounded,
         message: 'packageInspectError'.tr(args: ['$error']),
         actionLabel: 'systemdTryAgain'.tr(),
         onAction: _load,
       ),
       data: (status) => status.available.isEmpty
           ? _PackageEmpty(
-              icon: Symbols.inventory_2,
+              icon: Symbols.inventory_2_rounded,
               message: 'packageNoManagerFound'.tr(),
               actionLabel: 'commonRefresh'.tr(),
               onAction: _load,
@@ -273,7 +273,7 @@ class _PackageManagementTabState extends ConsumerState<PackageManagementTab> {
           padding: const EdgeInsets.fromLTRB(16, 4, 8, 0),
           child: Row(
             children: [
-              const Icon(Symbols.inventory_2, size: 20),
+              const Icon(Symbols.inventory_2_rounded, size: 20),
               const SizedBox(width: 8),
               DropdownButton<PackageManager>(
                 value: manager,
@@ -298,7 +298,7 @@ class _PackageManagementTabState extends ConsumerState<PackageManagementTab> {
                 padding: const EdgeInsets.all(4),
                 visualDensity: VisualDensity.compact,
                 onPressed: _busy ? null : _load,
-                icon: const Icon(Symbols.refresh),
+                icon: const Icon(Symbols.refresh_rounded),
               ),
               if (status.outdatedPackages.isNotEmpty)
                 IconButton(
@@ -306,7 +306,7 @@ class _PackageManagementTabState extends ConsumerState<PackageManagementTab> {
                   padding: const EdgeInsets.all(4),
                   visualDensity: VisualDensity.compact,
                   onPressed: _busy ? null : () => _run(PackageAction.upgrade),
-                  icon: const Icon(Symbols.system_update),
+                  icon: const Icon(Symbols.system_update_rounded),
                 ),
             ],
           ),
@@ -349,7 +349,7 @@ class _PackageManagementTabState extends ConsumerState<PackageManagementTab> {
                 padding: const EdgeInsets.all(4),
                 visualDensity: VisualDensity.compact,
                 onPressed: _busy ? null : _search,
-                icon: const Icon(Symbols.search),
+                icon: const Icon(Symbols.search_rounded),
               ),
             ],
           ),
@@ -366,7 +366,7 @@ class _PackageManagementTabState extends ConsumerState<PackageManagementTab> {
     }
     if (_results.hasError) {
       return _PackageEmpty(
-        icon: Symbols.error_outline,
+        icon: Symbols.error_outline_rounded,
         message: 'packageSearchError'.tr(args: ['${_results.error}']),
         actionLabel: 'systemdTryAgain'.tr(),
         onAction: _search,
@@ -376,7 +376,7 @@ class _PackageManagementTabState extends ConsumerState<PackageManagementTab> {
     if (results.isNotEmpty) return _packageList(results);
     if (_searchController.text.trim().isNotEmpty) {
       return _PackageEmpty(
-        icon: Symbols.search_off,
+        icon: Symbols.search_off_rounded,
         message: 'packageNoMatch'.tr(),
       );
     }
@@ -384,7 +384,7 @@ class _PackageManagementTabState extends ConsumerState<PackageManagementTab> {
       return _updatesList(status.outdatedPackages);
     }
     return _PackageEmpty(
-      icon: Symbols.check_circle,
+      icon: Symbols.check_circle_rounded,
       message: 'packageNoUpdates'.tr(),
     );
   }
@@ -394,7 +394,7 @@ class _PackageManagementTabState extends ConsumerState<PackageManagementTab> {
     separatorBuilder: (_, _) => const Divider(height: 1),
     itemBuilder: (_, index) => ListTile(
       dense: true,
-      leading: const Icon(Symbols.system_update),
+      leading: const Icon(Symbols.system_update_rounded),
       title: Text(packages[index]),
       subtitle: Text('packageUpdateAvailable'.tr()),
     ),
@@ -414,7 +414,7 @@ class _PackageManagementTabState extends ConsumerState<PackageManagementTab> {
             MenuAction(
               title: action.label,
               image: MenuImage.icon(
-                item.installed ? Symbols.delete_outline : Symbols.download,
+                item.installed ? Symbols.delete_outline_rounded : Symbols.download_rounded,
               ),
               attributes: MenuActionAttributes(disabled: _busy),
               callback: () => _run(action, packageName: item.name),
@@ -437,7 +437,7 @@ class _PackageManagementTabState extends ConsumerState<PackageManagementTab> {
                 ? null
                 : () => _run(action, packageName: item.name),
             icon: Icon(
-              item.installed ? Symbols.delete_outline : Symbols.download,
+              item.installed ? Symbols.delete_outline_rounded : Symbols.download_rounded,
             ),
           ),
         ),

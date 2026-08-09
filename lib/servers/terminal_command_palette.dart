@@ -140,44 +140,44 @@ class _TerminalCommandPaletteState extends State<_TerminalCommandPalette> {
       if (activeServer != null)
         _TerminalAction(
           label: 'sessionsNewTerminalOn'.tr(args: [activeTab!.serverName]),
-          icon: Symbols.add,
+          icon: Symbols.add_rounded,
           onSelect: () => widget.onOpen(activeServer),
         ),
       if (widget.onOpenFiles != null)
         _TerminalAction(
           label: 'sessionsOpenFileTransfer'.tr(args: [activeTab!.serverName]),
-          icon: Symbols.folder,
+          icon: Symbols.folder_rounded,
           onSelect: widget.onOpenFiles!,
         ),
       if (widget.onSplitRight != null)
         _TerminalAction(
           label: 'sessionsSplitRight'.tr(),
-          icon: Symbols.vertical_split,
+          icon: Symbols.vertical_split_rounded,
           onSelect: () async => widget.onSplitRight!(),
         ),
       if (widget.onSplitDown != null)
         _TerminalAction(
           label: 'sessionsSplitDown'.tr(),
-          icon: Symbols.horizontal_split,
+          icon: Symbols.horizontal_split_rounded,
           onSelect: () async => widget.onSplitDown!(),
         ),
       if (widget.onClose != null)
         _TerminalAction(
           label: 'sessionsCloseThisTab'.tr(),
-          icon: Symbols.close,
+          icon: Symbols.close_rounded,
           onSelect: widget.onClose!,
         ),
       if (widget.onDisconnect != null)
         _TerminalAction(
           label: 'sessionsCloseAllTabs'.tr(args: [activeTab!.serverName]),
-          icon: Symbols.link_off,
+          icon: Symbols.link_off_rounded,
           onSelect: widget.onDisconnect!,
         ),
       for (final server in widget.servers)
         if (server.id != activeTab?.serverId)
           _TerminalAction(
             label: 'sessionsNewTerminalOn'.tr(args: [server.name]),
-            icon: Symbols.terminal,
+            icon: Symbols.terminal_rounded,
             onSelect: () => widget.onOpen(server),
           ),
     ].where((action) => action.label.toLowerCase().contains(query)).toList();
@@ -205,7 +205,7 @@ class _TerminalCommandPaletteState extends State<_TerminalCommandPalette> {
               leading: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: CircleAvatar(
-                  child: const Icon(Symbols.keyboard_command_key),
+                  child: const Icon(Symbols.keyboard_command_key_rounded),
                 ),
               ),
               onChanged: (_) => setState(() {}),

@@ -242,7 +242,7 @@ class _FileEditorTabViewState extends ConsumerState<FileEditorTabView> {
       showStyledSnackBar(
         message: widget.tab.fileName,
         title: 'fileManagerSaved'.tr(),
-        icon: Symbols.check_circle,
+        icon: Symbols.check_circle_rounded,
         accentColor: Theme.of(context).colorScheme.primary,
       );
     } catch (error) {
@@ -504,7 +504,7 @@ class _EditorToolbar extends StatelessWidget {
         child: Row(
           children: [
             Icon(
-              isRemote ? Symbols.cloud : Symbols.computer,
+              isRemote ? Symbols.cloud_rounded : Symbols.computer_rounded,
               size: 18,
               color: scheme.onSurfaceVariant,
             ),
@@ -524,14 +524,14 @@ class _EditorToolbar extends StatelessWidget {
               const SizedBox(width: 8),
               OutlinedButton.icon(
                 onPressed: canFormat ? onFormat : null,
-                icon: const Icon(Symbols.data_object, size: 16),
+                icon: const Icon(Symbols.data_object_rounded, size: 16),
                 label: Text('fileEditorFormat'.tr()),
               ),
               const SizedBox(width: 8),
               OutlinedButton.icon(
                 onPressed: loading || saving ? null : onLint,
                 icon: Icon(
-                  issueCount > 0 ? Symbols.error : Symbols.checklist,
+                  issueCount > 0 ? Symbols.error_rounded : Symbols.checklist_rounded,
                   size: 16,
                 ),
                 label: Text(
@@ -550,7 +550,7 @@ class _EditorToolbar extends StatelessWidget {
                       height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Icon(Symbols.save, size: 18),
+                  : const Icon(Symbols.save_rounded, size: 18),
               label: Text('commonSave'.tr()),
             ),
           ],
@@ -577,7 +577,7 @@ class _IssuesBanner extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         child: Row(
           children: [
-            Icon(Symbols.error, size: 16, color: scheme.onErrorContainer),
+            Icon(Symbols.error_rounded, size: 16, color: scheme.onErrorContainer),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -600,7 +600,7 @@ class _IssuesBanner extends StatelessWidget {
               visualDensity: VisualDensity.compact,
               onPressed: onDismiss,
               icon: Icon(
-                Symbols.close,
+                Symbols.close_rounded,
                 size: 16,
                 color: scheme.onErrorContainer,
               ),

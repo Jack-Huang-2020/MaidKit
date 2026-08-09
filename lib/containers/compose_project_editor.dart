@@ -175,12 +175,12 @@ class _ComposeProjectEditorState extends State<ComposeProjectEditor> {
           segments: [
             ButtonSegment(
               value: _ComposeEditorMode.guided,
-              icon: Icon(Symbols.tune, size: 18),
+              icon: Icon(Symbols.tune_rounded, size: 18),
               label: Text('editorGuided'.tr()),
             ),
             ButtonSegment(
               value: _ComposeEditorMode.advanced,
-              icon: Icon(Symbols.code, size: 18),
+              icon: Icon(Symbols.code_rounded, size: 18),
               label: Text('editorAdvanced'.tr()),
             ),
           ],
@@ -208,7 +208,7 @@ class _ComposeProjectEditorState extends State<ComposeProjectEditor> {
               _services.add(_ComposeServiceDraft());
               _notifyChanged();
             }),
-            icon: const Icon(Symbols.add, size: 18),
+            icon: const Icon(Symbols.add_rounded, size: 18),
             label: const Text('editorAddService').tr(),
           ),
         ] else
@@ -254,7 +254,7 @@ class _ComposeProjectEditorState extends State<ComposeProjectEditor> {
                       _services.removeAt(index).dispose();
                       _notifyChanged();
                     }),
-                    icon: const Icon(Symbols.close, size: 18),
+                    icon: const Icon(Symbols.close_rounded, size: 18),
                   ),
               ],
             ),

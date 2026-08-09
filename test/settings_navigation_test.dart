@@ -89,7 +89,7 @@ void main() {
   ) async {
     await pumpApp(tester);
 
-    await tester.tap(find.byIcon(Symbols.inventory_2));
+    await tester.tap(find.byIcon(Symbols.inventory_2_rounded));
     await tester.pumpAndSettle();
 
     expect(find.text('assetsConnections'.tr()), findsOneWidget);

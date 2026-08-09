@@ -28,7 +28,7 @@ class CredentialsPage extends ConsumerWidget {
             ),
             FilledButton.icon(
               onPressed: () => _addCredential(context, ref),
-              icon: const Icon(Symbols.add),
+              icon: const Icon(Symbols.add_rounded),
               label: Text('settingsCredentialAdd'.tr()),
             ),
           ],
@@ -49,8 +49,8 @@ class CredentialsPage extends ConsumerWidget {
                   contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                   leading: Icon(
                     credential.credentialType == CredentialType.privateKey.name
-                        ? Symbols.key
-                        : Symbols.password,
+                        ? Symbols.key_rounded
+                        : Symbols.password_rounded,
                   ),
                   title: Text(credential.name),
                   subtitle: Text(
@@ -65,13 +65,13 @@ class CredentialsPage extends ConsumerWidget {
                         tooltip: 'settingsCredentialEdit'.tr(),
                         onPressed: () =>
                             _editCredential(context, ref, credential),
-                        icon: const Icon(Symbols.edit),
+                        icon: const Icon(Symbols.edit_rounded),
                       ),
                       IconButton(
                         tooltip: 'commonDelete'.tr(),
                         onPressed: () =>
                             _deleteCredential(context, ref, credential),
-                        icon: const Icon(Symbols.delete_outline),
+                        icon: const Icon(Symbols.delete_outline_rounded),
                       ),
                     ],
                   ),
@@ -277,7 +277,7 @@ class _CredentialEditorSheetState extends State<_CredentialEditorSheet> {
                   labelText: 'serverPrivateKeyLabel'.tr(),
                   suffixIcon: IconButton(
                     onPressed: _pickKey,
-                    icon: const Icon(Symbols.upload_file),
+                    icon: const Icon(Symbols.upload_file_rounded),
                   ),
                 ),
                 validator: _required,

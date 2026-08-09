@@ -99,7 +99,7 @@ void main() {
           find.descendant(of: rail, matching: find.byIcon(icon));
 
       // Open the Projects tab and its project detail.
-      await tester.tap(railIcon(Symbols.deployed_code));
+      await tester.tap(railIcon(Symbols.deployed_code_rounded));
       await tester.pumpAndSettle();
       expect(find.text('Demo Project'), findsOneWidget);
 
@@ -108,15 +108,15 @@ void main() {
 
       // Detail page is showing and the tab rail is still on screen.
       expect(find.text('deploymentResourcesTitle'.tr()), findsOneWidget);
-      expect(railIcon(Symbols.dns), findsOneWidget);
+      expect(railIcon(Symbols.dns_rounded), findsOneWidget);
 
       // Switch to the Servers tab: detail is out of view.
-      await tester.tap(railIcon(Symbols.dns));
+      await tester.tap(railIcon(Symbols.dns_rounded));
       await tester.pumpAndSettle();
       expect(find.text('deploymentResourcesTitle'.tr()), findsNothing);
 
       // Switch back: the pushed detail is still open (not reset to the list).
-      await tester.tap(railIcon(Symbols.deployed_code));
+      await tester.tap(railIcon(Symbols.deployed_code_rounded));
       await tester.pumpAndSettle();
       expect(find.text('deploymentResourcesTitle'.tr()), findsOneWidget);
 

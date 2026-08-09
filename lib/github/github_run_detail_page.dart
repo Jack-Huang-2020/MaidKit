@@ -61,7 +61,7 @@ class GitHubRunDetailPage extends ConsumerWidget {
               padding: const EdgeInsets.only(right: 12),
               child: FilledButton.icon(
                 onPressed: () => launchUrl(Uri.parse(run.htmlUrl)),
-                icon: const Icon(Symbols.open_in_new, size: 18),
+                icon: const Icon(Symbols.open_in_new_rounded, size: 18),
                 label: Text('githubRunOpen'.tr()),
               ),
             ),
@@ -118,10 +118,10 @@ class GitHubRunDetailPage extends ConsumerWidget {
                   spacing: 16,
                   runSpacing: 4,
                   children: [
-                    _Meta(icon: Symbols.tag, text: '#${run.runNumber}'),
+                    _Meta(icon: Symbols.tag_rounded, text: '#${run.runNumber}'),
                     if (run.headSha.isNotEmpty)
                       _Meta(
-                        icon: Symbols.commit,
+                        icon: Symbols.commit_rounded,
                         text: run.headSha.substring(
                           0,
                           run.headSha.length > 7 ? 7 : run.headSha.length,
@@ -129,7 +129,7 @@ class GitHubRunDetailPage extends ConsumerWidget {
                       ),
                     if (run.createdAt != null)
                       _Meta(
-                        icon: Symbols.schedule,
+                        icon: Symbols.schedule_rounded,
                         text: githubTimeAgo(context, run.createdAt),
                       ),
                   ],
@@ -140,7 +140,7 @@ class GitHubRunDetailPage extends ConsumerWidget {
           const SizedBox(height: 20),
           Row(
             children: [
-              Icon(Symbols.rocket_launch, size: 18, color: scheme.primary),
+              Icon(Symbols.rocket_launch_rounded, size: 18, color: scheme.primary),
               const SizedBox(width: 8),
               Text('githubJobs'.tr(), style: theme.textTheme.titleMedium),
             ],
@@ -230,11 +230,11 @@ class _JobCard extends StatelessWidget {
                     switch (step.status) {
                       WorkflowRunStatus.completed =>
                         step.conclusion == WorkflowRunConclusion.success
-                            ? Symbols.check_circle
-                            : Symbols.error,
-                      WorkflowRunStatus.inProgress => Symbols.play_arrow,
-                      WorkflowRunStatus.queued => Symbols.hourglass_top,
-                      WorkflowRunStatus.unknown => Symbols.help,
+                            ? Symbols.check_circle_rounded
+                            : Symbols.error_rounded,
+                      WorkflowRunStatus.inProgress => Symbols.play_arrow_rounded,
+                      WorkflowRunStatus.queued => Symbols.hourglass_top_rounded,
+                      WorkflowRunStatus.unknown => Symbols.help_rounded,
                     },
                     size: 15,
                     color: switch (step.status) {

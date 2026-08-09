@@ -72,7 +72,7 @@ class ContainerListTile extends StatelessWidget {
               child: Row(
                 children: [
                   Icon(
-                    running ? Symbols.play_circle : Symbols.stop_circle,
+                    running ? Symbols.play_circle_rounded : Symbols.stop_circle_rounded,
                     size: 18,
                     color: running ? scheme.primary : scheme.onSurfaceVariant,
                   ),
@@ -169,7 +169,7 @@ class ContainerListTile extends StatelessWidget {
             const SizedBox(width: 4),
             trailing ??
                 Icon(
-                  Symbols.chevron_right,
+                  Symbols.chevron_right_rounded,
                   size: 18,
                   color: scheme.onSurfaceVariant,
                 ),

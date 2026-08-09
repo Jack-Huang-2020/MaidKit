@@ -117,12 +117,12 @@ class _PortForwardingTabState extends ConsumerState<PortForwardingTab> {
                   segments: [
                     ButtonSegment(
                       value: PortForwardKind.tcp,
-                      icon: const Icon(Symbols.swap_horiz),
+                      icon: const Icon(Symbols.swap_horiz_rounded),
                       label: Text('portForwardingTcp').tr(),
                     ),
                     ButtonSegment(
                       value: PortForwardKind.socks5,
-                      icon: const Icon(Symbols.vpn_lock),
+                      icon: const Icon(Symbols.vpn_lock_rounded),
                       label: Text('portForwardingSocks5').tr(),
                     ),
                   ],
@@ -141,12 +141,12 @@ class _PortForwardingTabState extends ConsumerState<PortForwardingTab> {
                     segments: [
                       ButtonSegment(
                         value: PortForwardDirection.local,
-                        icon: const Icon(Symbols.laptop_mac),
+                        icon: const Icon(Symbols.laptop_mac_rounded),
                         label: Text('portForwardingLocal').tr(),
                       ),
                       ButtonSegment(
                         value: PortForwardDirection.remote,
-                        icon: const Icon(Symbols.dns),
+                        icon: const Icon(Symbols.dns_rounded),
                         label: Text('portForwardingRemote').tr(),
                       ),
                     ],
@@ -177,7 +177,7 @@ class _PortForwardingTabState extends ConsumerState<PortForwardingTab> {
                           height: 18,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Icon(Symbols.play_arrow),
+                      : const Icon(Symbols.play_arrow_rounded),
                   label: Text('portForwardingStart').tr(),
                 ),
               ],
@@ -207,7 +207,7 @@ class _ConnectionNotice extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ListTile(
     contentPadding: EdgeInsets.zero,
-    leading: const Icon(Symbols.link_off),
+    leading: const Icon(Symbols.link_off_rounded),
     title: Text('portForwardingConnectToConfigure').tr(),
     subtitle: Text('portForwardingHint').tr(),
   );
@@ -297,10 +297,10 @@ class _ForwardTile extends ConsumerWidget {
     contentPadding: EdgeInsets.zero,
     leading: Icon(
       forward.kind == PortForwardKind.socks5
-          ? Symbols.vpn_lock
+          ? Symbols.vpn_lock_rounded
           : forward.direction == PortForwardDirection.local
-          ? Symbols.laptop_mac
-          : Symbols.dns,
+          ? Symbols.laptop_mac_rounded
+          : Symbols.dns_rounded,
     ),
     title: Text('${forward.label} · ${forward.summary}'),
     subtitle: Text(
@@ -312,7 +312,7 @@ class _ForwardTile extends ConsumerWidget {
       tooltip: 'portForwardingStop'.tr(),
       onPressed: () =>
           ref.read(connectionManagerProvider).stopPortForward(forward.id),
-      icon: const Icon(Symbols.stop_circle),
+      icon: const Icon(Symbols.stop_circle_rounded),
     ),
   );
 }

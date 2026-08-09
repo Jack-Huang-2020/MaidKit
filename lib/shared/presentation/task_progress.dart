@@ -479,7 +479,7 @@ class _TaskProgressActions extends ConsumerWidget {
                 unawaited(notifier.pause(task.id));
               }
             },
-            icon: Icon(task.isPaused ? Symbols.play_arrow : Symbols.pause),
+            icon: Icon(task.isPaused ? Symbols.play_arrow_rounded : Symbols.pause_rounded),
           ),
         ],
         if (task.canCancel) ...[
@@ -495,7 +495,7 @@ class _TaskProgressActions extends ConsumerWidget {
                 ref.read(taskProgressProvider.notifier).cancel(task.id),
               );
             },
-            icon: const Icon(Symbols.close),
+            icon: const Icon(Symbols.close_rounded),
           ),
         ],
       ],
@@ -524,7 +524,7 @@ class _TaskProgressSheet extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(24, 8, 12, 8),
               child: Row(
                 children: [
-                  Icon(Symbols.sync, size: 20, color: colorScheme.primary),
+                  Icon(Symbols.sync_rounded, size: 20, color: colorScheme.primary),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -535,7 +535,7 @@ class _TaskProgressSheet extends ConsumerWidget {
                   IconButton(
                     tooltip: MaterialLocalizations.of(context).closeButtonLabel,
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Symbols.close),
+                    icon: const Icon(Symbols.close_rounded),
                   ),
                 ],
               ),
@@ -680,12 +680,12 @@ Color _taskColor(AppTaskProgress task, ColorScheme colorScheme) {
 
 IconData _taskIcon(AppTaskProgress task) {
   return switch (task.status) {
-    TaskProgressStatus.queued => Symbols.schedule,
-    TaskProgressStatus.inProgress => Symbols.sync,
-    TaskProgressStatus.paused => Symbols.pause_circle,
-    TaskProgressStatus.completed => Symbols.check_circle,
-    TaskProgressStatus.failed => Symbols.error,
-    TaskProgressStatus.canceled => Symbols.cancel,
+    TaskProgressStatus.queued => Symbols.schedule_rounded,
+    TaskProgressStatus.inProgress => Symbols.sync_rounded,
+    TaskProgressStatus.paused => Symbols.pause_circle_rounded,
+    TaskProgressStatus.completed => Symbols.check_circle_rounded,
+    TaskProgressStatus.failed => Symbols.error_rounded,
+    TaskProgressStatus.canceled => Symbols.cancel_rounded,
   };
 }
 

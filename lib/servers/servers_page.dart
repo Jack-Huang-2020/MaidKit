@@ -48,7 +48,7 @@ class ServerDashboardTab extends ConsumerWidget {
         showStyledSnackBar(
           message: 'serversSaveError'.tr(),
           title: 'serversSaveError'.tr(),
-          icon: Symbols.error,
+          icon: Symbols.error_rounded,
           accentColor: Theme.of(context).colorScheme.error,
         );
       }
@@ -124,7 +124,7 @@ class ServerDashboardTab extends ConsumerWidget {
         showStyledSnackBar(
           message: error.toString(),
           title: 'serversEditError'.tr(),
-          icon: Symbols.error_outline,
+          icon: Symbols.error_outline_rounded,
           accentColor: Theme.of(context).colorScheme.error,
         );
       }
@@ -251,7 +251,7 @@ class _ServersCatalog extends StatelessWidget {
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'servers-create-fab',
         onPressed: onAdd,
-        icon: const Icon(Symbols.add),
+        icon: const Icon(Symbols.add_rounded),
         label: Text('serversAddServer'.tr()),
       ),
     );
@@ -520,7 +520,7 @@ class _ServerGridState extends State<_ServerGrid> {
                 onPressed: () =>
                     setState(() => _isCompactView = !_isCompactView),
                 icon: Icon(
-                  _isCompactView ? Symbols.view_agenda : Symbols.view_compact,
+                  _isCompactView ? Symbols.view_agenda_rounded : Symbols.view_compact_rounded,
                 ),
                 label: Text(
                   _isCompactView
@@ -572,14 +572,14 @@ class _ArrangeServersControl extends StatelessWidget {
     if (isArranging) {
       return FilledButton.icon(
         onPressed: onPressed,
-        icon: const Icon(Symbols.check),
+        icon: const Icon(Symbols.check_rounded),
         label: Text('serversDoneArranging'.tr()),
       );
     }
 
     return OutlinedButton.icon(
       onPressed: canArrange ? onPressed : null,
-      icon: const Icon(Symbols.drag_indicator),
+      icon: const Icon(Symbols.drag_indicator_rounded),
       label: Text('serversArrange'.tr()),
     );
   }
@@ -664,7 +664,7 @@ class _ServerDragHandle extends StatelessWidget {
       ),
       child: const Padding(
         padding: EdgeInsets.all(8),
-        child: Icon(Symbols.drag_indicator, size: 20),
+        child: Icon(Symbols.drag_indicator_rounded, size: 20),
       ),
     );
   }
@@ -687,7 +687,7 @@ class _ServerDragFeedback extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Symbols.drag_indicator, color: colorScheme.primary),
+              Icon(Symbols.drag_indicator_rounded, color: colorScheme.primary),
               const SizedBox(width: 12),
               Text(name, style: Theme.of(context).textTheme.titleSmall),
             ],
@@ -734,7 +734,7 @@ class _ReconnectAllCard extends StatelessWidget {
         child: Row(
           children: [
             Icon(
-              Symbols.cloud_off,
+              Symbols.cloud_off_rounded,
               size: 20,
               color: colorScheme.onSurfaceVariant,
             ),
@@ -759,7 +759,7 @@ class _ReconnectAllCard extends StatelessWidget {
                         color: colorScheme.onSurfaceVariant,
                       ),
                     )
-                  : const Icon(Symbols.sync, size: 18),
+                  : const Icon(Symbols.sync_rounded, size: 18),
               label: Text('serversReconnectAll'.tr()),
             ),
           ],
@@ -824,7 +824,7 @@ class _ServerCard extends ConsumerWidget {
                 child: Row(
                   children: [
                     Icon(
-                      isLocal ? Symbols.computer : Symbols.dns,
+                      isLocal ? Symbols.computer_rounded : Symbols.dns_rounded,
                       fill: connected ? 1 : 0,
                       size: compact ? 20 : 22,
                       color: connected
@@ -851,7 +851,7 @@ class _ServerCard extends ConsumerWidget {
                                 Tooltip(
                                   message: 'tailscaleViaTailnet'.tr(),
                                   child: Icon(
-                                    Symbols.lan,
+                                    Symbols.lan_rounded,
                                     size: 14,
                                     color: colorScheme.onSurfaceVariant,
                                   ),
@@ -887,7 +887,7 @@ class _ServerCard extends ConsumerWidget {
                       onPressed: isSerial
                           ? null
                           : (connected ? onRefresh : null),
-                      icon: const Icon(Symbols.refresh),
+                      icon: const Icon(Symbols.refresh_rounded),
                     ),
                   ],
                 ),
@@ -898,7 +898,7 @@ class _ServerCard extends ConsumerWidget {
                   padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 12),
                   child: isSerial
                       ? _StatsMessage(
-                          icon: Symbols.usb,
+                          icon: Symbols.usb_rounded,
                           message: 'serversSerialConsole'.tr(),
                         )
                       : connected
@@ -1039,7 +1039,7 @@ class _ServerQuickActions extends StatelessWidget {
                   style: ButtonStyle(
                     visualDensity: compact ? VisualDensity.compact : null,
                   ),
-                  icon: const Icon(Symbols.terminal, size: 18),
+                  icon: const Icon(Symbols.terminal_rounded, size: 18),
                   label: Text('sessionsNewTerminal'.tr()),
                 ),
               ),
@@ -1049,7 +1049,7 @@ class _ServerQuickActions extends StatelessWidget {
                 child: IconButton.outlined(
                   onPressed: onOpenFiles,
                   visualDensity: compact ? VisualDensity.compact : null,
-                  icon: const Icon(Symbols.folder, size: 18),
+                  icon: const Icon(Symbols.folder_rounded, size: 18),
                 ),
               ),
             ],
@@ -1067,7 +1067,7 @@ class _ServerQuickActions extends StatelessWidget {
                     EdgeInsets.symmetric(horizontal: 8),
                   ),
                 ),
-                icon: const Icon(Symbols.terminal, size: 18),
+                icon: const Icon(Symbols.terminal_rounded, size: 18),
                 label: Text('sessionsNewTerminal'.tr()),
               ),
             ),
@@ -1081,7 +1081,7 @@ class _ServerQuickActions extends StatelessWidget {
                     EdgeInsets.symmetric(horizontal: 8),
                   ),
                 ),
-                icon: const Icon(Symbols.folder, size: 18),
+                icon: const Icon(Symbols.folder_rounded, size: 18),
                 label: Text('sessionsOpenFileManagement'.tr()),
               ),
             ),
@@ -1186,7 +1186,7 @@ class _DisconnectedStats extends StatelessWidget {
         child: Row(
           children: [
             Icon(
-              connecting ? Symbols.hourglass_top : Symbols.insights,
+              connecting ? Symbols.hourglass_top_rounded : Symbols.insights_rounded,
               size: 20,
               color: colorScheme.onSurfaceVariant,
             ),
@@ -1230,13 +1230,13 @@ class _ServerStats extends StatelessWidget {
 
     if (!collectStats && !collectSystemInfo) {
       return _StatsMessage(
-        icon: Symbols.visibility_off,
+        icon: Symbols.visibility_off_rounded,
         message: 'serversCollectionDisabled'.tr(),
       );
     }
     if (stats == null && systemInfo == null) {
       return _StatsMessage(
-        icon: Symbols.sync,
+        icon: Symbols.sync_rounded,
         message: 'serversFetchingInfo'.tr(),
       );
     }
@@ -1308,7 +1308,7 @@ class _ServerStats extends StatelessWidget {
           )
         else if (collectStats)
           _StatsMessage(
-            icon: Symbols.query_stats,
+            icon: Symbols.query_stats_rounded,
             message: 'serversStatsUnavailable'.tr(),
           ),
         if (!compact && systemLabel.isNotEmpty) ...[
@@ -1535,7 +1535,7 @@ class _EmptyServers extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            Symbols.dns,
+            Symbols.dns_rounded,
             size: 36,
             color: Theme.of(context).colorScheme.primary,
           ),
@@ -1549,7 +1549,7 @@ class _EmptyServers extends StatelessWidget {
           const SizedBox(height: 20),
           FilledButton.icon(
             onPressed: onAdd,
-            icon: const Icon(Symbols.add),
+            icon: const Icon(Symbols.add_rounded),
             label: Text('serversAddServer'.tr()),
           ),
         ],
@@ -1713,7 +1713,7 @@ class _AddServerDialogState extends ConsumerState<ServerEditorDialog> {
         showStyledSnackBar(
           message: 'serverSerialNotSupported'.tr(),
           title: 'serverSerialScanError'.tr(),
-          icon: Symbols.usb,
+          icon: Symbols.usb_rounded,
           accentColor: Theme.of(context).colorScheme.error,
         );
       }
@@ -1736,7 +1736,7 @@ class _AddServerDialogState extends ConsumerState<ServerEditorDialog> {
         showStyledSnackBar(
           message: error.message,
           title: 'serverSerialScanError'.tr(),
-          icon: Symbols.usb,
+          icon: Symbols.usb_rounded,
           accentColor: Theme.of(context).colorScheme.error,
         );
       }
@@ -1745,7 +1745,7 @@ class _AddServerDialogState extends ConsumerState<ServerEditorDialog> {
         showStyledSnackBar(
           message: 'serverSerialScanError'.tr(),
           title: 'serverSerialScanError'.tr(),
-          icon: Symbols.usb,
+          icon: Symbols.usb_rounded,
           accentColor: Theme.of(context).colorScheme.error,
         );
       }
@@ -1845,7 +1845,7 @@ class _AddServerDialogState extends ConsumerState<ServerEditorDialog> {
       showStyledSnackBar(
         message: 'serverSerialDeviceRequired'.tr(),
         title: 'serverSerialDeviceRequired'.tr(),
-        icon: Symbols.usb,
+        icon: Symbols.usb_rounded,
         accentColor: Theme.of(context).colorScheme.error,
       );
       return;
@@ -1968,7 +1968,7 @@ class _AddServerDialogState extends ConsumerState<ServerEditorDialog> {
                           suffixIcon: tailscaleRunning
                               ? IconButton(
                                   tooltip: 'tailscalePickMachine'.tr(),
-                                  icon: const Icon(Symbols.lan),
+                                  icon: const Icon(Symbols.lan_rounded),
                                   onPressed: () =>
                                       _pickTailscaleMachine(context),
                                 )
@@ -2061,7 +2061,7 @@ class _AddServerDialogState extends ConsumerState<ServerEditorDialog> {
                         labelText: 'serverPrivateKeyLabel'.tr(),
                         suffixIcon: IconButton(
                           onPressed: _pickKey,
-                          icon: const Icon(Symbols.upload_file),
+                          icon: const Icon(Symbols.upload_file_rounded),
                         ),
                       ),
                     ),
@@ -2187,7 +2187,7 @@ class _AddServerDialogState extends ConsumerState<ServerEditorDialog> {
                             tooltip: 'serverRemoveVariable'.tr(),
                             visualDensity: VisualDensity.compact,
                             onPressed: () => _removeEnvRow(row),
-                            icon: const Icon(Symbols.close, size: 18),
+                            icon: const Icon(Symbols.close_rounded, size: 18),
                           ),
                         ],
                       ),
@@ -2197,7 +2197,7 @@ class _AddServerDialogState extends ConsumerState<ServerEditorDialog> {
                       alignment: Alignment.centerLeft,
                       child: TextButton.icon(
                         onPressed: _addEnvRow,
-                        icon: const Icon(Symbols.add, size: 18),
+                        icon: const Icon(Symbols.add_rounded, size: 18),
                         label: Text('serverAddEnvVar'.tr()),
                       ),
                     ),
@@ -2262,7 +2262,7 @@ class _AddServerDialogState extends ConsumerState<ServerEditorDialog> {
                       DropdownMenuEntry(
                         value: device,
                         label: device,
-                        leadingIcon: const Icon(Symbols.usb, size: 18),
+                        leadingIcon: const Icon(Symbols.usb_rounded, size: 18),
                       ),
                   ],
                   onSelected: (value) {
@@ -2279,7 +2279,7 @@ class _AddServerDialogState extends ConsumerState<ServerEditorDialog> {
                           ? null
                           : _scanSerialDevices,
                       icon: Icon(
-                        _scanningSerialDevices ? Symbols.sync : Symbols.refresh,
+                        _scanningSerialDevices ? Symbols.sync_rounded : Symbols.refresh_rounded,
                         size: 18,
                       ),
                       label: Text('serverSerialScan'.tr()),
@@ -2438,7 +2438,7 @@ class _AddServerDialogState extends ConsumerState<ServerEditorDialog> {
                       const SizedBox(width: 8),
                       IconButton.filledTonal(
                         onPressed: _addTag,
-                        icon: const Icon(Symbols.add, size: 18),
+                        icon: const Icon(Symbols.add_rounded, size: 18),
                       ),
                     ],
                   ),

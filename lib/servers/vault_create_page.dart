@@ -100,7 +100,7 @@ class _VaultCreatePageState extends ConsumerState<VaultCreatePage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Symbols.add),
+                leading: const Icon(Symbols.add_rounded),
                 title: Text('vaultCreateFileAction'.tr()),
                 subtitle: Text('settingsVaultCreateLocalHint'.tr()),
                 onTap: _busy
@@ -112,14 +112,14 @@ class _VaultCreatePageState extends ConsumerState<VaultCreatePage> {
               ),
               const Divider(height: 1),
               ListTile(
-                leading: const Icon(Symbols.dns),
+                leading: const Icon(Symbols.dns_rounded),
                 title: Text('vaultCreateImportAction'.tr()),
                 subtitle: Text('vaultCreateImportHint'.tr()),
                 onTap: _busy ? null : _pickConnectionFiles,
               ),
               const Divider(height: 1),
               ListTile(
-                leading: const Icon(Symbols.cloud_download),
+                leading: const Icon(Symbols.cloud_download_rounded),
                 title: Text('vaultCreateFromCloudAction'.tr()),
                 subtitle: Text('vaultCreateFromCloudHint'.tr()),
                 onTap: _busy ? null : _downloadFromCloud,
@@ -505,7 +505,7 @@ class _VaultCreatePageState extends ConsumerState<VaultCreatePage> {
                   children: [
                     for (final blob in blobs)
                       ListTile(
-                        leading: const Icon(Symbols.lock),
+                        leading: const Icon(Symbols.lock_rounded),
                         title: Text(
                           'settingsVaultCloudVault'.tr(
                             args: [blob.revision.toString()],

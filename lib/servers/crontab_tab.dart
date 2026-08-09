@@ -98,7 +98,7 @@ class _CrontabTabState extends ConsumerState<CrontabTab> {
       showStyledSnackBar(
         message: error.toString(),
         title: 'crontabUpdateFailed'.tr(),
-        icon: Symbols.error,
+        icon: Symbols.error_rounded,
         accentColor: Theme.of(context).colorScheme.error,
       );
     }
@@ -230,7 +230,7 @@ class _CrontabTabState extends ConsumerState<CrontabTab> {
   Widget build(BuildContext context) {
     if (!widget.connected) {
       return _CrontabEmpty(
-        icon: Symbols.link_off,
+        icon: Symbols.link_off_rounded,
         message: widget.connectionError ?? 'crontabConnectToManage'.tr(),
         actionLabel: 'commonConnect'.tr(),
         onAction: widget.onConnect,
@@ -241,7 +241,7 @@ class _CrontabTabState extends ConsumerState<CrontabTab> {
     return _document.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => _CrontabEmpty(
-        icon: Symbols.error_outline,
+        icon: Symbols.error_outline_rounded,
         message: 'crontabLoadError'.tr(args: [error.toString()]),
         actionLabel: 'commonRetry'.tr(),
         onAction: _load,
@@ -282,13 +282,13 @@ class _CrontabTabState extends ConsumerState<CrontabTab> {
                     tooltip: 'crontabRefresh'.tr(),
                     visualDensity: VisualDensity.compact,
                     onPressed: _busy ? null : _load,
-                    icon: const Icon(Symbols.refresh),
+                    icon: const Icon(Symbols.refresh_rounded),
                   ),
                   IconButton(
                     tooltip: 'crontabAddJob'.tr(),
                     visualDensity: VisualDensity.compact,
                     onPressed: _busy ? null : _addJob,
-                    icon: const Icon(Symbols.add),
+                    icon: const Icon(Symbols.add_rounded),
                   ),
                 ],
               ),
@@ -297,7 +297,7 @@ class _CrontabTabState extends ConsumerState<CrontabTab> {
             Expanded(
               child: jobs.isEmpty
                   ? _CrontabEmpty(
-                      icon: Symbols.schedule,
+                      icon: Symbols.schedule_rounded,
                       message: document.exists
                           ? 'crontabEmptyNoJobs'.tr()
                           : 'crontabEmptyNotInstalled'.tr(),
@@ -318,7 +318,7 @@ class _CrontabTabState extends ConsumerState<CrontabTab> {
                             vertical: 4,
                           ),
                           leading: Icon(
-                            Symbols.schedule,
+                            Symbols.schedule_rounded,
                             color: scheme.onSurfaceVariant,
                           ),
                           title: Text(
@@ -343,14 +343,14 @@ class _CrontabTabState extends ConsumerState<CrontabTab> {
                                 onPressed: _busy
                                     ? null
                                     : () => _editJob(index, job),
-                                icon: const Icon(Symbols.edit, size: 20),
+                                icon: const Icon(Symbols.edit_rounded, size: 20),
                               ),
                               IconButton(
                                 tooltip: 'commonRemove'.tr(),
                                 onPressed: _busy
                                     ? null
                                     : () => _deleteJob(index, job),
-                                icon: const Icon(Symbols.delete, size: 20),
+                                icon: const Icon(Symbols.delete_rounded, size: 20),
                               ),
                             ],
                           ),
@@ -633,7 +633,7 @@ class _CrontabEmpty extends StatelessWidget {
               if (filled)
                 FilledButton.icon(
                   onPressed: onAction,
-                  icon: const Icon(Symbols.link),
+                  icon: const Icon(Symbols.link_rounded),
                   label: Text(actionLabel!),
                 )
               else

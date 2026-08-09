@@ -133,7 +133,7 @@ class _TerminalFindHostState extends State<TerminalFindHost> {
                   padding: const EdgeInsets.fromLTRB(12, 6, 8, 6),
                   child: Row(
                     children: [
-                      const Icon(Symbols.search, size: 18),
+                      const Icon(Symbols.search_rounded, size: 18),
                       const SizedBox(width: 8),
                       Expanded(
                         child: TextField(
@@ -170,17 +170,17 @@ class _TerminalFindHostState extends State<TerminalFindHost> {
                       IconButton(
                         tooltip: 'terminalPreviousMatch'.tr(),
                         onPressed: _matchCount == 0 ? null : _previous,
-                        icon: const Icon(Symbols.keyboard_arrow_up, size: 20),
+                        icon: const Icon(Symbols.keyboard_arrow_up_rounded, size: 20),
                       ),
                       IconButton(
                         tooltip: 'terminalNextMatch'.tr(),
                         onPressed: _matchCount == 0 ? null : _next,
-                        icon: const Icon(Symbols.keyboard_arrow_down, size: 20),
+                        icon: const Icon(Symbols.keyboard_arrow_down_rounded, size: 20),
                       ),
                       IconButton(
                         tooltip: 'commonClose'.tr(),
                         onPressed: _closeFind,
-                        icon: const Icon(Symbols.close, size: 18),
+                        icon: const Icon(Symbols.close_rounded, size: 18),
                       ),
                     ],
                   ),

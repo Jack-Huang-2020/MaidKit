@@ -124,17 +124,17 @@ class SettingsPage extends ConsumerWidget {
                               ButtonSegment(
                                 value: ThemeMode.system,
                                 label: Text('settingsThemeSystem'.tr()),
-                                icon: const Icon(Symbols.brightness_auto),
+                                icon: const Icon(Symbols.brightness_auto_rounded),
                               ),
                               ButtonSegment(
                                 value: ThemeMode.light,
                                 label: Text('settingsThemeLight'.tr()),
-                                icon: const Icon(Symbols.light_mode),
+                                icon: const Icon(Symbols.light_mode_rounded),
                               ),
                               ButtonSegment(
                                 value: ThemeMode.dark,
                                 label: Text('settingsThemeDark'.tr()),
-                                icon: const Icon(Symbols.dark_mode),
+                                icon: const Icon(Symbols.dark_mode_rounded),
                               ),
                             ],
                             selected: {themeMode},
@@ -186,7 +186,7 @@ class SettingsPage extends ConsumerWidget {
                             OutlinedButton.icon(
                               onPressed: () =>
                                   _selectBackgroundImage(context, ref),
-                              icon: const Icon(Symbols.image),
+                              icon: const Icon(Symbols.image_rounded),
                               label: const Text(
                                 'settingsBackgroundImageChoose',
                               ).tr(),
@@ -195,7 +195,7 @@ class SettingsPage extends ConsumerWidget {
                               TextButton.icon(
                                 onPressed: () =>
                                     _clearBackgroundImage(context, ref),
-                                icon: const Icon(Symbols.delete_outline),
+                                icon: const Icon(Symbols.delete_outline_rounded),
                                 label: const Text(
                                   'settingsBackgroundImageClear',
                                 ).tr(),
@@ -511,7 +511,7 @@ class SettingsPage extends ConsumerWidget {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            trailing: const Icon(Symbols.chevron_right),
+                            trailing: const Icon(Symbols.chevron_right_rounded),
                             onTap: () => _editAgentPersonality(
                               context,
                               ref,
@@ -569,12 +569,12 @@ class SettingsPage extends ConsumerWidget {
                             _SettingsTilePosition.last,
                           ),
                         ),
-                        leading: const Icon(Symbols.password),
+                        leading: const Icon(Symbols.password_rounded),
                         title: const Text('settingsVaultChangePassword').tr(),
                         subtitle: const Text(
                           'settingsVaultChangePasswordHint',
                         ).tr(),
-                        trailing: const Icon(Symbols.chevron_right),
+                        trailing: const Icon(Symbols.chevron_right_rounded),
                         onTap: () => _changeVaultPassword(context, ref),
                       ),
                     ],
@@ -592,10 +592,10 @@ class SettingsPage extends ConsumerWidget {
                       _SettingsTilePosition.only,
                     ),
                   ),
-                  leading: const Icon(Symbols.info),
+                  leading: const Icon(Symbols.info_rounded),
                   title: Text('aboutTitle'.tr()),
                   subtitle: Text('settingsAboutHint'.tr()),
-                  trailing: const Icon(Symbols.chevron_right),
+                  trailing: const Icon(Symbols.chevron_right_rounded),
                   onTap: () => context.router.push(const AboutRoute()),
                 ),
               ),
@@ -611,7 +611,7 @@ class SettingsPage extends ConsumerWidget {
                         _SettingsTilePosition.only,
                       ),
                     ),
-                    leading: const CircleAvatar(child: Icon(Symbols.person)),
+                    leading: const CircleAvatar(child: Icon(Symbols.person_rounded)),
                     title: const Text('…'),
                   ),
                   error: (_, _) => _cloudLoginTile(context, ref),
@@ -632,7 +632,7 @@ class SettingsPage extends ConsumerWidget {
                                   ? null
                                   : Text(user.handle),
                               trailing: IconButton(
-                                icon: const Icon(Symbols.logout),
+                                icon: const Icon(Symbols.logout_rounded),
                                 tooltip: 'settingsCloudSignOut'.tr(),
                                 onPressed: () =>
                                     _signOutFromCloud(context, ref),
@@ -682,7 +682,7 @@ class SettingsPage extends ConsumerWidget {
                                     child: Row(
                                       children: [
                                         const Icon(
-                                          Symbols.warning_amber,
+                                          Symbols.warning_amber_rounded,
                                           size: 20,
                                         ),
                                         const SizedBox(width: 8),
@@ -832,7 +832,7 @@ class SettingsPage extends ConsumerWidget {
                                     FilledButton.tonalIcon(
                                       onPressed: () =>
                                           _settleBilling(context, ref),
-                                      icon: const Icon(Symbols.payments),
+                                      icon: const Icon(Symbols.payments_rounded),
                                       label: const Text(
                                         'settingsBillingSettleNow',
                                       ).tr(),
@@ -895,9 +895,9 @@ class SettingsPage extends ConsumerWidget {
                           _SettingsTilePosition.last,
                         ),
                       ),
-                      leading: const Icon(Symbols.add),
+                      leading: const Icon(Symbols.add_rounded),
                       title: const Text('settingsVaultCreate').tr(),
-                      trailing: const Icon(Symbols.chevron_right),
+                      trailing: const Icon(Symbols.chevron_right_rounded),
                       onTap: () => _showVaultOnboarding(context, ref),
                     ),
                   ],
@@ -916,12 +916,12 @@ class SettingsPage extends ConsumerWidget {
                           _SettingsTilePosition.first,
                         ),
                       ),
-                      leading: const Icon(Symbols.dns),
+                      leading: const Icon(Symbols.dns_rounded),
                       title: const Text('settingsConnectionsExport').tr(),
                       subtitle: const Text(
                         'settingsConnectionsExportHint',
                       ).tr(),
-                      trailing: const Icon(Symbols.chevron_right),
+                      trailing: const Icon(Symbols.chevron_right_rounded),
                       onTap: () => _exportConnections(context, ref),
                     ),
                     ListTile(
@@ -931,12 +931,12 @@ class SettingsPage extends ConsumerWidget {
                           _SettingsTilePosition.last,
                         ),
                       ),
-                      leading: const Icon(Symbols.upload_file),
+                      leading: const Icon(Symbols.upload_file_rounded),
                       title: const Text('settingsConnectionsImport').tr(),
                       subtitle: const Text(
                         'settingsConnectionsImportHint',
                       ).tr(),
-                      trailing: const Icon(Symbols.chevron_right),
+                      trailing: const Icon(Symbols.chevron_right_rounded),
                       onTap: () => _importConnections(context, ref),
                     ),
                   ],
@@ -1071,7 +1071,7 @@ class SettingsPage extends ConsumerWidget {
     shape: RoundedRectangleBorder(
       borderRadius: _sectionTileBorderRadius(_SettingsTilePosition.only),
     ),
-    leading: const CircleAvatar(child: Icon(Symbols.person)),
+    leading: const CircleAvatar(child: Icon(Symbols.person_rounded)),
     title: const Text('settingsCloudSignIn').tr(),
     subtitle: const Text('settingsCloudSignInHint').tr(),
     trailing: FilledButton(
@@ -1643,14 +1643,14 @@ class SettingsPage extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
           children: [
             ListTile(
-              leading: const Icon(Symbols.lock),
+              leading: const Icon(Symbols.lock_rounded),
               title: const Text('settingsVaultCreateLocal').tr(),
               subtitle: const Text('settingsVaultCreateLocalHint').tr(),
               onTap: () =>
                   Navigator.of(sheetContext).pop(_VaultOnboardingChoice.local),
             ),
             ListTile(
-              leading: const Icon(Symbols.cloud_download),
+              leading: const Icon(Symbols.cloud_download_rounded),
               title: const Text('settingsVaultDownloadCloud').tr(),
               subtitle: const Text('settingsVaultDownloadCloudHint').tr(),
               onTap: () =>
@@ -1760,7 +1760,7 @@ class SettingsPage extends ConsumerWidget {
               children: [
                 for (final blob in blobs)
                   ListTile(
-                    leading: const Icon(Symbols.lock),
+                    leading: const Icon(Symbols.lock_rounded),
                     title: Text(
                       'settingsVaultCloudVault'.tr(
                         args: [blob.revision.toString()],
@@ -2253,7 +2253,7 @@ class _VaultCloudBindingTile extends ConsumerWidget {
           ListTile(
             contentPadding: _sectionTilePadding,
             shape: RoundedRectangleBorder(borderRadius: tileBorderRadius),
-            leading: const Icon(Symbols.lock),
+            leading: const Icon(Symbols.lock_rounded),
             title: Text(title),
             subtitle: Text('$workspace\n$syncStatus'),
             isThreeLine: true,
@@ -2286,7 +2286,7 @@ class _VaultCloudBindingTile extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(width: 8),
-                const Icon(Symbols.chevron_right),
+                const Icon(Symbols.chevron_right_rounded),
               ],
             ),
             onTap: () => onSelect(),
@@ -2299,13 +2299,13 @@ class _VaultCloudBindingTile extends ConsumerWidget {
                 children: [
                   OutlinedButton.icon(
                     onPressed: onExport == null ? null : () => onExport!(),
-                    icon: const Icon(Symbols.file_download),
+                    icon: const Icon(Symbols.file_download_rounded),
                     label: const Text('settingsExportData').tr(),
                   ),
                   const SizedBox(width: 8),
                   OutlinedButton.icon(
                     onPressed: onImport == null ? null : () => onImport!(),
-                    icon: const Icon(Symbols.file_upload),
+                    icon: const Icon(Symbols.file_upload_rounded),
                     label: const Text('settingsImportData').tr(),
                   ),
                   const SizedBox(width: 8),
@@ -2313,7 +2313,7 @@ class _VaultCloudBindingTile extends ConsumerWidget {
                     onPressed: configuration == null || onSync == null
                         ? null
                         : () => onSync!(),
-                    icon: const Icon(Symbols.sync),
+                    icon: const Icon(Symbols.sync_rounded),
                     label: const Text('settingsVaultSyncNow').tr(),
                   ),
                 ],
@@ -2353,7 +2353,7 @@ class _VaultCloudBindingTile extends ConsumerWidget {
                       ListTile(
                         title: Text(workspace.name),
                         trailing: selected?.workspaceId == workspace.id
-                            ? const Icon(Symbols.check)
+                            ? const Icon(Symbols.check_rounded)
                             : null,
                         onTap: () => Navigator.of(sheetContext).pop(workspace),
                       ),
@@ -2522,7 +2522,7 @@ class _LocalMcpServerSectionState
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(Symbols.link, size: 18),
+                    const Icon(Symbols.link_rounded, size: 18),
                     const SizedBox(width: 8),
                     Expanded(
                       child: SelectableText(
@@ -2537,7 +2537,7 @@ class _LocalMcpServerSectionState
                       tooltip: 'settingsLocalMcpServerCopy'.tr(),
                       visualDensity: VisualDensity.compact,
                       onPressed: _copyUrl,
-                      icon: const Icon(Symbols.content_copy),
+                      icon: const Icon(Symbols.content_copy_rounded),
                     ),
                   ],
                 ),
@@ -2666,7 +2666,7 @@ class _LocalMcpServerSectionState
     };
     return Row(
       children: [
-        Icon(Symbols.circle, size: 10, color: color),
+        Icon(Symbols.circle_rounded, size: 10, color: color),
         const SizedBox(width: 8),
         Text(labelKey.tr(), style: Theme.of(context).textTheme.bodyMedium),
         if (state.error != null) ...[
@@ -2955,7 +2955,7 @@ class _SeedColorTile extends StatelessWidget {
       trailing: IconButton(
         tooltip: 'settingsThemeEdit'.tr(),
         onPressed: onEdit,
-        icon: const Icon(Symbols.edit),
+        icon: const Icon(Symbols.edit_rounded),
       ),
       onTap: onEdit,
     );
@@ -2986,7 +2986,7 @@ class _TerminalThemeTile extends StatelessWidget {
       trailing: IconButton(
         tooltip: 'settingsTerminalThemeEdit'.tr(),
         onPressed: onEdit,
-        icon: const Icon(Symbols.edit),
+        icon: const Icon(Symbols.edit_rounded),
       ),
       onTap: onEdit,
     );

@@ -54,8 +54,8 @@ class _ConnectionImportPreviewSheetState
                     controlAffinity: ListTileControlAffinity.leading,
                     secondary: Icon(
                       candidate.connection.credential == null
-                          ? Symbols.key_off
-                          : Symbols.key,
+                          ? Symbols.key_off_rounded
+                          : Symbols.key_rounded,
                     ),
                     title: Text(candidate.connection.name),
                     subtitle: _candidateSubtitle(candidate),

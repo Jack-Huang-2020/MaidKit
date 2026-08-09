@@ -127,7 +127,7 @@ class _ProjectDetailState extends ConsumerState<_ProjectDetail> {
       showStyledSnackBar(
         message: 'deploymentResourceAdded'.tr(args: [draft.name]),
         title: 'deploymentResourceAddedTitle'.tr(),
-        icon: Symbols.check_circle,
+        icon: Symbols.check_circle_rounded,
       );
     }
   }
@@ -261,12 +261,12 @@ class _ProjectDetailState extends ConsumerState<_ProjectDetail> {
         actions: [
           IconButton(
             tooltip: 'deploymentEditProject'.tr(),
-            icon: const Icon(Symbols.edit),
+            icon: const Icon(Symbols.edit_rounded),
             onPressed: _editProject,
           ),
           IconButton(
             tooltip: 'deploymentDeleteProject'.tr(),
-            icon: const Icon(Symbols.delete),
+            icon: const Icon(Symbols.delete_rounded),
             onPressed: _deleteProject,
           ),
           const SizedBox(width: 4),
@@ -274,7 +274,7 @@ class _ProjectDetailState extends ConsumerState<_ProjectDetail> {
             padding: const EdgeInsets.only(right: 12),
             child: FilledButton.icon(
               onPressed: () => _addResource(servers),
-              icon: const Icon(Symbols.add, size: 18),
+              icon: const Icon(Symbols.add_rounded, size: 18),
               label: Text('deploymentAddResource'.tr()),
             ),
           ),
@@ -302,14 +302,14 @@ class _ProjectDetailState extends ConsumerState<_ProjectDetail> {
                     runSpacing: 8,
                     children: [
                       _SummaryPill(
-                        icon: Symbols.inventory_2,
+                        icon: Symbols.inventory_2_rounded,
                         label:
                             '${widget.resources.length} resource'
                             '${widget.resources.length == 1 ? '' : 's'}',
                       ),
                       if (serverIds.isNotEmpty)
                         _SummaryPill(
-                          icon: Symbols.dns,
+                          icon: Symbols.dns_rounded,
                           label: serverIds.length == 1
                               ? (serverNames[serverIds.first] ?? '1 server')
                               : '${serverIds.length} servers',
@@ -334,12 +334,12 @@ class _ProjectDetailState extends ConsumerState<_ProjectDetail> {
                           decoration: InputDecoration(
                             isDense: true,
                             hintText: 'deploymentFilterResources'.tr(),
-                            prefixIcon: const Icon(Symbols.search, size: 20),
+                            prefixIcon: const Icon(Symbols.search_rounded, size: 20),
                             suffixIcon: _query.isEmpty
                                 ? null
                                 : IconButton(
                                     tooltip: 'deploymentClearTooltip'.tr(),
-                                    icon: const Icon(Symbols.close, size: 18),
+                                    icon: const Icon(Symbols.close_rounded, size: 18),
                                     onPressed: () {
                                       _searchController.clear();
                                       setState(() => _query = '');
@@ -785,36 +785,36 @@ class _ResourceTileState extends ConsumerState<_ResourceTile> {
         _QuickActionSpec(
           id: 'compose_up',
           label: 'deploymentQuickActionStart'.tr(),
-          icon: Symbols.play_arrow,
+          icon: Symbols.play_arrow_rounded,
           enabled: _composeReady,
         ),
         _QuickActionSpec(
           id: 'compose_pull',
           label: 'deploymentQuickActionPull'.tr(),
-          icon: Symbols.download,
+          icon: Symbols.download_rounded,
           enabled: _composeReady,
         ),
         _QuickActionSpec(
           id: 'compose_restart',
           label: 'deploymentQuickActionRestart'.tr(),
-          icon: Symbols.restart_alt,
+          icon: Symbols.restart_alt_rounded,
           enabled: _composeReady,
         ),
         _QuickActionSpec(
           id: 'compose_logs',
           label: 'deploymentQuickActionLogs'.tr(),
-          icon: Symbols.terminal,
+          icon: Symbols.terminal_rounded,
           enabled: _composeReady,
         ),
         _QuickActionSpec(
           id: 'prune_images',
           label: 'deploymentCleanUpImages'.tr(),
-          icon: Symbols.cleaning_services,
+          icon: Symbols.cleaning_services_rounded,
         ),
         _QuickActionSpec(
           id: 'compose_stop',
           label: 'deploymentQuickActionStop'.tr(),
-          icon: Symbols.stop,
+          icon: Symbols.stop_rounded,
           enabled: _composeReady,
         ),
       ],
@@ -822,30 +822,30 @@ class _ResourceTileState extends ConsumerState<_ResourceTile> {
         _QuickActionSpec(
           id: 'container_restart',
           label: 'deploymentQuickActionRestart'.tr(),
-          icon: Symbols.restart_alt,
+          icon: Symbols.restart_alt_rounded,
           enabled: _containerRef.isNotEmpty,
         ),
         _QuickActionSpec(
           id: 'container_logs',
           label: 'deploymentQuickActionLogs'.tr(),
-          icon: Symbols.terminal,
+          icon: Symbols.terminal_rounded,
           enabled: _containerRef.isNotEmpty,
         ),
         _QuickActionSpec(
           id: 'prune_images',
           label: 'deploymentCleanUpImages'.tr(),
-          icon: Symbols.cleaning_services,
+          icon: Symbols.cleaning_services_rounded,
         ),
         _QuickActionSpec(
           id: 'container_start',
           label: 'deploymentQuickActionStart'.tr(),
-          icon: Symbols.play_arrow,
+          icon: Symbols.play_arrow_rounded,
           enabled: _containerRef.isNotEmpty,
         ),
         _QuickActionSpec(
           id: 'container_stop',
           label: 'deploymentQuickActionStop'.tr(),
-          icon: Symbols.stop,
+          icon: Symbols.stop_rounded,
           enabled: _containerRef.isNotEmpty,
         ),
       ],
@@ -854,31 +854,31 @@ class _ResourceTileState extends ConsumerState<_ResourceTile> {
         _QuickActionSpec(
           id: 'systemd_status',
           label: 'deploymentQuickActionStatus'.tr(),
-          icon: Symbols.info,
+          icon: Symbols.info_rounded,
           enabled: _systemdUnit.isNotEmpty,
         ),
         _QuickActionSpec(
           id: 'systemd_logs',
           label: 'deploymentQuickActionLogs'.tr(),
-          icon: Symbols.terminal,
+          icon: Symbols.terminal_rounded,
           enabled: _systemdUnit.isNotEmpty,
         ),
         _QuickActionSpec(
           id: 'systemd_restart',
           label: 'deploymentQuickActionRestart'.tr(),
-          icon: Symbols.restart_alt,
+          icon: Symbols.restart_alt_rounded,
           enabled: _systemdUnit.isNotEmpty,
         ),
         _QuickActionSpec(
           id: 'systemd_start',
           label: 'deploymentQuickActionStart'.tr(),
-          icon: Symbols.play_arrow,
+          icon: Symbols.play_arrow_rounded,
           enabled: _systemdUnit.isNotEmpty,
         ),
         _QuickActionSpec(
           id: 'systemd_stop',
           label: 'deploymentQuickActionStop'.tr(),
-          icon: Symbols.stop,
+          icon: Symbols.stop_rounded,
           enabled: _systemdUnit.isNotEmpty,
         ),
       ],
@@ -886,13 +886,13 @@ class _ResourceTileState extends ConsumerState<_ResourceTile> {
         _QuickActionSpec(
           id: 'github_open_run',
           label: 'deploymentGithubOpenRun'.tr(),
-          icon: Symbols.open_in_new,
+          icon: Symbols.open_in_new_rounded,
           enabled: _githubRun != null,
         ),
         _QuickActionSpec(
           id: 'github_open_web',
           label: 'githubRunOpen'.tr(),
-          icon: Symbols.language,
+          icon: Symbols.language_rounded,
           enabled: _githubRun?.htmlUrl.isNotEmpty ?? false,
         ),
       ],
@@ -960,7 +960,7 @@ class _ResourceTileState extends ConsumerState<_ResourceTile> {
         showStyledSnackBar(
           message: '$error',
           title: 'deploymentActionFailed'.tr(),
-          icon: Symbols.error,
+          icon: Symbols.error_rounded,
           accentColor: Theme.of(context).colorScheme.error,
         );
       }
@@ -1019,7 +1019,7 @@ class _ResourceTileState extends ConsumerState<_ResourceTile> {
       showStyledSnackBar(
         message: resource.name,
         title: 'deploymentContainerSuccess'.tr(args: [action.pastLabel]),
-        icon: Symbols.check_circle,
+        icon: Symbols.check_circle_rounded,
       );
     }
   }
@@ -1038,7 +1038,7 @@ class _ResourceTileState extends ConsumerState<_ResourceTile> {
       showStyledSnackBar(
         message: 'deploymentCleanUpImagesHint'.tr(),
         title: 'deploymentCleanUpImagesDone'.tr(),
-        icon: Symbols.check_circle,
+        icon: Symbols.check_circle_rounded,
       );
     }
   }
@@ -1070,7 +1070,7 @@ class _ResourceTileState extends ConsumerState<_ResourceTile> {
       showStyledSnackBar(
         message: unit,
         title: 'deploymentServiceSuccess'.tr(args: [past.tr()]),
-        icon: Symbols.check_circle,
+        icon: Symbols.check_circle_rounded,
       );
     }
   }
@@ -1195,7 +1195,7 @@ class _ResourceTileState extends ConsumerState<_ResourceTile> {
       showStyledSnackBar(
         message: resource.name,
         title: 'deploymentConfigSaved'.tr(),
-        icon: Symbols.check_circle,
+        icon: Symbols.check_circle_rounded,
       );
     }
   }
@@ -1304,12 +1304,12 @@ class _ResourceTileState extends ConsumerState<_ResourceTile> {
                       ),
                     ),
                   Icon(
-                    _expanded ? Symbols.expand_less : Symbols.expand_more,
+                    _expanded ? Symbols.expand_less_rounded : Symbols.expand_more_rounded,
                     color: scheme.onSurfaceVariant,
                   ),
                   IconButton(
                     tooltip: 'deploymentRemoveFromProject'.tr(),
-                    icon: const Icon(Symbols.close),
+                    icon: const Icon(Symbols.close_rounded),
                     onPressed: widget.onDelete,
                   ),
                 ],
@@ -1358,7 +1358,7 @@ class _ResourceTileState extends ConsumerState<_ResourceTile> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              Symbols.more_horiz,
+                              Symbols.more_horiz_rounded,
                               size: 18,
                               color: scheme.onSurfaceVariant,
                             ),
@@ -1416,7 +1416,7 @@ class _ResourceTileState extends ConsumerState<_ResourceTile> {
                         const Spacer(),
                         IconButton(
                           tooltip: 'deploymentEditConfiguration'.tr(),
-                          icon: const Icon(Symbols.edit, size: 18),
+                          icon: const Icon(Symbols.edit_rounded, size: 18),
                           onPressed: _editConfiguration,
                         ),
                       ],
@@ -1454,7 +1454,7 @@ class _ResourceTileState extends ConsumerState<_ResourceTile> {
                         Expanded(child: Text('deploymentConfigEmpty'.tr())),
                         IconButton(
                           tooltip: 'deploymentEditConfiguration'.tr(),
-                          icon: const Icon(Symbols.edit, size: 18),
+                          icon: const Icon(Symbols.edit_rounded, size: 18),
                           onPressed: _editConfiguration,
                         ),
                       ],
@@ -1464,7 +1464,7 @@ class _ResourceTileState extends ConsumerState<_ResourceTile> {
                       alignment: Alignment.centerLeft,
                       child: OutlinedButton.icon(
                         onPressed: _openOnServer,
-                        icon: const Icon(Symbols.open_in_new, size: 18),
+                        icon: const Icon(Symbols.open_in_new_rounded, size: 18),
                         label: Text(
                           kind == DeploymentResourceKind.serverFolder
                               ? 'deploymentBrowseServer'.tr(
@@ -1535,7 +1535,7 @@ class _RemoteTextSheetState extends State<_RemoteTextSheet> {
     showStyledSnackBar(
       message: 'deploymentRemoteCopySuccess'.tr(),
       title: widget.title,
-      icon: Symbols.content_copy,
+      icon: Symbols.content_copy_rounded,
     );
   }
 
@@ -1550,13 +1550,13 @@ class _RemoteTextSheetState extends State<_RemoteTextSheet> {
         IconButton(
           tooltip: 'Refresh',
           onPressed: () => setState(_reload),
-          icon: const Icon(Symbols.refresh),
+          icon: const Icon(Symbols.refresh_rounded),
           style: IconButton.styleFrom(minimumSize: const Size(36, 36)),
         ),
         IconButton(
           tooltip: 'Copy',
           onPressed: canCopy ? _copy : null,
-          icon: const Icon(Symbols.content_copy),
+          icon: const Icon(Symbols.content_copy_rounded),
           style: IconButton.styleFrom(minimumSize: const Size(36, 36)),
         ),
       ],
@@ -1723,7 +1723,7 @@ class _ComposeLivePanelState extends ConsumerState<_ComposeLivePanel> {
         showStyledSnackBar(
           message: container.name,
           title: 'deploymentContainerSuccess'.tr(args: [action.pastLabel]),
-          icon: Symbols.check_circle,
+          icon: Symbols.check_circle_rounded,
         );
         setState(() => _containers = _load());
       }
@@ -1732,7 +1732,7 @@ class _ComposeLivePanelState extends ConsumerState<_ComposeLivePanel> {
         showStyledSnackBar(
           message: '$error',
           title: 'Action failed',
-          icon: Symbols.error,
+          icon: Symbols.error_rounded,
           accentColor: Theme.of(context).colorScheme.error,
         );
       }
@@ -1769,7 +1769,7 @@ class _ComposeLivePanelState extends ConsumerState<_ComposeLivePanel> {
               if (snapshot.connectionState == ConnectionState.done)
                 IconButton(
                   tooltip: 'deploymentRefreshContainers'.tr(),
-                  icon: const Icon(Symbols.refresh, size: 18),
+                  icon: const Icon(Symbols.refresh_rounded, size: 18),
                   onPressed: () => setState(() => _containers = _load()),
                 ),
             ],
@@ -1920,7 +1920,7 @@ class _GithubWorkflowLivePanel extends ConsumerWidget {
             onPressed: run.htmlUrl.isEmpty
                 ? null
                 : () => launchUrl(Uri.parse(run.htmlUrl)),
-            icon: const Icon(Symbols.open_in_new, size: 18),
+            icon: const Icon(Symbols.open_in_new_rounded, size: 18),
           ),
         ],
       ),
@@ -1947,7 +1947,7 @@ class _EmptyResources extends StatelessWidget {
       child: Column(
         children: [
           Icon(
-            Symbols.add_link,
+            Symbols.add_link_rounded,
             size: 32,
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -1967,7 +1967,7 @@ class _EmptyResources extends StatelessWidget {
           const SizedBox(height: 16),
           FilledButton.icon(
             onPressed: onAdd,
-            icon: const Icon(Symbols.add, size: 18),
+            icon: const Icon(Symbols.add_rounded, size: 18),
             label: Text('deploymentAddResource'.tr()),
           ),
         ],
@@ -2459,7 +2459,7 @@ class _LinkResourceSheetState extends ConsumerState<_LinkResourceSheet> {
                             )
                           : IconButton(
                               tooltip: 'deploymentRefreshSuggestions'.tr(),
-                              icon: const Icon(Symbols.refresh),
+                              icon: const Icon(Symbols.refresh_rounded),
                               onPressed: _loadSuggestions,
                             ),
                     ),
@@ -2541,7 +2541,7 @@ class _LinkResourceSheetState extends ConsumerState<_LinkResourceSheet> {
                   alignment: Alignment.centerLeft,
                   child: OutlinedButton.icon(
                     onPressed: _serverId == null ? null : _pickFolder,
-                    icon: const Icon(Symbols.folder_open, size: 18),
+                    icon: const Icon(Symbols.folder_open_rounded, size: 18),
                     label: Text('deploymentBrowseFolders'.tr()),
                   ),
                 ),
@@ -2551,7 +2551,7 @@ class _LinkResourceSheetState extends ConsumerState<_LinkResourceSheet> {
           const SizedBox(height: 24),
           FilledButton.icon(
             onPressed: canSubmit ? _submit : null,
-            icon: Icon(_isEditing ? Symbols.save : Symbols.add),
+            icon: Icon(_isEditing ? Symbols.save_rounded : Symbols.add_rounded),
             label: Text(
               (_isEditing ? 'commonSave' : 'deploymentAddToProject').tr(),
             ),

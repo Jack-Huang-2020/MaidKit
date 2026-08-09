@@ -144,7 +144,7 @@ class _ImageManagementTabState extends ConsumerState<ImageManagementTab> {
       showStyledSnackBar(
         title: 'imagesRemoveSuccess'.tr(),
         message: image.reference,
-        icon: Symbols.check_circle,
+        icon: Symbols.check_circle_rounded,
         accentColor: Theme.of(context).colorScheme.primary,
       );
       await _load();
@@ -153,7 +153,7 @@ class _ImageManagementTabState extends ConsumerState<ImageManagementTab> {
       showStyledSnackBar(
         title: 'imagesRemoveError'.tr(),
         message: error.toString(),
-        icon: Symbols.error,
+        icon: Symbols.error_rounded,
         accentColor: Theme.of(context).colorScheme.error,
       );
     }
@@ -197,7 +197,7 @@ class _ImageManagementTabState extends ConsumerState<ImageManagementTab> {
         message: result.allUnused
             ? 'imagesPruneUnused'.tr(args: [environment.runtime.name])
             : 'imagesPruneDangling'.tr(args: [environment.runtime.name]),
-        icon: Symbols.check_circle,
+        icon: Symbols.check_circle_rounded,
         accentColor: Theme.of(context).colorScheme.primary,
       );
       await _load();
@@ -206,7 +206,7 @@ class _ImageManagementTabState extends ConsumerState<ImageManagementTab> {
       showStyledSnackBar(
         title: 'imagesPruneError'.tr(),
         message: error.toString(),
-        icon: Symbols.error,
+        icon: Symbols.error_rounded,
         accentColor: Theme.of(context).colorScheme.error,
       );
     }
@@ -226,7 +226,7 @@ class _ImageManagementTabState extends ConsumerState<ImageManagementTab> {
       showStyledSnackBar(
         title: 'imagesRuntimeInstalled'.tr(args: [runtime.name]),
         message: 'imagesRuntimeRefreshing'.tr(),
-        icon: Symbols.check_circle,
+        icon: Symbols.check_circle_rounded,
         accentColor: Theme.of(context).colorScheme.primary,
       );
       await _load();
@@ -235,7 +235,7 @@ class _ImageManagementTabState extends ConsumerState<ImageManagementTab> {
       showStyledSnackBar(
         title: 'imagesRuntimeInstallError'.tr(args: [runtime.name]),
         message: error.toString(),
-        icon: Symbols.error,
+        icon: Symbols.error_rounded,
         accentColor: Theme.of(context).colorScheme.error,
       );
     }
@@ -245,18 +245,18 @@ class _ImageManagementTabState extends ConsumerState<ImageManagementTab> {
   Widget build(BuildContext context) {
     if (!widget.connected) {
       return _ImageEmptyPanel(
-        icon: Symbols.link_off,
+        icon: Symbols.link_off_rounded,
         message: widget.connectionError ?? 'imagesConnectToManage'.tr(),
         actionLabel: 'commonConnect'.tr(),
         onAction: widget.onConnect,
         filledAction: true,
-        actionIcon: Symbols.link,
+        actionIcon: Symbols.link_rounded,
       );
     }
     return _environments.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => _ImageEmptyPanel(
-        icon: Symbols.error_outline,
+        icon: Symbols.error_outline_rounded,
         message: 'imagesLoadError'.tr(args: [error.toString()]),
         actionLabel: 'imagesTryAgain'.tr(),
         onAction: _load,
@@ -414,7 +414,7 @@ class _PruneImagesSheetState extends State<_PruneImagesSheet> {
               const SizedBox(width: 8),
               FilledButton.icon(
                 onPressed: _submit,
-                icon: const Icon(Symbols.play_arrow, size: 18),
+                icon: const Icon(Symbols.play_arrow_rounded, size: 18),
                 label: const Text('imagesPruneRun').tr(),
               ),
             ],
@@ -479,12 +479,12 @@ class _ImageEnvironments extends StatelessWidget {
 
     if (environments.isEmpty) {
       return _ImageEmptyPanel(
-        icon: Symbols.image,
+        icon: Symbols.image_rounded,
         message: 'containersNotInstalled'.tr(),
         actionLabel: 'containersInstallRuntimeShort'.tr(),
         onAction: onInstallRuntime,
         filledAction: true,
-        actionIcon: Symbols.download,
+        actionIcon: Symbols.download_rounded,
       );
     }
 
@@ -524,7 +524,7 @@ class _ImageEnvironments extends StatelessWidget {
                 tooltip: 'imagesRefreshTooltip'.tr(),
                 visualDensity: VisualDensity.compact,
                 onPressed: onRefresh,
-                icon: const Icon(Symbols.refresh),
+                icon: const Icon(Symbols.refresh_rounded),
               ),
             ],
           ),
@@ -577,8 +577,8 @@ class _ImageEnvironmentSection extends StatelessWidget {
       : 'commonUser'.tr();
 
   IconData get _runtimeIcon => switch (environment.runtime) {
-    ContainerRuntime.docker => Symbols.deployed_code,
-    ContainerRuntime.podman => Symbols.package_2,
+    ContainerRuntime.docker => Symbols.deployed_code_rounded,
+    ContainerRuntime.podman => Symbols.package_2_rounded,
   };
 
   Widget _imageTile({required ServerContainerImage image}) {
@@ -586,7 +586,7 @@ class _ImageEnvironmentSection extends StatelessWidget {
       children: [
         MenuAction(
           title: 'commonRemove'.tr(),
-          image: MenuImage.icon(Symbols.delete),
+          image: MenuImage.icon(Symbols.delete_rounded),
           attributes: const MenuActionAttributes(destructive: true),
           callback: () => onAction(environment, image, ImageAction.remove),
         ),
@@ -605,14 +605,14 @@ class _ImageEnvironmentSection extends StatelessWidget {
               value: ImageAction.remove,
               child: Row(
                 children: [
-                  const Icon(Symbols.delete, size: 20),
+                  const Icon(Symbols.delete_rounded, size: 20),
                   const SizedBox(width: 12),
                   Text('commonRemove'.tr()),
                 ],
               ),
             ),
           ],
-          icon: const Icon(Symbols.more_vert),
+          icon: const Icon(Symbols.more_vert_rounded),
         ),
       ),
     );
@@ -663,7 +663,7 @@ class _ImageEnvironmentSection extends StatelessWidget {
                     tooltip: 'imagesPruneDanglingLabel'.tr(),
                     visualDensity: VisualDensity.compact,
                     onPressed: onPrune,
-                    icon: const Icon(Symbols.cleaning_services, size: 20),
+                    icon: const Icon(Symbols.cleaning_services_rounded, size: 20),
                   ),
               ],
             ),
@@ -674,7 +674,7 @@ class _ImageEnvironmentSection extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Symbols.info, size: 16, color: scheme.onSurfaceVariant),
+                  Icon(Symbols.info_rounded, size: 16, color: scheme.onSurfaceVariant),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -783,7 +783,7 @@ class _ImageEmptyPanel extends StatelessWidget {
               if (filledAction)
                 FilledButton.icon(
                   onPressed: onAction,
-                  icon: Icon(actionIcon ?? Symbols.refresh),
+                  icon: Icon(actionIcon ?? Symbols.refresh_rounded),
                   label: Text(actionLabel!),
                 )
               else

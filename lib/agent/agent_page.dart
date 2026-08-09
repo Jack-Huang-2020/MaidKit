@@ -757,7 +757,7 @@ class _AgentPageState extends ConsumerState<AgentPage> {
     final confirmed = await showMaidKitConfirmAlert(
       'agentDeleteConversationConfirm'.tr(args: [conversation.title]),
       'agentDeleteConversation'.tr(),
-      icon: Symbols.delete_outline,
+      icon: Symbols.delete_outline_rounded,
       isDanger: true,
     );
     if (!confirmed) return;
@@ -814,7 +814,7 @@ class _AgentPageState extends ConsumerState<AgentPage> {
     final confirmed = await showMaidKitConfirmAlert(
       'agentDeleteProviderConfirm'.tr(args: [provider.name]),
       'agentDeleteProvider'.tr(),
-      icon: Symbols.delete_outline,
+      icon: Symbols.delete_outline_rounded,
       isDanger: true,
     );
     if (!confirmed) return;
@@ -849,7 +849,7 @@ class _AgentPageState extends ConsumerState<AgentPage> {
     final confirmed = await showMaidKitConfirmAlert(
       'agentRemoveModelConfirm'.tr(args: [model.model]),
       'agentRemoveModel'.tr(),
-      icon: Symbols.delete_outline,
+      icon: Symbols.delete_outline_rounded,
       isDanger: true,
     );
     if (!confirmed) return;
@@ -939,13 +939,13 @@ class _AgentPageState extends ConsumerState<AgentPage> {
           tooltip: 'agentConversations'.tr(),
           onPressed: () => _showSidebar.value = !_showSidebar.value,
           visualDensity: VisualDensity.compact,
-          icon: const Icon(Symbols.history),
+          icon: const Icon(Symbols.history_rounded),
         );
         final capabilitiesButton = IconButton(
           tooltip: 'agentCapabilities'.tr(),
           onPressed: () => _showCapabilitiesSheet(),
           visualDensity: VisualDensity.compact,
-          icon: const Icon(Symbols.extension),
+          icon: const Icon(Symbols.extension_rounded),
         );
         return MaidKitAppScaffold(
           appBar: AppBar(
@@ -1036,18 +1036,18 @@ class _AgentPageState extends ConsumerState<AgentPage> {
         actions: [
           _DropdownAction(
             label: 'agentAddProvider'.tr(),
-            icon: Symbols.add,
+            icon: Symbols.add_rounded,
             onSelected: () => _showProviderEditor(),
           ),
           _DropdownAction(
             label: 'agentEditProvider'.tr(),
-            icon: Symbols.edit,
+            icon: Symbols.edit_rounded,
             onSelected: () => _showProviderEditor(selectedProvider!),
             enabled: selectedProvider != null && !isManagedPersonalityProvider,
           ),
           _DropdownAction(
             label: 'agentDeleteProviderAction'.tr(),
-            icon: Symbols.delete_outline,
+            icon: Symbols.delete_outline_rounded,
             onSelected: () => _deleteProvider(selectedProvider!),
             enabled: selectedProvider != null && !isManagedPersonalityProvider,
           ),
@@ -1068,13 +1068,13 @@ class _AgentPageState extends ConsumerState<AgentPage> {
           actions: [
             _DropdownAction(
               label: 'agentAddModel'.tr(),
-              icon: Symbols.add,
+              icon: Symbols.add_rounded,
               onSelected: () => _showAddModelSheet(selectedProvider!),
               enabled: selectedProvider != null,
             ),
             _DropdownAction(
               label: 'agentRemoveModel'.tr(),
-              icon: Symbols.delete_outline,
+              icon: Symbols.delete_outline_rounded,
               onSelected: () => _deleteModel(selectedModel!),
               enabled: selectedModel != null,
             ),
@@ -1105,12 +1105,12 @@ class _AgentPageState extends ConsumerState<AgentPage> {
               IconButton(
                 tooltip: 'agentNewConversation'.tr(),
                 onPressed: _working ? null : _startNewConversation,
-                icon: const Icon(Symbols.add),
+                icon: const Icon(Symbols.add_rounded),
               ),
               IconButton(
                 tooltip: 'commonClose'.tr(),
                 onPressed: () => _showSidebar.value = false,
-                icon: const Icon(Symbols.close),
+                icon: const Icon(Symbols.close_rounded),
               ),
             ],
           ),
@@ -1188,7 +1188,7 @@ class _AgentPageState extends ConsumerState<AgentPage> {
                       heroTag: 'agent-scroll-to-bottom',
                       tooltip: 'agentScrollToLatest'.tr(),
                       onPressed: _scrollToLatest,
-                      child: const Icon(Symbols.arrow_downward),
+                      child: const Icon(Symbols.arrow_downward_rounded),
                     ),
                   ),
               ],
@@ -1241,8 +1241,8 @@ class _AgentPageState extends ConsumerState<AgentPage> {
                         ? null
                         : _send,
                     icon: _working
-                        ? const Icon(Symbols.stop)
-                        : const Icon(Symbols.send),
+                        ? const Icon(Symbols.stop_rounded)
+                        : const Icon(Symbols.send_rounded),
                   ),
                 ],
               ),
@@ -1463,7 +1463,7 @@ class _AppBarDropdown extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           menuWidth: compact ? 220 : null,
           style: theme.textTheme.bodyMedium,
-          icon: const Icon(Symbols.expand_more, size: 18),
+          icon: const Icon(Symbols.expand_more_rounded, size: 18),
           hint: Text(
             label,
             style: theme.textTheme.bodyMedium?.copyWith(
@@ -1602,7 +1602,7 @@ class _ConversationTile extends StatelessWidget {
                   tooltip: 'agentDeleteConversation'.tr(),
                   onPressed: onDelete,
                   visualDensity: VisualDensity.compact,
-                  icon: const Icon(Symbols.delete_outline, size: 18),
+                  icon: const Icon(Symbols.delete_outline_rounded, size: 18),
                 ),
             ],
           ),
@@ -1806,7 +1806,7 @@ class _AgentProviderEditorSheetState extends State<_AgentProviderEditorSheet> {
                     dimension: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Icon(Symbols.save),
+                : const Icon(Symbols.save_rounded),
             label: Text('agentSaveProvider'.tr()),
           ),
         ),
@@ -1955,7 +1955,7 @@ class _ToolCallCard extends StatelessWidget {
       visualDensity: VisualDensity.compact,
       title: Row(
         children: [
-          Icon(Symbols.terminal, size: 16, color: scheme.primary),
+          Icon(Symbols.terminal_rounded, size: 16, color: scheme.primary),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -2036,7 +2036,7 @@ class _ProposalCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
             child: Row(
               children: [
-                Icon(Symbols.terminal, size: 16, color: scheme.primary),
+                Icon(Symbols.terminal_rounded, size: 16, color: scheme.primary),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -2081,8 +2081,8 @@ class _ProposalCard extends StatelessWidget {
                       onPressed: working ? null : onApprove,
                       icon: Icon(
                         reconnectRequired
-                            ? Symbols.refresh
-                            : Symbols.play_arrow,
+                            ? Symbols.refresh_rounded
+                            : Symbols.play_arrow_rounded,
                       ),
                       label: Text(
                         reconnectRequired
@@ -2197,7 +2197,7 @@ class _AgentCapabilitiesSheetState
     final confirmed = await showMaidKitConfirmAlert(
       'agentDeleteMcpServerConfirm'.tr(args: [server.name]),
       'agentDeleteMcpServer'.tr(),
-      icon: Symbols.delete_outline,
+      icon: Symbols.delete_outline_rounded,
       isDanger: true,
     );
     if (!confirmed) return;
@@ -2250,7 +2250,7 @@ class _AgentCapabilitiesSheetState
     final confirmed = await showMaidKitConfirmAlert(
       'agentDeleteSkillConfirm'.tr(args: [skill.name]),
       'agentDeleteSkill'.tr(),
-      icon: Symbols.delete_outline,
+      icon: Symbols.delete_outline_rounded,
       isDanger: true,
     );
     if (!confirmed) return;
@@ -2272,23 +2272,23 @@ class _AgentCapabilitiesSheetState
           IconButton(
             tooltip: 'agentImportMcpConfig'.tr(),
             onPressed: () => _importMcpConfig(),
-            icon: const Icon(Symbols.content_paste),
+            icon: const Icon(Symbols.content_paste_rounded),
           ),
           IconButton(
             tooltip: 'agentAddMcpServer'.tr(),
             onPressed: () => _editMcpServer(),
-            icon: const Icon(Symbols.add),
+            icon: const Icon(Symbols.add_rounded),
           ),
         ] else ...[
           IconButton(
             tooltip: 'agentSkillRegistry'.tr(),
             onPressed: () => _browseSkillRegistry(),
-            icon: const Icon(Symbols.travel_explore),
+            icon: const Icon(Symbols.travel_explore_rounded),
           ),
           IconButton(
             tooltip: 'agentAddSkill'.tr(),
             onPressed: () => _editSkill(),
-            icon: const Icon(Symbols.add),
+            icon: const Icon(Symbols.add_rounded),
           ),
         ],
       ],
@@ -2358,20 +2358,20 @@ class _AgentCapabilitiesSheetState
               IconButton(
                 tooltip: 'agentRestartMcpServer'.tr(),
                 visualDensity: VisualDensity.compact,
-                icon: const Icon(Symbols.restart_alt, size: 18),
+                icon: const Icon(Symbols.restart_alt_rounded, size: 18),
                 onPressed: () =>
                     ref.read(mcpClientManagerProvider).dispose(server.id),
               ),
               IconButton(
                 tooltip: 'agentEditMcpServer'.tr(),
                 visualDensity: VisualDensity.compact,
-                icon: const Icon(Symbols.edit, size: 18),
+                icon: const Icon(Symbols.edit_rounded, size: 18),
                 onPressed: () => _editMcpServer(server),
               ),
               IconButton(
                 tooltip: 'agentDeleteMcpServer'.tr(),
                 visualDensity: VisualDensity.compact,
-                icon: const Icon(Symbols.delete_outline, size: 18),
+                icon: const Icon(Symbols.delete_outline_rounded, size: 18),
                 onPressed: () => _deleteMcpServer(server),
               ),
             ],
@@ -2424,13 +2424,13 @@ class _AgentCapabilitiesSheetState
               IconButton(
                 tooltip: 'agentEditSkill'.tr(),
                 visualDensity: VisualDensity.compact,
-                icon: const Icon(Symbols.edit, size: 18),
+                icon: const Icon(Symbols.edit_rounded, size: 18),
                 onPressed: () => _editSkill(skill),
               ),
               IconButton(
                 tooltip: 'agentDeleteSkill'.tr(),
                 visualDensity: VisualDensity.compact,
-                icon: const Icon(Symbols.delete_outline, size: 18),
+                icon: const Icon(Symbols.delete_outline_rounded, size: 18),
                 onPressed: () => _deleteSkill(skill),
               ),
             ],
@@ -2596,7 +2596,7 @@ class _McpServerEditorSheetState extends State<_McpServerEditorSheet> {
                     dimension: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Icon(Symbols.save),
+                : const Icon(Symbols.save_rounded),
             label: Text('agentSaveMcpServer'.tr()),
           ),
         ),
@@ -2725,7 +2725,7 @@ class _McpConfigImportSheetState extends ConsumerState<_McpConfigImportSheet> {
                       dimension: 18,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Icon(Symbols.upload),
+                  : const Icon(Symbols.upload_rounded),
               label: Text('agentImportMcpConfigParse'.tr()),
             ),
           ),
@@ -2839,7 +2839,7 @@ class _SkillEditorSheetState extends State<_SkillEditorSheet> {
                     dimension: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Icon(Symbols.save),
+                : const Icon(Symbols.save_rounded),
             label: Text('agentSaveSkill'.tr()),
           ),
         ),
@@ -2996,13 +2996,13 @@ class _SkillRegistrySheetState extends ConsumerState<_SkillRegistrySheet> {
               enableSuggestions: false,
               decoration: InputDecoration(
                 hintText: 'agentSkillRegistrySearch'.tr(),
-                prefixIcon: const Icon(Symbols.search, size: 20),
+                prefixIcon: const Icon(Symbols.search_rounded, size: 20),
                 suffixIcon: _query.text.isEmpty
                     ? null
                     : IconButton(
                         tooltip: 'commonClearSearch'.tr(),
                         visualDensity: VisualDensity.compact,
-                        icon: const Icon(Symbols.close, size: 18),
+                        icon: const Icon(Symbols.close_rounded, size: 18),
                         onPressed: () {
                           _query.clear();
                           _onQueryChanged('');
@@ -3073,7 +3073,7 @@ class _SkillRegistrySheetState extends ConsumerState<_SkillRegistrySheet> {
                 style: TextStyle(color: scheme.onSurfaceVariant),
               ),
               trailing: added
-                  ? Icon(Symbols.check_circle, size: 20, color: scheme.primary)
+                  ? Icon(Symbols.check_circle_rounded, size: 20, color: scheme.primary)
                   : FilledButton.tonal(
                       onPressed: _busy.contains(hit.skillId)
                           ? null
@@ -3140,7 +3140,7 @@ class _SkillRegistrySheetState extends ConsumerState<_SkillRegistrySheet> {
                 style: TextStyle(color: scheme.onSurfaceVariant),
               ),
               trailing: added
-                  ? Icon(Symbols.check_circle, size: 20, color: scheme.primary)
+                  ? Icon(Symbols.check_circle_rounded, size: 20, color: scheme.primary)
                   : FilledButton.tonal(
                       onPressed: _busy.contains(skill.name)
                           ? null
@@ -3174,7 +3174,7 @@ class _SkillRegistrySheetState extends ConsumerState<_SkillRegistrySheet> {
           const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: _retry,
-            icon: const Icon(Symbols.refresh),
+            icon: const Icon(Symbols.refresh_rounded),
             label: Text('agentRetry'.tr()),
           ),
         ],

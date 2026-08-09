@@ -310,7 +310,7 @@ class _CloudFilePickerSheetState extends State<_CloudFilePickerSheet> {
                 IconButton(
                   tooltip: 'Go up',
                   onPressed: _loading || _path == '/' ? null : _goUp,
-                  icon: const Icon(Symbols.arrow_upward),
+                  icon: const Icon(Symbols.arrow_upward_rounded),
                 ),
                 Expanded(
                   child: TextField(
@@ -334,12 +334,12 @@ class _CloudFilePickerSheetState extends State<_CloudFilePickerSheet> {
                   tooltip: 'Copy path',
                   onPressed: () =>
                       Clipboard.setData(ClipboardData(text: _path)),
-                  icon: const Icon(Symbols.content_copy),
+                  icon: const Icon(Symbols.content_copy_rounded),
                 ),
                 IconButton(
                   tooltip: 'Refresh',
                   onPressed: _loading ? null : _refresh,
-                  icon: const Icon(Symbols.refresh),
+                  icon: const Icon(Symbols.refresh_rounded),
                 ),
               ],
             ),
@@ -411,7 +411,7 @@ class _CloudFilePickerSheetState extends State<_CloudFilePickerSheet> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Symbols.error, color: scheme.error),
+              Icon(Symbols.error_rounded, color: scheme.error),
               const SizedBox(height: 12),
               Text(
                 _error!,
@@ -491,7 +491,7 @@ class _CloudFilePickerSheetState extends State<_CloudFilePickerSheet> {
                 child: Row(
                   children: [
                     Icon(
-                      isDirectory ? Symbols.folder : Symbols.description,
+                      isDirectory ? Symbols.folder_rounded : Symbols.description_rounded,
                       size: 20,
                       color: selected
                           ? scheme.onSecondaryContainer
@@ -526,7 +526,7 @@ class _CloudFilePickerSheetState extends State<_CloudFilePickerSheet> {
                               visualDensity: VisualDensity.compact,
                               padding: EdgeInsets.zero,
                               onPressed: () => _openDirectory(entry),
-                              icon: const Icon(Symbols.chevron_right),
+                              icon: const Icon(Symbols.chevron_right_rounded),
                             )
                           : null,
                     ),

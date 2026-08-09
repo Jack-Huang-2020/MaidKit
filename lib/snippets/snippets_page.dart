@@ -128,26 +128,26 @@ class SnippetsPage extends ConsumerWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    leading: const Icon(Symbols.code),
+                    leading: const Icon(Symbols.code_rounded),
                     trailing: Wrap(
                       spacing: 4,
                       children: [
                         IconButton(
                           tooltip: 'snippetsRun'.tr(),
                           onPressed: () => _run(context, ref, item),
-                          icon: const Icon(Symbols.play_arrow),
+                          icon: const Icon(Symbols.play_arrow_rounded),
                         ),
                         IconButton(
                           tooltip: 'snippetsEdit'.tr(),
                           onPressed: () => _edit(context, ref, item),
-                          icon: const Icon(Symbols.edit),
+                          icon: const Icon(Symbols.edit_rounded),
                         ),
                         IconButton(
                           tooltip: 'commonDelete'.tr(),
                           onPressed: () => ref
                               .read(snippetRepositoryProvider)
                               .delete(item.id),
-                          icon: const Icon(Symbols.delete_outline),
+                          icon: const Icon(Symbols.delete_outline_rounded),
                         ),
                       ],
                     ),
@@ -158,7 +158,7 @@ class SnippetsPage extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'snippets-create-fab',
         onPressed: () => _edit(context, ref),
-        icon: const Icon(Symbols.add),
+        icon: const Icon(Symbols.add_rounded),
         label: Text('snippetsNew'.tr()),
       ),
     );
@@ -177,7 +177,7 @@ class _EmptySnippets extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Symbols.code, size: 40),
+          const Icon(Symbols.code_rounded, size: 40),
           const SizedBox(height: 16),
           Text(
             'snippetsEmpty'.tr(),
@@ -188,7 +188,7 @@ class _EmptySnippets extends StatelessWidget {
           const SizedBox(height: 16),
           FilledButton.icon(
             onPressed: onCreate,
-            icon: const Icon(Symbols.add),
+            icon: const Icon(Symbols.add_rounded),
             label: Text('snippetsNew'.tr()),
           ),
         ],
@@ -358,7 +358,7 @@ class _ServerPickerState extends ConsumerState<_ServerPicker> {
                           .where((server) => _selected.contains(server.id))
                           .toList(),
                     ),
-              icon: const Icon(Symbols.play_arrow),
+              icon: const Icon(Symbols.play_arrow_rounded),
               label: Text('snippetsRun'.tr()),
             ),
           ),
