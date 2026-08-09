@@ -143,13 +143,15 @@ jobs:
       # Without it the build falls back to the Android debug signing config
       # (see android/app/build.gradle.kts), so CI still succeeds.
       - name: Configure Android signing
-        if: secrets.ANDROID_KEYSTORE_BASE64 != ''
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
-          test -n "$ANDROID_KEYSTORE_BASE64"
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "No keystore secret configured; skipping release signing (debug fallback)."
+            exit 0
+          fi
           printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/release.jks
           {
             echo "storeFile=release.jks"
