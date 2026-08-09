@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -65,55 +66,71 @@ class _MaidKitAppState extends ConsumerState<MaidKitApp> {
 
   @override
   Widget build(BuildContext context) {
-    final appRouter = ref.watch(appRouterProvider);
-    final themeMode = ref.watch(themeModeProvider);
-    final appSeedColor = ref.watch(appSeedColorProvider);
-    ref.watch(serverMetricsRefreshSchedulerProvider);
-    // Starts the local MCP server when the user enabled it, so other agents
-    // can connect right after the app launches.
-    ref.watch(localMcpServerProvider);
-    IslandUIFoundation.configureOverlay(maidKitOverlayKey);
-    IslandUIFoundation.configureNavigator(maidKitNavigatorKey);
-    return MaterialApp.router(
-      title: 'title'.tr(),
-      debugShowCheckedModeBanner: false,
-      theme: createMaidKitTheme(Brightness.light, seedColor: appSeedColor),
-      darkTheme: createMaidKitTheme(Brightness.dark, seedColor: appSeedColor),
-      themeMode: themeMode,
-      locale: context.locale,
-      supportedLocales: context.supportedLocales,
-      localizationsDelegates: [
-        ...context.localizationDelegates,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      routerConfig: appRouter.config(),
-      builder: (context, child) => Overlay(
-        key: maidKitOverlayKey,
-        initialEntries: [
-          OverlayEntry(
-            builder: (context) => MaidKitWindowScaffold(
-              title: 'title'.tr(),
-              // The gate needs a Navigator for standard Material controls
-              // such as a dropdown. The app router remains below it and is
-              // only exposed once the vault unlocks.
-              child: Navigator(
-                onGenerateRoute: (settings) => MaterialPageRoute<void>(
-                  settings: settings,
-                  builder: (context) => VaultGate(
-                    child: StartupConnectionBootstrap(
-                      child: TailscaleAutoConnect(
-                        child: child ?? const SizedBox.shrink(),
+    // Android 12+ exposes the wallpaper-derived Monet palette. When the system
+    // dynamic color is available we follow it; on every other platform (or
+    // when Android dynamic color is unavailable) the builder falls back to the
+    // user-configured seed color below.
+    final useDynamicColor = defaultTargetPlatform == TargetPlatform.android;
+
+    return DynamicColorBuilder(builder: (lightDynamic, darkDynamic) {
+      final appRouter = ref.watch(appRouterProvider);
+      final themeMode = ref.watch(themeModeProvider);
+      final appSeedColor = ref.watch(appSeedColorProvider);
+      ref.watch(serverMetricsRefreshSchedulerProvider);
+      // Starts the local MCP server when the user enabled it, so other agents
+      // can connect right after the app launches.
+      ref.watch(localMcpServerProvider);
+      IslandUIFoundation.configureOverlay(maidKitOverlayKey);
+      IslandUIFoundation.configureNavigator(maidKitNavigatorKey);
+      return MaterialApp.router(
+        title: 'title'.tr(),
+        debugShowCheckedModeBanner: false,
+        theme: createMaidKitTheme(
+          Brightness.light,
+          seedColor: appSeedColor,
+          colorScheme: useDynamicColor ? lightDynamic : null,
+        ),
+        darkTheme: createMaidKitTheme(
+          Brightness.dark,
+          seedColor: appSeedColor,
+          colorScheme: useDynamicColor ? darkDynamic : null,
+        ),
+        themeMode: themeMode,
+        locale: context.locale,
+        supportedLocales: context.supportedLocales,
+        localizationsDelegates: [
+          ...context.localizationDelegates,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        routerConfig: appRouter.config(),
+        builder: (context, child) => Overlay(
+          key: maidKitOverlayKey,
+          initialEntries: [
+            OverlayEntry(
+              builder: (context) => MaidKitWindowScaffold(
+                title: 'title'.tr(),
+                // The gate needs a Navigator for standard Material controls
+                // such as a dropdown. The app router remains below it and is
+                // only exposed once the vault unlocks.
+                child: Navigator(
+                  onGenerateRoute: (settings) => MaterialPageRoute<void>(
+                    settings: settings,
+                    builder: (context) => VaultGate(
+                      child: StartupConnectionBootstrap(
+                        child: TailscaleAutoConnect(
+                          child: child ?? const SizedBox.shrink(),
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 }
