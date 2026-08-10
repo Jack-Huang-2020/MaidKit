@@ -540,6 +540,21 @@ class AppSeedColorNotifier extends Notifier<Color> {
   }
 }
 
+final wallpaperColorEnabledProvider =
+    NotifierProvider<WallpaperColorEnabledNotifier, bool>(
+  WallpaperColorEnabledNotifier.new,
+);
+
+class WallpaperColorEnabledNotifier extends Notifier<bool> {
+  @override
+  bool build() => ref.read(appThemeSettingsProvider).wallpaperColorEnabled;
+
+  Future<void> setEnabled(bool enabled) async {
+    await ref.read(appThemeSettingsProvider).saveWallpaperColorEnabled(enabled);
+    state = enabled;
+  }
+}
+
 final terminalSessionAdapterOptionsProvider =
     Provider<List<TerminalSessionAdapterOption>>((ref) {
       final cursorAnimationEnabled = ref.watch(cursorAnimationEnabledProvider);

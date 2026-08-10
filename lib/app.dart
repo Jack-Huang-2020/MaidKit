@@ -67,11 +67,13 @@ class _MaidKitAppState extends ConsumerState<MaidKitApp> {
 
   @override
   Widget build(BuildContext context) {
-    // Android 12+ exposes the wallpaper-derived Monet palette. When the system
-    // dynamic color is available we follow it; on every other platform (or
-    // when Android dynamic color is unavailable) the builder falls back to the
-    // user-configured seed color below.
-    final useDynamicColor = defaultTargetPlatform == TargetPlatform.android;
+    // Android 12+ exposes the wallpaper-derived Monet palette. Use it only
+    // when the user enabled the wallpaper color switch; on every other
+    // platform (or when the switch is off) the builder falls back to the
+    // user-configured seed color below, so non-Android platforms always use
+    // the manually picked accent color.
+    final useDynamicColor = defaultTargetPlatform == TargetPlatform.android &&
+        ref.watch(wallpaperColorEnabledProvider);
 
     return DynamicColorBuilder(builder: (lightDynamic, darkDynamic) {
       final appRouter = ref.watch(appRouterProvider);
