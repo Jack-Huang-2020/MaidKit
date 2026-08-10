@@ -186,6 +186,7 @@ class MaidKitAppScaffold extends StatelessWidget {
     this.extendBody = false,
     this.useSafeArea = true,
     this.topSafeArea = true,
+    this.bottomSafeArea = true,
     this.backgroundColor,
     this.showBackgroundImage = true,
   });
@@ -208,6 +209,12 @@ class MaidKitAppScaffold extends StatelessWidget {
   /// control the top safe area.
   final bool topSafeArea;
 
+  /// Whether this scaffold consumes the bottom inset (system gesture bar or
+  /// the floating navigation bar inset). Set to false on pages that want
+  /// their content to run to the bottom edge (e.g. settings, where the
+  /// floating bar floats over the list).
+  final bool bottomSafeArea;
+
   final Color? backgroundColor;
   final bool showBackgroundImage;
 
@@ -223,7 +230,7 @@ class MaidKitAppScaffold extends StatelessWidget {
             child: useSafeArea
                 ? SafeArea(
                     top: topSafeArea && appBar == null,
-                    bottom: bottomNavigationBar == null,
+                    bottom: bottomSafeArea && bottomNavigationBar == null,
                     child: body!,
                   )
                 : body!,

@@ -42,7 +42,9 @@ class FloatingNavigationBar extends StatelessWidget {
         heightFactor: 1,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: colorScheme.surfaceContainer,
+            // Slightly translucent so content scrolling beneath the pill
+            // (e.g. the settings list) stays visible through it.
+            color: colorScheme.surfaceContainer.withValues(alpha: 0.92),
             borderRadius: BorderRadius.circular(32),
             border: Border.all(
               color: colorScheme.outlineVariant.withValues(alpha: 0.5),

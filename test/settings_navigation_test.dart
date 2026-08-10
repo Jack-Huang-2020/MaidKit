@@ -7,7 +7,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:maid_kit/data/local/app_database.dart';
 import 'package:maid_kit/routing/app_router.dart';
 import 'package:maid_kit/servers/server_providers.dart';
-import 'package:maid_kit/shared/presentation/floating_navigation_bar.dart';
 import 'package:maid_kit/theme.dart';
 
 void main() {
@@ -113,16 +112,13 @@ void main() {
 
     // The settings page has a pre-existing overflow on 400px-wide viewports
     // (language switcher row); ignore layout exceptions so this regression
-    // test only asserts the floating-bar inset behaviour.
+    // test only asserts the floating-bar behaviour.
     while (tester.takeException() != null) {}
 
-    // SafeArea consumes the injected bottom inset and turns it into physical
-    // padding, so assert on the layout: the list must end above the floating
-    // bar region instead of being covered by the pill.
+    // The settings list runs to the bottom edge (removeBottom inset), so
+    // options stay visible beneath the floating pill instead of being cut off
+    // by an opaque inset band.
     final listRect = tester.getRect(find.byType(ListView).first);
-    expect(
-      listRect.bottom,
-      lessThanOrEqualTo(800 - floatingNavigationBarInset + 1),
-    );
+    expect(listRect.bottom, 800);
   });
 }

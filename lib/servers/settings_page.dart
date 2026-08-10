@@ -85,6 +85,10 @@ class SettingsPage extends ConsumerWidget {
     );
 
     return MaidKitAppScaffold(
+      // Let the settings list run to the bottom edge: the floating bar floats
+      // over it, so options stay visible beneath the (semi-transparent) pill
+      // instead of being cut off by an opaque inset band.
+      bottomSafeArea: false,
       body: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
