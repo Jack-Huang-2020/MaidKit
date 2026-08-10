@@ -229,11 +229,20 @@ class MaidKitAppScaffold extends StatelessWidget {
                 : body!,
           );
 
+    final floatingActionButtonInset = MediaQuery.paddingOf(context).bottom;
     return Scaffold(
       backgroundColor: pageColor,
       appBar: appBar,
       body: bodyContent,
-      floatingActionButton: floatingActionButton,
+      // Lift the FAB above the floating bottom bar on narrow layouts: the
+      // workspace shell injects the bar height as MediaQuery bottom padding,
+      // which would otherwise leave the FAB covered by the pill.
+      floatingActionButton: floatingActionButton == null
+          ? null
+          : Padding(
+              padding: EdgeInsets.only(bottom: floatingActionButtonInset),
+              child: floatingActionButton!,
+            ),
       floatingActionButtonLocation: floatingActionButtonLocation,
       bottomNavigationBar: bottomNavigationBar,
       bottomSheet: bottomSheet,
