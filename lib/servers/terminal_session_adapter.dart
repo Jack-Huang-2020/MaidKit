@@ -46,6 +46,12 @@ abstract interface class TerminalSessionAdapter {
   /// Sends text or terminal control sequences to the remote shell.
   void sendInput(String text);
 
+  /// Shows the platform software keyboard and focuses this terminal.
+  void showKeyboard();
+
+  /// Hides the platform software keyboard without dropping terminal focus.
+  void hideKeyboard();
+
   /// Builds this adapter's terminal renderer.
   ///
   /// [readOnly] disables keyboard input when the surface is used for log
@@ -270,6 +276,7 @@ class XtermTerminalSessionAdapter implements TerminalSessionAdapter {
   final String fontFamily;
   final TerminalController _controller = TerminalController();
   final ScrollController _scrollController = ScrollController();
+  final _terminalViewKey = GlobalKey<TerminalViewState>();
   final _outgoingBytes = StreamController<Uint8List>.broadcast();
   final _resizeEvents = StreamController<TerminalResize>.broadcast();
   final _highlights = <TerminalHighlight>[];
@@ -313,6 +320,16 @@ class XtermTerminalSessionAdapter implements TerminalSessionAdapter {
       _activity.sentInput(text);
       _outgoingBytes.add(Uint8List.fromList(utf8.encode(text)));
     }
+  }
+
+  @override
+  void showKeyboard() {
+    if (!_disposed) _terminalViewKey.currentState?.requestKeyboard();
+  }
+
+  @override
+  void hideKeyboard() {
+    if (!_disposed) _terminalViewKey.currentState?.closeKeyboard();
   }
 
   @override
@@ -453,6 +470,7 @@ class XtermTerminalSessionAdapter implements TerminalSessionAdapter {
       key: ObjectKey(this),
       child: TerminalView(
         _terminal,
+        key: _terminalViewKey,
         controller: _controller,
         scrollController: _scrollController,
         autofocus: autofocus,

@@ -1254,6 +1254,10 @@ class _ServerStats extends StatelessWidget {
     final memoryPercent = memoryRatio == null
         ? null
         : (memoryRatio * 100).round();
+    final gpus = stats?.gpus ?? const <ServerGpuStats>[];
+    final gpuUtilization = _averageGpuUtilization(gpus);
+    final gpuMemoryUsedKb = _sumGpuMemory(gpus, used: true);
+    final gpuMemoryTotalKb = _sumGpuMemory(gpus, used: false);
     final systemLabel = [
       systemInfo?.distribution,
       systemInfo?.kernel,
@@ -1311,8 +1315,38 @@ class _ServerStats extends StatelessWidget {
             icon: Symbols.query_stats_rounded,
             message: 'serversStatsUnavailable'.tr(),
           ),
+        if (gpus.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _StatTile(
+                  compact: compact,
+                  label: 'detailGpu'.tr(),
+                  value: gpuUtilization == null
+                      ? '—'
+                      : '${gpuUtilization.toStringAsFixed(0)}%',
+                  detail: compact
+                      ? null
+                      : 'detailGpuCount'.tr(args: ['${gpus.length}']),
+                  progress: gpuMemoryUsedKb == null || gpuMemoryTotalKb == null
+                      ? null
+                      : (gpuMemoryUsedKb / gpuMemoryTotalKb).clamp(0.0, 1.0),
+                  progressColor: _memoryColor(
+                    gpuMemoryUsedKb == null || gpuMemoryTotalKb == null
+                        ? null
+                        : (gpuMemoryUsedKb / gpuMemoryTotalKb).clamp(0.0, 1.0),
+                    colorScheme,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
         if (!compact && systemLabel.isNotEmpty) ...[
           const SizedBox(height: 8),
+
           Text(
             systemLabel,
             maxLines: 1,
@@ -1334,6 +1368,24 @@ class _ServerStats extends StatelessWidget {
         ],
       ],
     );
+  }
+
+  static double? _averageGpuUtilization(List<ServerGpuStats> gpus) {
+    final values = gpus
+        .map((gpu) => gpu.utilizationPercent)
+        .whereType<double>()
+        .toList();
+    if (values.isEmpty) return null;
+    return values.reduce((a, b) => a + b) / values.length;
+  }
+
+  static int? _sumGpuMemory(List<ServerGpuStats> gpus, {required bool used}) {
+    final values = gpus
+        .map((gpu) => used ? gpu.memoryUsedKb : gpu.memoryTotalKb)
+        .whereType<int>()
+        .toList();
+    if (values.isEmpty) return null;
+    return values.fold<int>(0, (sum, value) => sum + value);
   }
 
   static String? _loadDetail(double? load) {
