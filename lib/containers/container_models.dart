@@ -5,6 +5,39 @@ enum ContainerRuntime { docker, podman }
 /// environment. Root operations require passwordless sudo on the server.
 enum ContainerScope { user, root }
 
+/// The interactive command run in a container terminal.
+String buildContainerExecCommand({
+  required ContainerRuntime runtime,
+  required String containerId,
+  required String command,
+}) {
+  final flags = '-it';
+  return '${runtime.name} exec $flags ${_shellQuote(containerId)} '
+      'sh -c ${_shellQuote(command)}';
+}
+
+/// The interactive command that attaches to a running container's main
+/// process.
+String buildContainerAttachCommand({
+  required ContainerRuntime runtime,
+  required String containerId,
+}) => '${runtime.name} attach ${_shellQuote(containerId)}';
+
+/// Wraps an interactive container command in the remote shell's privilege
+/// boundary.
+String buildContainerTerminalScript({
+  required ContainerScope scope,
+  required String command,
+}) => switch (scope) {
+  ContainerScope.user => 'exec $command',
+  // `-S` keeps the password prompt on the terminal's stdin, so interactive
+  // sessions can use either passwordless sudo or the configured user password
+  // without embedding a credential in the initial command script.
+  ContainerScope.root => 'exec sudo -S $command',
+};
+
+String _shellQuote(String value) => "'${value.replaceAll("'", "'\\''")}'";
+
 /// Lifecycle actions for a single container (`docker|podman <verb> <id>`).
 ///
 /// [remove] maps to `rm`. When the container is still running, callers should

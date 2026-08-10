@@ -266,6 +266,7 @@ class TerminalTabsNotifier extends Notifier<TerminalTabsState> {
     HostKeyApproval approve, {
     String? knownHostKeyFingerprint,
     String? initialDirectory,
+    List<String>? initialScripts,
     String? paneId,
     ServerProxy? proxy,
   }) async {
@@ -276,6 +277,7 @@ class TerminalTabsNotifier extends Notifier<TerminalTabsState> {
       approve,
       knownHostKeyFingerprint: knownHostKeyFingerprint,
       initialDirectory: initialDirectory,
+      extraInitialScripts: initialScripts,
       proxy: proxy,
     );
     final tab = TerminalTab(
@@ -592,6 +594,7 @@ class TerminalTabsNotifier extends Notifier<TerminalTabsState> {
     HostKeyApproval approve, {
     String? knownHostKeyFingerprint,
     String? initialDirectory,
+    List<String>? extraInitialScripts,
     ServerProxy? proxy,
   }) async {
     final repository = ref.read(snippetRepositoryProvider);
@@ -600,6 +603,7 @@ class TerminalTabsNotifier extends Notifier<TerminalTabsState> {
       final snippet = await repository.snippet(id);
       if (snippet != null) initialScripts.add(snippet.script);
     }
+    initialScripts.addAll(extraInitialScripts ?? const <String>[]);
     return ref
         .read(connectionManagerProvider)
         .openTerminal(

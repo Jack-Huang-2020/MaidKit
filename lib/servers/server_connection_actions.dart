@@ -100,6 +100,7 @@ Future<bool> openTerminalSession(
   WidgetRef ref,
   Server server, {
   String? initialDirectory,
+  List<String>? initialScripts,
   String? paneId,
 }) async {
   HostKeyPrompt? approvedHostKey;
@@ -127,6 +128,7 @@ Future<bool> openTerminalSession(
           },
           knownHostKeyFingerprint: server.hostKeyFingerprint,
           initialDirectory: initialDirectory,
+          initialScripts: initialScripts,
           paneId: paneId,
           proxy: proxy,
         );
