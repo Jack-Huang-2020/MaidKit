@@ -34,6 +34,18 @@ ThemeData createMaidKitTheme(
       groupAlignment: -1,
       labelType: NavigationRailLabelType.all,
     ),
+    // Material 3 Expressive switches: a check on the thumb when on, a cross
+    // when off.
+    switchTheme: SwitchThemeData(
+      thumbIcon: WidgetStateProperty.resolveWith((states) {
+        final selected = states.contains(WidgetState.selected);
+        return Icon(
+          selected ? Icons.check_rounded : Icons.close_rounded,
+          size: 16,
+          color: selected ? resolvedScheme.primary : resolvedScheme.surface,
+        );
+      }),
+    ),
     inputDecorationTheme: InputDecorationThemeData(
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
     ),

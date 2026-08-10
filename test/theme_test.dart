@@ -33,4 +33,20 @@ void main() {
       isFalse,
     );
   });
+
+  test('switch theme resolves Material 3 Expressive check/cross thumb icons',
+      () {
+    final light = createMaidKitTheme(Brightness.light);
+    expect(light.switchTheme?.thumbIcon, isNotNull);
+    final dark = createMaidKitTheme(Brightness.dark);
+    expect(dark.switchTheme?.thumbIcon, isNotNull);
+
+    // The thumb icon is painted by the Switch's CustomPainter, so assert on
+    // the resolved icons: check when on, cross when off.
+    final thumbIcon = light.switchTheme!.thumbIcon!;
+    final onIcon = thumbIcon.resolve({WidgetState.selected});
+    final offIcon = thumbIcon.resolve(const <WidgetState>{});
+    expect(onIcon?.icon, Icons.check_rounded);
+    expect(offIcon?.icon, Icons.close_rounded);
+  });
 }
