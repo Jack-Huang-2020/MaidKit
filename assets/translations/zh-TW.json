@@ -1282,7 +1282,7 @@
   "settingsVaultWorkspaceUnbound": "無關聯雲端工作區",
   "settingsVaults": "保險庫",
   "settingsWallpaperColor": "桌布取色",
-  "settingsWallpaperColorHint": "使用從桌布提取的顏色（Monet），並停用手動選擇強調色。",
+  "settingsWallpaperColorHint": "使用從桌布提取的顏色（Monet），僅 Android 可用；開啟後停用手動選擇強調色。",
   "settingsWindowOpacity": "視窗不透明度",
   "settingsWindowOpacityHint": "調整整個桌面視窗的透明度。",
   "settingsWorkspace": "工作區",

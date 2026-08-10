@@ -151,22 +151,24 @@ class SettingsPage extends ConsumerWidget {
                             enabled: !wallpaperColorEnabled,
                             onEdit: () => _editSeedColor(context, ref),
                           ),
-                          // Wallpaper color (Monet) only exists on Android;
-                          // other platforms always pick the accent manually.
-                          if (defaultTargetPlatform == TargetPlatform.android) ...[
-                            const SizedBox(height: 8),
-                            SwitchListTile(
-                              contentPadding: EdgeInsets.zero,
-                              title: const Text('settingsWallpaperColor').tr(),
-                              subtitle: Text(
-                                'settingsWallpaperColorHint'.tr(),
-                              ),
-                              value: wallpaperColorEnabled,
-                              onChanged: (enabled) => ref
-                                  .read(wallpaperColorEnabledProvider.notifier)
-                                  .setEnabled(enabled),
+                          // Wallpaper color (Monet) only exists on Android; the
+                          // switch stays visible on other platforms but is
+                          // disabled there, so the accent is always picked
+                          // manually.
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('settingsWallpaperColor').tr(),
+                            subtitle: Text(
+                              'settingsWallpaperColorHint'.tr(),
                             ),
-                          ],
+                            value: wallpaperColorEnabled,
+                            onChanged: defaultTargetPlatform ==
+                                    TargetPlatform.android
+                                ? (enabled) => ref
+                                    .read(wallpaperColorEnabledProvider.notifier)
+                                    .setEnabled(enabled)
+                                : null,
+                          ),
                           const SizedBox(height: 16),
                           const _LanguageSwitcher(),
                         ],
