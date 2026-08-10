@@ -261,6 +261,24 @@ class ServerConnectionRequiredException implements Exception {
   String toString() => 'Connect to this server before running an operation.';
 }
 
+class ServerGpuStats {
+  const ServerGpuStats({
+    required this.index,
+    required this.name,
+    this.utilizationPercent,
+    this.memoryUsedKb,
+    this.memoryTotalKb,
+    this.temperatureC,
+  });
+
+  final int index;
+  final String name;
+  final double? utilizationPercent;
+  final int? memoryUsedKb;
+  final int? memoryTotalKb;
+  final double? temperatureC;
+}
+
 class ServerStats {
   const ServerStats({
     required this.collectorId,
@@ -276,6 +294,7 @@ class ServerStats {
     this.diskTotalKb,
     this.diskAvailableKb,
     this.uptime,
+    this.gpus = const [],
   });
 
   final String collectorId;
@@ -291,6 +310,7 @@ class ServerStats {
   final int? diskTotalKb;
   final int? diskAvailableKb;
   final Duration? uptime;
+  final List<ServerGpuStats> gpus;
 }
 
 class ServerProcess {

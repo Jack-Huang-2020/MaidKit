@@ -12,7 +12,7 @@ import 'server_connection_actions.dart';
 import 'server_models.dart';
 import 'server_providers.dart';
 
-/// Host package maintenance for distributions with a supported package tool.
+/// Host package maintenance for supported package managers.
 class PackageManagementTab extends ConsumerStatefulWidget {
   const PackageManagementTab({
     super.key,

@@ -1,4 +1,4 @@
-enum PackageManager { apt, dnf, yum, pacman, zypper, apk, xbps }
+enum PackageManager { apt, dnf, yum, pacman, zypper, apk, xbps, brew }
 
 extension PackageManagerX on PackageManager {
   String get label => switch (this) {
@@ -9,7 +9,11 @@ extension PackageManagerX on PackageManager {
     PackageManager.zypper => 'Zypper',
     PackageManager.apk => 'APK',
     PackageManager.xbps => 'XBPS',
+    PackageManager.brew => 'Homebrew',
   };
+
+  /// Homebrew is designed to manage user-owned installations without sudo.
+  bool get requiresElevation => this != PackageManager.brew;
 }
 
 enum PackageAction { refresh, upgrade, install, remove }

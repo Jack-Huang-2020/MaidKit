@@ -23,6 +23,9 @@ total = 4096.00M  used = 1024.00M  free = 3072.00M
 --DISK--
 Filesystem 1024-blocks Used Available Capacity Mounted on
 /dev/disk3s1 104857600 52428800 52428800 50% /
+--GPU--
+0, NVIDIA A100, 12.5, 1024, 40960, 45
+1, NVIDIA A100, 0, 0, 40960, N/A
 --UPTIME--
 { sec = $bootSeconds, usec = 0 } Mon Jan  1 00:00:00 2024
 ''', now: now);
@@ -36,6 +39,7 @@ Filesystem 1024-blocks Used Available Capacity Mounted on
     expect(stats.memoryTotalKb, 16 * 1024 * 1024);
     expect(stats.memoryAvailableKb, 350 * 16);
     expect(stats.swapTotalKb, 4096 * 1024);
+    expect(stats.gpus, hasLength(2));
     expect(stats.swapFreeKb, 3072 * 1024);
     expect(stats.diskTotalKb, 104857600);
     expect(stats.diskAvailableKb, 52428800);
@@ -79,6 +83,22 @@ DiskAvailable: 26214400
     expect(stats.diskAvailableKb, 26214400);
     expect(stats.uptime, const Duration(days: 1));
     expect(stats.updatedAt, now);
+  });
+  test('parses all NVIDIA GPUs and converts memory to KiB', () {
+    final gpus = parseNvidiaGpuMetricsOutput('''
+0, NVIDIA A100, 12.5, 1024, 40960, 45
+1, NVIDIA A100, 0, 0, 40960, N/A
+''');
+
+    expect(gpus, hasLength(2));
+    expect(gpus[0].index, 0);
+    expect(gpus[0].name, 'NVIDIA A100');
+    expect(gpus[0].utilizationPercent, 12.5);
+    expect(gpus[0].memoryUsedKb, 1024 * 1024);
+    expect(gpus[0].memoryTotalKb, 40960 * 1024);
+    expect(gpus[0].temperatureC, 45);
+    expect(gpus[1].index, 1);
+    expect(gpus[1].temperatureC, isNull);
   });
 
   test('activity counters preserve direct Windows CPU utilization', () {

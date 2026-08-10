@@ -108,6 +108,16 @@ class GhosttyTerminalSessionAdapter implements TerminalSessionAdapter {
     }
   }
 
+  @override
+  void showKeyboard() {
+    if (!_disposed) _controller.showKeyboard();
+  }
+
+  @override
+  void hideKeyboard() {
+    if (!_disposed) _controller.hideKeyboard();
+  }
+
   /// Exposes flterm's key encoder for the adapter integration tests and for
   /// callers that need to send a non-text terminal key programmatically.
   void sendKey(flterm.Key key) {

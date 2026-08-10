@@ -807,6 +807,24 @@ class _MetricGrid extends StatelessWidget {
               : 'detailCpuCount'.tr(args: ['${stats!.cpuCount}']),
         ),
         const SizedBox(height: 8),
+        for (final gpu in stats!.gpus) ...[
+          _MetricCard(
+            icon: Symbols.developer_board,
+            label: 'detailGpu',
+            value: gpu.utilizationPercent == null
+                ? '—'
+                : '${gpu.utilizationPercent!.toStringAsFixed(0)}%',
+            detail: [
+              gpu.name,
+              if (gpu.memoryUsedKb != null && gpu.memoryTotalKb != null)
+                '${_formatKb(gpu.memoryUsedKb!)} / ${_formatKb(gpu.memoryTotalKb!)}',
+              if (gpu.temperatureC != null)
+                '${gpu.temperatureC!.toStringAsFixed(0)}°C',
+            ].join(' · '),
+            progress: _ratio(gpu.memoryUsedKb, gpu.memoryTotalKb),
+          ),
+          const SizedBox(height: 8),
+        ],
         _MetricCard(
           icon: Symbols.memory_rounded,
           label: 'detailMemory',
