@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -456,7 +457,11 @@ class SshAgentService {
     AgentCancelToken? cancelToken,
   }) async {
     SSHSession? session;
-    cancelToken?.register(() => session?.close());
+    void closeSession() {
+      session?.close();
+    }
+
+    cancelToken?.register(closeSession);
     try {
       final path = proposal.arguments['path'] as String?;
       switch (proposal.kind) {
@@ -488,41 +493,45 @@ class SshAgentService {
           if (path == null || path.isEmpty) {
             throw ArgumentError('A file path is required to read a file.');
           }
-          final sftp = await client.sftp();
-          final file = await sftp.open(path, mode: SftpFileOpenMode.read);
-          try {
-            return _limit(utf8.decode(await file.readBytes()));
-          } finally {
-            await file.close();
-          }
+          return _withSftp(client, cancelToken, (sftp) async {
+            final file = await sftp.open(path, mode: SftpFileOpenMode.read);
+            try {
+              return _limit(utf8.decode(await file.readBytes()));
+            } finally {
+              await file.close();
+            }
+          });
         case AgentActionKind.writeFile:
           if (path == null || path.isEmpty) {
             throw ArgumentError('A file path is required to write a file.');
           }
-          final sftp = await client.sftp();
-          final file = await sftp.open(
-            path,
-            mode:
-                SftpFileOpenMode.write |
-                SftpFileOpenMode.create |
-                SftpFileOpenMode.truncate,
-          );
-          try {
-            await file.writeBytes(
-              Uint8List.fromList(
-                utf8.encode(proposal.arguments['content'] as String),
-              ),
+          return _withSftp(client, cancelToken, (sftp) async {
+            final file = await sftp.open(
+              path,
+              mode:
+                  SftpFileOpenMode.write |
+                  SftpFileOpenMode.create |
+                  SftpFileOpenMode.truncate,
             );
-          } finally {
-            await file.close();
-          }
-          return 'Wrote $path';
+            try {
+              await file.writeBytes(
+                Uint8List.fromList(
+                  utf8.encode(proposal.arguments['content'] as String),
+                ),
+              );
+            } finally {
+              await file.close();
+            }
+            return 'Wrote $path';
+          });
         case AgentActionKind.deleteFile:
           if (path == null || path.isEmpty) {
             throw ArgumentError('A file path is required to delete a file.');
           }
-          await (await client.sftp()).remove(path);
-          return 'Deleted $path';
+          return _withSftp(client, cancelToken, (sftp) async {
+            await sftp.remove(path);
+            return 'Deleted $path';
+          });
         case AgentActionKind.createSnippet:
           throw UnsupportedError('Snippet creation is handled by the app.');
         case AgentActionKind.mcpToolCall:
@@ -537,7 +546,32 @@ class SshAgentService {
       }
       rethrow;
     } finally {
-      cancelToken?.unregister(() => session?.close());
+      cancelToken?.unregister(closeSession);
+    }
+  }
+
+  /// Opens one SFTP channel for an action and always closes it afterwards.
+  ///
+  /// [SSHClient.sftp] opens a new SSH session channel on every call. Reusing
+  /// the authenticated [SSHClient] does not reuse those channels, so leaving
+  /// the [SftpClient] open eventually makes the server reject new channels.
+  static Future<T> _withSftp<T>(
+    SSHClient client,
+    AgentCancelToken? cancelToken,
+    Future<T> Function(SftpClient sftp) action,
+  ) async {
+    final sftp = await client.sftp();
+    void closeSftp() {
+      unawaited(sftp.close());
+    }
+
+    cancelToken?.register(closeSftp);
+    try {
+      cancelToken?.throwIfCancelled();
+      return await action(sftp);
+    } finally {
+      cancelToken?.unregister(closeSftp);
+      await sftp.close();
     }
   }
 
