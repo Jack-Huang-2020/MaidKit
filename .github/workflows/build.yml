@@ -142,11 +142,14 @@ jobs:
         env:
           CODE_SIGNING_ALLOWED: "NO"
         run: flutter build macos --release
+      # Archive only the self-contained .app bundle; the Release directory
+      # also holds intermediate build products (.o, .swiftmodule, dSYM, ...)
+      # that are not part of the distributable application.
       - name: Archive production artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-output-macos
-          path: build/macos/Build/Products/Release/
+          path: build/macos/Build/Products/Release/MaidKit.app
 
   build-android:
     if: github.event_name == 'push' || github.event.inputs.platform == 'all' || github.event.inputs.platform == 'android'
