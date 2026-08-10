@@ -93,44 +93,41 @@ class _ServerTabsShell extends ConsumerWidget {
                             IconButton(
                               tooltip: 'tabSettings'.tr(),
                               onPressed: () => tabsRouter.setActiveIndex(5),
-                              icon: const Icon(Symbols.settings_rounded),
+                              icon: const Icon(Icons.settings_outlined),
                             ),
                           ],
                         ),
                       ),
                       destinations: [
                         NavigationRailDestination(
-                          icon: const Icon(Symbols.dns_rounded),
-                          selectedIcon: const Icon(Symbols.dns_rounded, fill: 1),
+                          icon: const Icon(Icons.dns_outlined),
+                          selectedIcon: const Icon(Icons.dns),
                           label: Text('tabServers').tr(),
                         ),
                         NavigationRailDestination(
                           icon: Badge(
                             isLabelVisible: githubHasFailures,
-                            child: const Icon(Symbols.inventory_2_rounded),
+                            child: const Icon(Icons.inventory_2_outlined),
                           ),
                           selectedIcon: Badge(
                             isLabelVisible: githubHasFailures,
-                            child: const Icon(Symbols.inventory_2_rounded, fill: 1),
+                            child: const Icon(Icons.inventory_2),
                           ),
                           label: Text('tabAssets').tr(),
                         ),
                         NavigationRailDestination(
-                          icon: const Icon(Symbols.deployed_code_rounded),
-                          selectedIcon: const Icon(
-                            Symbols.deployed_code_rounded,
-                            fill: 1,
-                          ),
+                          icon: const Icon(Icons.layers_outlined),
+                          selectedIcon: const Icon(Icons.layers),
                           label: Text('tabProjects').tr(),
                         ),
                         NavigationRailDestination(
-                          icon: const Icon(Symbols.code_rounded),
-                          selectedIcon: const Icon(Symbols.code_rounded, fill: 1),
+                          icon: const Icon(Icons.code_outlined),
+                          selectedIcon: const Icon(Icons.code),
                           label: Text('tabSnippets').tr(),
                         ),
                         const NavigationRailDestination(
-                          icon: Icon(Symbols.smart_toy_rounded),
-                          selectedIcon: Icon(Symbols.smart_toy_rounded, fill: 1),
+                          icon: Icon(Icons.smart_toy_outlined),
+                          selectedIcon: Icon(Icons.smart_toy),
                           label: Text('Agent'),
                         ),
                       ],
@@ -157,42 +154,39 @@ class _ServerTabsShell extends ConsumerWidget {
                   onDestinationSelected: tabsRouter.setActiveIndex,
                   destinations: [
                       NavigationDestination(
-                        icon: const Icon(Symbols.dns_rounded),
-                        selectedIcon: const Icon(Symbols.dns_rounded, fill: 1),
+                        icon: const Icon(Icons.dns_outlined),
+                        selectedIcon: const Icon(Icons.dns),
                         label: 'tabServers'.tr(),
                       ),
                       NavigationDestination(
                         icon: Badge(
                           isLabelVisible: githubHasFailures,
-                          child: const Icon(Symbols.inventory_2_rounded),
+                          child: const Icon(Icons.inventory_2_outlined),
                         ),
                         selectedIcon: Badge(
                           isLabelVisible: githubHasFailures,
-                          child: const Icon(Symbols.inventory_2_rounded, fill: 1),
+                          child: const Icon(Icons.inventory_2),
                         ),
                         label: 'tabAssets'.tr(),
                       ),
                       NavigationDestination(
-                        icon: const Icon(Symbols.deployed_code_rounded),
-                        selectedIcon: const Icon(
-                          Symbols.deployed_code_rounded,
-                          fill: 1,
-                        ),
+                        icon: const Icon(Icons.layers_outlined),
+                        selectedIcon: const Icon(Icons.layers),
                         label: 'tabProjects'.tr(),
                       ),
                       NavigationDestination(
-                        icon: const Icon(Symbols.code_rounded),
-                        selectedIcon: const Icon(Symbols.code_rounded, fill: 1),
+                        icon: const Icon(Icons.code_outlined),
+                        selectedIcon: const Icon(Icons.code),
                         label: 'tabSnippets'.tr(),
                       ),
                       const NavigationDestination(
-                        icon: Icon(Symbols.smart_toy_rounded),
-                        selectedIcon: Icon(Symbols.smart_toy_rounded, fill: 1),
+                        icon: Icon(Icons.smart_toy_outlined),
+                        selectedIcon: Icon(Icons.smart_toy),
                         label: 'Agent',
                       ),
                       NavigationDestination(
-                        icon: const Icon(Symbols.settings_rounded, fill: 1),
-                        selectedIcon: const Icon(Symbols.settings_rounded),
+                        icon: const Icon(Icons.settings_outlined),
+                        selectedIcon: const Icon(Icons.settings),
                         label: 'tabSettings'.tr(),
                       ),
                     ],

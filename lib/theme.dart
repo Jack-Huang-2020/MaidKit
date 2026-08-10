@@ -29,9 +29,6 @@ ThemeData createMaidKitTheme(
     colorScheme: resolvedScheme,
     brightness: brightness,
     fontFamily: MaidKitFonts.sans,
-    // Material Symbols is a variable font: render every icon Bold (wght 700)
-    // app-wide for the Material 3 Expressive look.
-    iconTheme: const IconThemeData(weight: 700),
     appBarTheme: const AppBarTheme(centerTitle: false),
     navigationRailTheme: const NavigationRailThemeData(
       groupAlignment: -1,

@@ -4,14 +4,16 @@ import 'package:maid_kit/theme.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 void main() {
-  test('theme renders Material Symbols icons bold (wght 700)', () {
+  test('theme keeps Material Symbols icons at the default weight', () {
     final light = createMaidKitTheme(Brightness.light);
     final dark = createMaidKitTheme(Brightness.dark);
-    expect(light.iconTheme.weight, 700);
-    expect(dark.iconTheme.weight, 700);
+    // No explicit weight: icons render at the standard 400 weight, matching
+    // the PiliPlus-style bottom navigation icons.
+    expect(light.iconTheme.weight, isNull);
+    expect(dark.iconTheme.weight, isNull);
   });
 
-  testWidgets('rendered icons carry the wght 700 font variation',
+  testWidgets('renders icons without an explicit weight variation',
       (tester) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -20,12 +22,15 @@ void main() {
       ),
     );
 
+    expect(find.byIcon(Symbols.refresh_rounded), findsOneWidget);
     final richText = tester.widget<RichText>(find.byType(RichText));
     final style = richText.text.style;
-    expect(style, isNotNull);
     expect(
-      style!.fontVariations,
-      contains(const FontVariation('wght', 700)),
+      style?.fontVariations?.any(
+            (v) => v.axis == 'wght' && v.value == 700,
+          ) ??
+          false,
+      isFalse,
     );
   });
 }
