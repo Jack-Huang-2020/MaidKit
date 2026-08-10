@@ -85,6 +85,7 @@ class _AgentPageState extends ConsumerState<AgentPage> {
   // chat messages alone cannot provide that because tool-call IDs are omitted.
   final _agentContext = <Map<String, dynamic>>[];
   List<Map<String, dynamic>> _pendingContext = const [];
+  final _queuedPrompts = <_QueuedPrompt>[];
   final _messagesScroll = ScrollController();
   AgentProposal? _proposal;
   bool _reconnectRequired = false;
@@ -122,7 +123,7 @@ class _AgentPageState extends ConsumerState<AgentPage> {
       if (HardwareKeyboard.instance.isShiftPressed) {
         _insertNewLine();
       } else {
-        _send();
+        _submitPrompt();
       }
       return KeyEventResult.handled;
     };
@@ -208,8 +209,69 @@ class _AgentPageState extends ConsumerState<AgentPage> {
     });
   }
 
+  Future<void> _submitPrompt() async {
+    if (_working) {
+      _queuePrompt();
+      return;
+    }
+    await _send();
+  }
+
+  void _queuePrompt() {
+    final text = _prompt.text.trim();
+    final servers = ref.read(serversProvider).asData?.value ?? const <Server>[];
+    if (text.isEmpty || servers.isEmpty || _proposal != null) return;
+    setState(() {
+      _queuedPrompts.add(_QueuedPrompt(text));
+      _prompt.clear();
+    });
+    _promptFocus.requestFocus();
+  }
+
+  Future<void> _steerQueuedPrompt(int index) async {
+    if (index < 0 || index >= _queuedPrompts.length) return;
+    final queued = _queuedPrompts.removeAt(index);
+    if (_working) {
+      setState(() => _queuedPrompts.insert(0, queued));
+      // A steer is deliberately sent on the next request, not appended to an
+      // already-running request. Cancelling here makes that next request start
+      // as soon as the current turn has unwound.
+      _activeToken?.cancel();
+      return;
+    }
+    if (mounted) setState(() {});
+    await _runPrompt(queued.text);
+  }
+
+  void _removeQueuedPrompt(int index) {
+    if (index < 0 || index >= _queuedPrompts.length) return;
+    setState(() => _queuedPrompts.removeAt(index));
+  }
+
+  Future<void> _drainQueuedPrompts() async {
+    final servers = ref.read(serversProvider).asData?.value ?? const <Server>[];
+    if (!mounted ||
+        _working ||
+        _proposal != null ||
+        _queuedPrompts.isEmpty ||
+        servers.isEmpty) {
+      return;
+    }
+    final queued = _queuedPrompts.removeAt(0);
+    setState(() {});
+    await _runPrompt(queued.text);
+  }
+
   Future<void> _send() async {
     final text = _prompt.text.trim();
+    final servers = ref.read(serversProvider).asData?.value ?? const <Server>[];
+    if (text.isEmpty || servers.isEmpty || _working || _proposal != null) {
+      return;
+    }
+    await _runPrompt(text);
+  }
+
+  Future<void> _runPrompt(String text) async {
     final servers = ref.read(serversProvider).asData?.value ?? const <Server>[];
     if (text.isEmpty || servers.isEmpty || _working || _proposal != null) {
       return;
@@ -308,6 +370,7 @@ class _AgentPageState extends ConsumerState<AgentPage> {
       if (mounted) {
         setState(() => _working = false);
         await _persistConversation();
+        await _drainQueuedPrompts();
       }
     }
   }
@@ -456,6 +519,7 @@ class _AgentPageState extends ConsumerState<AgentPage> {
       if (mounted) {
         setState(() => _working = false);
         await _persistConversation();
+        await _drainQueuedPrompts();
       }
     }
   }
@@ -663,6 +727,7 @@ class _AgentPageState extends ConsumerState<AgentPage> {
       ..add(_rawContextMessage('assistant', 'agentActionDeclined'.tr()));
     _pendingContext = List<Map<String, dynamic>>.from(_agentContext);
     await _persistConversation();
+    await _drainQueuedPrompts();
   }
 
   Future<void> _persistConversation() async {
@@ -695,8 +760,8 @@ class _AgentPageState extends ConsumerState<AgentPage> {
   Future<void> _startNewConversation() async {
     if (_working) return;
     await _persistConversation();
-    if (!mounted) return;
     setState(() {
+      _queuedPrompts.clear();
       _messages.clear();
       _agentContext.clear();
       _pendingContext = const [];
@@ -730,6 +795,7 @@ class _AgentPageState extends ConsumerState<AgentPage> {
         .conversation(id);
     if (!mounted || conversation == null) return;
     setState(() {
+      _queuedPrompts.clear();
       _messages
         ..clear()
         ..addAll([
@@ -766,6 +832,7 @@ class _AgentPageState extends ConsumerState<AgentPage> {
         .deleteConversation(conversation.id);
     if (mounted && _conversationId == conversation.id) {
       setState(() {
+        _queuedPrompts.clear();
         _messages.clear();
         _agentContext.clear();
         _pendingContext = const [];
@@ -1194,6 +1261,10 @@ class _AgentPageState extends ConsumerState<AgentPage> {
               ],
             ),
           ),
+          if (_queuedPrompts.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _buildQueuedPrompts(scheme),
+          ],
           const SizedBox(height: 12),
           Material(
             elevation: 2,
@@ -1211,44 +1282,93 @@ class _AgentPageState extends ConsumerState<AgentPage> {
                     child: TextField(
                       controller: _prompt,
                       focusNode: _promptFocus,
-                      enabled: !_working && _proposal == null,
+                      enabled: _proposal == null,
                       keyboardType: TextInputType.multiline,
                       maxLines: 5,
                       minLines: 1,
                       onTapOutside: (_) =>
                           FocusManager.instance.primaryFocus?.unfocus(),
-                      onSubmitted: (_) => _send(),
+                      onSubmitted: (_) => _submitPrompt(),
                       decoration: InputDecoration(
                         hintText: 'agentPromptHint'.tr(),
                         hintMaxLines: 1,
                         border: InputBorder.none,
                         isDense: true,
-                        contentPadding: EdgeInsets.symmetric(
+                        contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 12,
                         ),
                       ),
                     ),
                   ),
+                  if (_working)
+                    IconButton(
+                      tooltip: 'commonStop'.tr(),
+                      onPressed: _interrupt,
+                      icon: const Icon(Symbols.stop),
+                    ),
                   IconButton(
                     tooltip: _working
-                        ? 'commonStop'.tr()
+                        ? 'agentQueueMessage'.tr()
                         : 'agentSendMessage'.tr(),
                     color: scheme.primary,
-                    onPressed: _working
-                        ? _interrupt
-                        : _proposal != null
-                        ? null
-                        : _send,
-                    icon: _working
-                        ? const Icon(Symbols.stop)
-                        : const Icon(Symbols.send),
+                    onPressed: _proposal != null ? null : _submitPrompt,
+                    icon: Icon(_working ? Symbols.schedule : Symbols.send),
                   ),
                 ],
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildQueuedPrompts(ColorScheme scheme) {
+    return Material(
+      color: scheme.surfaceContainerHighest,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: scheme.outlineVariant),
+      ),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 176),
+        child: ListView.separated(
+          shrinkWrap: true,
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          itemCount: _queuedPrompts.length,
+          separatorBuilder: (_, _) => const Divider(height: 1),
+          itemBuilder: (context, index) {
+            final queued = _queuedPrompts[index];
+            return ListTile(
+              dense: true,
+              leading: const Icon(Symbols.schedule, size: 20),
+              title: Text(
+                queued.text,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              subtitle: Text('agentQueuedMessage'.tr()),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    tooltip: 'agentSteerMessage'.tr(),
+                    onPressed: () => _steerQueuedPrompt(index),
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(Symbols.arrow_upward, size: 18),
+                  ),
+                  IconButton(
+                    tooltip: 'agentRemoveQueuedMessage'.tr(),
+                    onPressed: () => _removeQueuedPrompt(index),
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(Symbols.close, size: 18),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -1395,6 +1515,12 @@ class _AgentMessage {
   final String text;
   final _MessageKind kind;
   final bool autoApproved;
+}
+
+class _QueuedPrompt {
+  const _QueuedPrompt(this.text);
+
+  final String text;
 }
 
 class _DropdownAction {
