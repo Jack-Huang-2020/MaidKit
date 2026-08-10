@@ -442,61 +442,68 @@ class _ServerGridState extends State<_ServerGrid> {
                 const SliverToBoxAdapter(child: GithubWorkflowStatusStrip()),
                 SliverPadding(
                   padding: const EdgeInsets.all(24),
-                  sliver: SliverGrid(
-                    gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: 380,
-                      mainAxisExtent: _isCompactView ? 200 : 320,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                    ),
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final server = visibleServers[index];
-                      final session = sessionsByServerId[server.id];
-                      final card = _ServerCard(
-                        server: server,
-                        session: session,
-                        compact: _isCompactView,
-                        onConnect: () => widget.onConnect(server),
-                        onOpenDetail: () => widget.onOpenDetail(server),
-                        onOpenTerminal: () => widget.onOpenTerminal(server),
-                        onOpenFiles: () => widget.onOpenFiles(server),
-                        onRefresh: () => widget.onRefresh(server),
-                      );
-                      // The local machine is a virtual server: it is not in
-                      // the database, so it cannot be reordered, edited, or
-                      // deleted, and gets no context menu.
-                      final isLocal =
-                          server.connectionType ==
-                          ServerConnectionType.local.name;
-                      if (isLocal) return card;
-                      if (_isArranging) {
-                        return _ReorderableServerTile(
+                  // Cap the grid width on wide screens so cards keep a
+                  // comfortable size and the gutters stay symmetric; on
+                  // phones the grid is narrower than the cap and cards
+                  // stretch edge-to-edge with equal margins.
+                  sliver: SliverConstrainedCrossAxis(
+                    maxExtent: 1100,
+                    sliver: SliverGrid(
+                      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 380,
+                        mainAxisExtent: _isCompactView ? 200 : 320,
+                        mainAxisSpacing: 16,
+                        crossAxisSpacing: 16,
+                      ),
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final server = visibleServers[index];
+                        final session = sessionsByServerId[server.id];
+                        final card = _ServerCard(
                           server: server,
-                          isSavingOrder: _isSavingOrder,
-                          onMoveBefore: _moveBefore,
+                          session: session,
+                          compact: _isCompactView,
+                          onConnect: () => widget.onConnect(server),
+                          onOpenDetail: () => widget.onOpenDetail(server),
+                          onOpenTerminal: () => widget.onOpenTerminal(server),
+                          onOpenFiles: () => widget.onOpenFiles(server),
+                          onRefresh: () => widget.onRefresh(server),
+                        );
+                        // The local machine is a virtual server: it is not in
+                        // the database, so it cannot be reordered, edited, or
+                        // deleted, and gets no context menu.
+                        final isLocal =
+                            server.connectionType ==
+                            ServerConnectionType.local.name;
+                        if (isLocal) return card;
+                        if (_isArranging) {
+                          return _ReorderableServerTile(
+                            server: server,
+                            isSavingOrder: _isSavingOrder,
+                            onMoveBefore: _moveBefore,
+                            child: card,
+                          );
+                        }
+                        return ContextMenuWidget(
+                          menuProvider: (_) => Menu(
+                            children: [
+                              MenuAction(
+                                title: 'serversEditServer'.tr(),
+                                callback: () => widget.onEdit(server),
+                              ),
+                              MenuSeparator(),
+                              MenuAction(
+                                title: 'serversDeleteServer'.tr(),
+                                attributes: const MenuActionAttributes(
+                                  destructive: true,
+                                ),
+                                callback: () => widget.onDelete(server),
+                              ),
+                            ],
+                          ),
                           child: card,
                         );
-                      }
-                      return ContextMenuWidget(
-                        menuProvider: (_) => Menu(
-                          children: [
-                            MenuAction(
-                              title: 'serversEditServer'.tr(),
-                              callback: () => widget.onEdit(server),
-                            ),
-                            MenuSeparator(),
-                            MenuAction(
-                              title: 'serversDeleteServer'.tr(),
-                              attributes: const MenuActionAttributes(
-                                destructive: true,
-                              ),
-                              callback: () => widget.onDelete(server),
-                            ),
-                          ],
-                        ),
-                        child: card,
-                      );
-                    }, childCount: visibleServers.length),
+                      }, childCount: visibleServers.length),
+                    ),
                   ),
                 ),
                 SliverToBoxAdapter(child: _arrangeServersFooter(context)),
@@ -520,7 +527,9 @@ class _ServerGridState extends State<_ServerGrid> {
                 onPressed: () =>
                     setState(() => _isCompactView = !_isCompactView),
                 icon: Icon(
-                  _isCompactView ? Symbols.view_agenda_rounded : Symbols.view_compact_rounded,
+                  _isCompactView
+                      ? Symbols.view_agenda_rounded
+                      : Symbols.view_compact_rounded,
                 ),
                 label: Text(
                   _isCompactView
@@ -1186,7 +1195,9 @@ class _DisconnectedStats extends StatelessWidget {
         child: Row(
           children: [
             Icon(
-              connecting ? Symbols.hourglass_top_rounded : Symbols.insights_rounded,
+              connecting
+                  ? Symbols.hourglass_top_rounded
+                  : Symbols.insights_rounded,
               size: 20,
               color: colorScheme.onSurfaceVariant,
             ),
@@ -2331,7 +2342,9 @@ class _AddServerDialogState extends ConsumerState<ServerEditorDialog> {
                           ? null
                           : _scanSerialDevices,
                       icon: Icon(
-                        _scanningSerialDevices ? Symbols.sync_rounded : Symbols.refresh_rounded,
+                        _scanningSerialDevices
+                            ? Symbols.sync_rounded
+                            : Symbols.refresh_rounded,
                         size: 18,
                       ),
                       label: Text('serverSerialScan'.tr()),
