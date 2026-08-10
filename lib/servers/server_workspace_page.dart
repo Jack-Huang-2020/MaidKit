@@ -10,7 +10,7 @@ import 'package:maid_kit/routing/app_router.dart';
 import 'package:maid_kit/routing/app_router.gr.dart';
 import 'package:maid_kit/shared/presentation/deploy_terminal.dart';
 import 'package:maid_kit/shared/presentation/app_scaffold.dart';
-import 'package:styled_widget/styled_widget.dart';
+import 'package:maid_kit/shared/presentation/floating_navigation_bar.dart';
 import 'port_forwarding_models.dart';
 import 'server_providers.dart';
 import 'terminal_tabs_provider.dart';
@@ -152,17 +152,10 @@ class _ServerTabsShell extends ConsumerWidget {
           bottomNavigationBar:
               isWide || !isDashboardFocused || isAgentInputFocused
               ? null
-              : Material(
-                  elevation: 0,
-                  color: Theme.of(context).colorScheme.surfaceContainer,
-                  child: NavigationBar(
-                    backgroundColor: Colors.transparent,
-                    height: 56,
-                    labelBehavior:
-                        NavigationDestinationLabelBehavior.alwaysHide,
-                    selectedIndex: tabsRouter.activeIndex,
-                    onDestinationSelected: tabsRouter.setActiveIndex,
-                    destinations: [
+              : FloatingNavigationBar(
+                  selectedIndex: tabsRouter.activeIndex,
+                  onDestinationSelected: tabsRouter.setActiveIndex,
+                  destinations: [
                       NavigationDestination(
                         icon: const Icon(Symbols.dns_rounded),
                         selectedIcon: const Icon(Symbols.dns_rounded, fill: 1),
@@ -203,8 +196,7 @@ class _ServerTabsShell extends ConsumerWidget {
                         label: 'tabSettings'.tr(),
                       ),
                     ],
-                  ).padding(horizontal: 16),
-                ),
+                  ),
         );
       },
     );
