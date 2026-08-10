@@ -43,6 +43,13 @@ class SshConnectionManager {
   /// interrupts an interactive session.
   final _sessions = <int, SSHClient>{};
   final _terminals = <String, _TerminalConnection>{};
+
+  /// Non-interactive SSH commands do not source the user's shell profile.
+  /// Include common Homebrew and Docker Desktop locations explicitly so
+  /// user-installed tools are discoverable on macOS and Linuxbrew hosts.
+  static const _remoteToolPath =
+      '/opt/homebrew/bin:/usr/local/bin:/home/linuxbrew/.linuxbrew/bin:'
+      '/Applications/Docker.app/Contents/Resources/bin';
   final _controller = StreamController<List<SshSessionInfo>>.broadcast();
   final _portForwardController =
       StreamController<List<ActivePortForward>>.broadcast();
@@ -560,13 +567,14 @@ fi
     final display = _packageActionCommand(manager, action, name);
     await withClient(serverId, (client) async {
       onOutput?.call('\$ $display\n');
-      final prefix = sshUserIsRoot
+      final requiresElevation = manager.requiresElevation && !sshUserIsRoot;
+      final prefix = !requiresElevation
           ? ''
           : (sudoPassword == null ? 'sudo -n ' : 'sudo -S -p "" ');
       final result = await _executeStreaming(
         client,
         '$prefix$display',
-        stdin: sshUserIsRoot ? null : sudoPassword,
+        stdin: requiresElevation ? sudoPassword : null,
         onOutput: onOutput,
       );
       if (result.exitCode != 0) {
@@ -2186,7 +2194,7 @@ done
     String command, {
     String? stdin,
   }) async {
-    final session = await client.execute(command);
+    final session = await client.execute(_withRemoteToolPath(command));
     final stdout = utf8.decoder.bind(session.stdout).join();
     final stderr = utf8.decoder.bind(session.stderr).join();
     if (stdin != null) {
@@ -2215,7 +2223,7 @@ done
     bool usePty = true,
   }) async {
     final session = await client.execute(
-      command,
+      _withRemoteToolPath(command),
       pty: usePty
           ? const SSHPtyConfig(type: 'xterm-256color', width: 120, height: 40)
           : null,
@@ -2243,6 +2251,9 @@ done
       exitCode: session.exitCode ?? 1,
     );
   }
+
+  String _withRemoteToolPath(String command) =>
+      'export PATH="$_remoteToolPath:\$PATH"; $command';
 
   /// Local image tags available to [runtime] under [scope], newest first.
   ///
@@ -3221,6 +3232,7 @@ fi
     PackageManager.zypper => 'zypper',
     PackageManager.apk => 'apk',
     PackageManager.xbps => 'xbps-install',
+    PackageManager.brew => 'brew',
   };
 
   String _packageOutdatedCommand(PackageManager manager) => switch (manager) {
@@ -3236,6 +3248,7 @@ fi
     PackageManager.apk => 'apk version -l "<" 2>/dev/null | cut -d" " -f1',
     PackageManager.xbps =>
       'xbps-install -Mun 2>/dev/null | awk \'{print \$1}\'',
+    PackageManager.brew => 'HOMEBREW_NO_AUTO_UPDATE=1 brew outdated --formula',
   };
 
   String _installedPackageCountCommand(PackageManager manager) =>
@@ -3247,6 +3260,8 @@ fi
         PackageManager.pacman => 'pacman -Qq | wc -l',
         PackageManager.apk => 'apk info | wc -l',
         PackageManager.xbps => 'xbps-query -l | wc -l',
+        PackageManager.brew =>
+          'HOMEBREW_NO_AUTO_UPDATE=1 brew list --formula | wc -l',
       };
 
   String _packageInstallationStatusCommand(
@@ -3266,6 +3281,9 @@ fi
       PackageManager.pacman => 'pacman -Q \$package >/dev/null 2>&1',
       PackageManager.apk => 'apk info -e \$package >/dev/null 2>&1',
       PackageManager.xbps => 'xbps-query -p pkgver \$package >/dev/null 2>&1',
+      PackageManager.brew =>
+        'HOMEBREW_NO_AUTO_UPDATE=1 brew list --formula "\$package" '
+            '>/dev/null 2>&1',
     };
     return 'for package in $packages; do if $check; then '
         'printf "%s\\t1\\n" "\$package"; else '
@@ -3284,6 +3302,9 @@ fi
         'zypper --non-interactive search $pattern 2>/dev/null | head -n 80',
       PackageManager.apk => 'apk search -v $pattern 2>/dev/null | head -n 80',
       PackageManager.xbps => 'xbps-query -Rs $query 2>/dev/null | head -n 80',
+      PackageManager.brew =>
+        'HOMEBREW_NO_AUTO_UPDATE=1 brew search --formula '
+            '${_shellSingleQuote(pattern)} | head -n 80',
     };
   }
 
@@ -3344,6 +3365,13 @@ fi
       (PackageManager.xbps, PackageAction.upgrade) => 'xbps-install -yu',
       (PackageManager.xbps, PackageAction.install) => 'xbps-install -y $name',
       (PackageManager.xbps, PackageAction.remove) => 'xbps-remove -y $name',
+      (PackageManager.brew, PackageAction.refresh) => 'brew update',
+      (PackageManager.brew, PackageAction.upgrade) =>
+        'HOMEBREW_NO_AUTO_UPDATE=1 brew upgrade',
+      (PackageManager.brew, PackageAction.install) =>
+        'HOMEBREW_NO_AUTO_UPDATE=1 brew install $name',
+      (PackageManager.brew, PackageAction.remove) =>
+        'HOMEBREW_NO_AUTO_UPDATE=1 brew uninstall $name',
     };
   }
 
