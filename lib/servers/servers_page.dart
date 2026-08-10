@@ -352,6 +352,16 @@ class _ServerGridState extends State<_ServerGrid> {
     final sessionsByServerId = {
       for (final session in widget.sessions) session.serverId: session,
     };
+    // Responsive card columns: 1 on phones (cards stretch edge-to-edge with
+    // symmetric margins), 2 on tablets, 3 on laptops, 4 on wide desktops.
+    final viewportWidth = MediaQuery.sizeOf(context).width;
+    final gridColumns = viewportWidth >= 1200
+        ? 4
+        : viewportWidth >= 900
+        ? 3
+        : viewportWidth >= 600
+        ? 2
+        : 1;
     final allTags =
         widget.servers
             .expand((server) => decodeStringList(server.tags))
@@ -449,8 +459,8 @@ class _ServerGridState extends State<_ServerGrid> {
                   sliver: SliverConstrainedCrossAxis(
                     maxExtent: 1100,
                     sliver: SliverGrid(
-                      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: 380,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: gridColumns,
                         mainAxisExtent: _isCompactView ? 200 : 320,
                         mainAxisSpacing: 16,
                         crossAxisSpacing: 16,
