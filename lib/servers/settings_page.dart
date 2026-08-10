@@ -44,6 +44,7 @@ class SettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
     final appSeedColor = ref.watch(appSeedColorProvider);
+    final wallpaperColorEnabled = ref.watch(wallpaperColorEnabledProvider);
     final biometricEnabled = ref.watch(biometricUnlockEnabledProvider);
     final adapterOptions = ref.watch(terminalSessionAdapterOptionsProvider);
     final selectedAdapter = ref.watch(selectedTerminalSessionAdapterProvider);
@@ -147,7 +148,26 @@ class SettingsPage extends ConsumerWidget {
                           const SizedBox(height: 16),
                           _SeedColorTile(
                             seedColor: appSeedColor,
+                            enabled: !wallpaperColorEnabled,
                             onEdit: () => _editSeedColor(context, ref),
+                          ),
+                          // Wallpaper color (Monet) only exists on Android; the
+                          // switch stays visible on other platforms but is
+                          // disabled there, so the accent is always picked
+                          // manually.
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('settingsWallpaperColor').tr(),
+                            subtitle: Text(
+                              'settingsWallpaperColorHint'.tr(),
+                            ),
+                            value: wallpaperColorEnabled,
+                            onChanged: defaultTargetPlatform ==
+                                    TargetPlatform.android
+                                ? (enabled) => ref
+                                    .read(wallpaperColorEnabledProvider.notifier)
+                                    .setEnabled(enabled)
+                                : null,
                           ),
                           const SizedBox(height: 16),
                           const _LanguageSwitcher(),
@@ -2931,33 +2951,45 @@ class _TerminalFontDropdown extends HookConsumerWidget {
 }
 
 class _SeedColorTile extends StatelessWidget {
-  const _SeedColorTile({required this.seedColor, required this.onEdit});
+  const _SeedColorTile({
+    required this.seedColor,
+    required this.onEdit,
+    this.enabled = true,
+  });
 
   final Color seedColor;
   final VoidCallback onEdit;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return ListTile(
+      enabled: enabled,
       contentPadding: EdgeInsets.zero,
       leading: Container(
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: seedColor,
+          color: enabled
+              ? seedColor
+              : colorScheme.onSurface.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: colorScheme.outlineVariant),
+          border: Border.all(
+            color: enabled
+                ? colorScheme.outlineVariant
+                : colorScheme.outlineVariant.withValues(alpha: 0.5),
+          ),
         ),
       ),
       title: const Text('settingsThemeAccent').tr(),
       subtitle: const Text('settingsThemeAccentHint').tr(),
       trailing: IconButton(
         tooltip: 'settingsThemeEdit'.tr(),
-        onPressed: onEdit,
+        onPressed: enabled ? onEdit : null,
         icon: const Icon(Symbols.edit_rounded),
       ),
-      onTap: onEdit,
+      onTap: enabled ? onEdit : null,
     );
   }
 }

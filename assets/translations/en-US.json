@@ -1281,6 +1281,8 @@
   "settingsVaultWorkspaceBound": "Cloud workspace: {}",
   "settingsVaultWorkspaceUnbound": "No cloud workspace linked",
   "settingsVaults": "Vaults",
+  "settingsWallpaperColor": "Wallpaper color",
+  "settingsWallpaperColorHint": "Use the color extracted from your wallpaper (Monet). Android only; when enabled, manual accent selection is disabled.",
   "settingsWindowOpacity": "Window opacity",
   "settingsWindowOpacityHint": "Adjust the transparency of the entire desktop window.",
   "settingsWorkspace": "Workspace",

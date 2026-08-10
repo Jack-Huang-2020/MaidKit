@@ -5,6 +5,7 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   desktop_drop
   desktop_webview_window
+  dynamic_color
   file_saver
   flutter_secure_storage_windows
   irondash_engine_context
