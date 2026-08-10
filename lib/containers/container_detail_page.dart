@@ -20,6 +20,7 @@ import 'package:maid_kit/shared/presentation/deploy_terminal.dart';
 import 'package:maid_kit/shared/presentation/maidkit_alert.dart';
 import 'package:maid_kit/theme.dart';
 import 'container_models.dart';
+import 'container_command_preferences.dart';
 
 @RoutePage()
 class ContainerDetailPage extends ConsumerStatefulWidget {
@@ -382,6 +383,91 @@ class _ContainerDetailPageState extends ConsumerState<ContainerDetailPage> {
     );
   }
 
+  Future<void> _runContainerCommand({required bool attach}) async {
+    final preferences = await ContainerCommandPreferences.load();
+    final lastCommand = await preferences.commandFor(
+      serverId: widget.server.id,
+      containerId: widget.containerId,
+    );
+    if (!mounted) return;
+    final request = await showDialog<_ContainerCommandRequest>(
+      context: context,
+      builder: (context) =>
+          _ContainerCommandDialog(attach: attach, initialCommand: lastCommand),
+    );
+    if (request == null || !mounted) return;
+    if (!attach) {
+      await preferences.saveCommand(
+        serverId: widget.server.id,
+        containerId: widget.containerId,
+        command: request.command,
+      );
+    }
+    if (!mounted) return;
+
+    if (request.interactive) {
+      final command = attach
+          ? buildContainerAttachCommand(
+              runtime: widget.runtime,
+              containerId: widget.containerId,
+            )
+          : buildContainerExecCommand(
+              runtime: widget.runtime,
+              containerId: widget.containerId,
+              command: request.command,
+            );
+      if (!mounted) return;
+      await openTerminalSession(
+        context,
+        ref,
+        widget.server,
+        initialScripts: [
+          buildContainerTerminalScript(scope: widget.scope, command: command),
+        ],
+      );
+      return;
+    }
+
+    setState(() => _actionBusy = true);
+    final manager = ref.read(connectionManagerProvider);
+    try {
+      await runWithDeployTerminal(
+        ref: ref,
+        title: 'containerExecTitle'.tr(),
+        subtitle: widget.server.name,
+        command:
+            '${widget.runtime.name} exec ${widget.containerId} '
+            '${request.command}',
+        run: (onOutput) async => manager.runContainerCommand(
+          widget.server.id,
+          runtime: widget.runtime,
+          scope: widget.scope,
+          containerId: widget.containerId,
+          command: request.command,
+          sudoPassword: await _sudoPassword(),
+          onOutput: onOutput,
+        ),
+      );
+      if (!mounted) return;
+      showStyledSnackBar(
+        title: 'containerExecSuccess'.tr(),
+        message: request.command,
+        icon: Symbols.check_circle,
+        accentColor: Theme.of(context).colorScheme.primary,
+      );
+    } catch (error) {
+      if (!mounted) return;
+      showStyledSnackBar(
+        title: 'containerExecError'.tr(),
+        message: error.toString(),
+        icon: Symbols.error,
+        accentColor: Theme.of(context).colorScheme.error,
+      );
+    } finally {
+      if (mounted) setState(() => _actionBusy = false);
+    }
+  }
+
   Future<void> _recreateFromInspect() async {
     final inspect = _inspect;
     if (inspect == null || _actionBusy) return;
@@ -549,6 +635,10 @@ class _ContainerDetailPageState extends ConsumerState<ContainerDetailPage> {
                   unawaited(_runAction(ContainerAction.kill));
                 case 'remove':
                   unawaited(_runAction(ContainerAction.remove));
+                case 'exec':
+                  unawaited(_runContainerCommand(attach: false));
+                case 'attach':
+                  unawaited(_runContainerCommand(attach: true));
                 case 'recreate':
                   unawaited(_recreateFromInspect());
               }
@@ -557,6 +647,17 @@ class _ContainerDetailPageState extends ConsumerState<ContainerDetailPage> {
               final scheme = Theme.of(context).colorScheme;
               final paused = inspect?.isPaused ?? false;
               return [
+                PopupMenuItem(
+                  value: 'exec',
+                  enabled: running,
+                  child: Text('containerExec'.tr()),
+                ),
+                PopupMenuItem(
+                  value: 'attach',
+                  enabled: running,
+                  child: Text('containerAttach'.tr()),
+                ),
+                const PopupMenuDivider(),
                 PopupMenuItem(
                   value: 'start',
                   enabled: !running,
@@ -1638,6 +1739,130 @@ class _DetailsPane extends StatelessWidget {
               ),
             ),
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ContainerCommandRequest {
+  const _ContainerCommandRequest({
+    required this.command,
+    required this.interactive,
+  });
+
+  final String command;
+  final bool interactive;
+}
+
+class _ContainerCommandDialog extends StatefulWidget {
+  const _ContainerCommandDialog({
+    required this.attach,
+    required this.initialCommand,
+  });
+
+  final bool attach;
+  final String? initialCommand;
+
+  @override
+  State<_ContainerCommandDialog> createState() =>
+      _ContainerCommandDialogState();
+}
+
+class _ContainerCommandDialogState extends State<_ContainerCommandDialog> {
+  late final TextEditingController _commandController = TextEditingController(
+    text: widget.initialCommand?.trim().isNotEmpty == true
+        ? widget.initialCommand
+        : 'bash',
+  );
+  late var _interactive = true;
+
+  @override
+  void dispose() {
+    _commandController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final command = _commandController.text.trim();
+    if (!widget.attach && command.isEmpty) return;
+    Navigator.of(context).pop(
+      _ContainerCommandRequest(command: command, interactive: _interactive),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return AlertDialog(
+      title: Text(
+        widget.attach ? 'containerAttachTitle'.tr() : 'containerExecTitle'.tr(),
+      ),
+      content: SizedBox(
+        width: 480,
+        child: widget.attach
+            ? Text(
+                'containerAttachTitle'.tr(),
+                style: theme.textTheme.bodyMedium,
+              )
+            : SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextField(
+                      controller: _commandController,
+                      autofocus: true,
+                      maxLines: 4,
+                      onChanged: (_) => setState(() {}),
+                      onSubmitted: (_) => _submit(),
+                      decoration: InputDecoration(
+                        labelText: 'containerCommand'.tr(),
+                        hintText: 'containerCommandHint'.tr(),
+                        border: const OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'containerQuickCommands'.tr(),
+                      style: theme.textTheme.labelLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final command in ['bash', 'sh', 'rcon-cli'])
+                          ActionChip(
+                            label: Text(command),
+                            onPressed: () => setState(
+                              () => _commandController.text = command,
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: _interactive,
+                      onChanged: (value) =>
+                          setState(() => _interactive = value ?? true),
+                      title: Text('containerInteractive'.tr()),
+                    ),
+                  ],
+                ),
+              ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text('commonCancel'.tr()),
+        ),
+        FilledButton(
+          onPressed: widget.attach || _commandController.text.trim().isNotEmpty
+              ? _submit
+              : null,
+          child: Text('containerRun'.tr()),
         ),
       ],
     );

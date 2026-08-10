@@ -2141,6 +2141,47 @@ fi
     });
   }
 
+  /// Executes a non-interactive command inside a running container.
+  ///
+  /// The command is evaluated by the container's `/bin/sh`, which preserves
+  /// quoted arguments and supports custom command strings from the UI.
+  Future<void> runContainerCommand(
+    int serverId, {
+    required ContainerRuntime runtime,
+    required ContainerScope scope,
+    required String containerId,
+    required String command,
+    String? sudoPassword,
+    void Function(String chunk)? onOutput,
+  }) async {
+    if (!_safeContainerRef(containerId)) {
+      throw ArgumentError.value(
+        containerId,
+        'containerId',
+        'Invalid container ID.',
+      );
+    }
+    final trimmed = command.trim();
+    if (trimmed.isEmpty) {
+      throw ArgumentError.value(command, 'command', 'Command is required.');
+    }
+    final cliCommand =
+        '${runtime.name} exec ${_shellSingleQuote(containerId)} '
+        'sh -c ${_shellSingleQuote(trimmed)}';
+    final displayCommand =
+        '${runtime.name} exec ${_shellSingleQuote(containerId)} $trimmed';
+    await withClient(serverId, (client) async {
+      onOutput?.call('\$ $displayCommand\n');
+      final result = await _executeStreaming(
+        client,
+        '${_scopePrefix(scope, sudoPassword)}$cliCommand',
+        stdin: scope == ContainerScope.root ? sudoPassword : null,
+        onOutput: onOutput,
+      );
+      if (result.exitCode != 0) throw StateError(_commandError(result));
+    });
+  }
+
   Future<bool> _runtimeAvailable(
     SSHClient client,
     ContainerRuntime runtime,
