@@ -46,6 +46,39 @@ void main() {
     expect(find.byIcon(Symbols.code_rounded), findsOneWidget);
   });
 
+  testWidgets('does not squeeze the scaffold body', (tester) async {
+    // Regression: the bar used to expand to the full bottomNavigationBar slot
+    // height (Align without heightFactor), leaving the body at zero height.
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: const Center(child: Text('body content')),
+          bottomNavigationBar: FloatingNavigationBar(
+            selectedIndex: 0,
+            onDestinationSelected: (_) {},
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.dns_outlined),
+                label: 'Servers',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.code_outlined),
+                label: 'Snippets',
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('body content'), findsOneWidget);
+    expect(tester.getSize(find.text('body content')).height, greaterThan(0));
+    expect(
+      tester.getSize(find.byType(FloatingNavigationBar)).height,
+      lessThan(200), // pill height, not full screen
+    );
+  });
+
   testWidgets('reports destination taps', (tester) async {
     var selected = 0;
     await tester.pumpWidget(

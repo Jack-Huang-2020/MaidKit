@@ -25,11 +25,16 @@ class FloatingNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: SafeArea(
-        top: false,
-        minimum: EdgeInsets.only(bottom: bottomPadding),
+    // heightFactor: 1 keeps the bar at its content height. Without it the
+    // root Align expands to fill the whole Scaffold bottomNavigationBar slot
+    // (Scaffold constrains it loosely), squeezing the body to zero height and
+    // leaving a blank page with only the pill visible.
+    return SafeArea(
+      top: false,
+      minimum: EdgeInsets.only(bottom: bottomPadding),
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        heightFactor: 1,
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: colorScheme.surfaceContainer,
