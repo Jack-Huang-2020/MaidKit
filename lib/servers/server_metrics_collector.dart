@@ -70,6 +70,8 @@ echo --SWAP--
 sysctl -n vm.swapusage 2>/dev/null || true
 echo --DISK--
 df -Pk / 2>/dev/null || true
+echo --GPU--
+nvidia-smi --query-gpu=index,name,utilization.gpu,memory.used,memory.total,temperature.gpu --format=csv,noheader,nounits 2>/dev/null || true
 echo --UPTIME--
 sysctl -n kern.boottime 2>/dev/null || true
 '""");
@@ -114,6 +116,10 @@ Write-Output '--SWAP--'
 Write-Output '--DISK--'
 "DiskTotal: $([int64]($disk.Size / 1KB))"
 "DiskAvailable: $([int64]($disk.FreeSpace / 1KB))"
+Write-Output '--GPU--'
+if (Get-Command nvidia-smi.exe -ErrorAction SilentlyContinue) {
+  & nvidia-smi.exe '--query-gpu=index,name,utilization.gpu,memory.used,memory.total,temperature.gpu' '--format=csv,noheader,nounits' 2>$null
+}
 Write-Output '--UPTIME--'
 [int64](([DateTime]::UtcNow - $os.LastBootUpTime.ToUniversalTime()).TotalSeconds)
 '''),
@@ -135,7 +141,7 @@ class LinuxProcfsMetricsCollector implements ServerMetricsCollector {
   Future<ServerStats?> collect(SSHClient client) async {
     final output = await _run(
       client,
-      "sh -c 'cat /proc/loadavg; echo --CPU--; getconf _NPROCESSORS_ONLN 2>/dev/null || nproc; echo --MEM--; cat /proc/meminfo; echo --DISK--; df -Pk / | tail -n 1; echo --UPTIME--; cut -d. -f1 /proc/uptime'",
+      "sh -c 'cat /proc/loadavg; echo --CPU--; getconf _NPROCESSORS_ONLN 2>/dev/null || nproc; echo --MEM--; cat /proc/meminfo; echo --DISK--; df -Pk / | tail -n 1; echo --GPU--; nvidia-smi --query-gpu=index,name,utilization.gpu,memory.used,memory.total,temperature.gpu --format=csv,noheader,nounits 2>/dev/null || true; echo --UPTIME--; cut -d. -f1 /proc/uptime'",
     );
     final sections = output.split('--CPU--');
     if (sections.length != 2) return null;
@@ -145,14 +151,16 @@ class LinuxProcfsMetricsCollector implements ServerMetricsCollector {
     if (cpuAndRest.length != 2 || load == null) return null;
     final memoryAndRest = cpuAndRest[1].split('--DISK--');
     if (memoryAndRest.length != 2) return null;
-    final diskAndUptime = memoryAndRest[1].split('--UPTIME--');
-    if (diskAndUptime.length != 2) return null;
+    final diskAndGpu = memoryAndRest[1].split('--GPU--');
+    if (diskAndGpu.length != 2) return null;
+    final gpuAndUptime = diskAndGpu[1].split('--UPTIME--');
+    if (gpuAndUptime.length != 2) return null;
     int? valueFor(String label) {
       final match = RegExp('$label:\\s+(\\d+)').firstMatch(memoryAndRest[0]);
       return match == null ? null : int.tryParse(match.group(1)!);
     }
 
-    final diskFields = diskAndUptime[0].trim().split(RegExp(r'\s+'));
+    final diskFields = diskAndGpu[0].trim().split(RegExp(r'\s+'));
 
     return ServerStats(
       collectorId: id,
@@ -169,7 +177,8 @@ class LinuxProcfsMetricsCollector implements ServerMetricsCollector {
       diskAvailableKb: diskFields.length > 3
           ? int.tryParse(diskFields[3])
           : null,
-      uptime: Duration(seconds: int.tryParse(diskAndUptime[1].trim()) ?? 0),
+      gpus: parseNvidiaGpuMetricsOutput(gpuAndUptime[0]),
+      uptime: Duration(seconds: int.tryParse(gpuAndUptime[1].trim()) ?? 0),
     );
   }
 }
@@ -213,8 +222,41 @@ ServerStats? parseMacosMetricsOutput(String output, {DateTime? now}) {
     swapFreeKb: swap.$2,
     diskTotalKb: diskFields.length > 1 ? int.tryParse(diskFields[1]) : null,
     diskAvailableKb: diskFields.length > 3 ? int.tryParse(diskFields[3]) : null,
+    gpus: parseNvidiaGpuMetricsOutput(_metricSection(output, 'GPU')),
     uptime: uptime,
   );
+}
+
+/// Parses `nvidia-smi --query-gpu=... --format=csv,noheader,nounits` rows.
+///
+/// NVIDIA reports memory in MiB; the app's resource model stores memory in
+/// KiB. A row is retained when its index and name are valid, even if an
+/// individual sensor returns `N/A`.
+List<ServerGpuStats> parseNvidiaGpuMetricsOutput(String output) {
+  final gpus = <ServerGpuStats>[];
+  for (final line in output.split('\n')) {
+    final fields = line.trim().split(',').map((field) => field.trim()).toList();
+    if (fields.length < 6) continue;
+    final index = int.tryParse(fields[0]);
+    final name = fields[1];
+    if (index == null || name.isEmpty) continue;
+    int? memoryKb(String value) {
+      final mib = int.tryParse(value);
+      return mib == null ? null : mib * 1024;
+    }
+
+    gpus.add(
+      ServerGpuStats(
+        index: index,
+        name: name,
+        utilizationPercent: double.tryParse(fields[2]),
+        memoryUsedKb: memoryKb(fields[3]),
+        memoryTotalKb: memoryKb(fields[4]),
+        temperatureC: double.tryParse(fields[5]),
+      ),
+    );
+  }
+  return gpus;
 }
 
 /// Parses the normalized output emitted by [WindowsPowerShellMetricsCollector].
@@ -242,6 +284,7 @@ ServerStats? parseWindowsMetricsOutput(String output, {DateTime? now}) {
     swapFreeKb: value('SWAP', 'SwapFree'),
     diskTotalKb: value('DISK', 'DiskTotal'),
     diskAvailableKb: value('DISK', 'DiskAvailable'),
+    gpus: parseNvidiaGpuMetricsOutput(_metricSection(output, 'GPU')),
     uptime: uptimeSeconds == null
         ? null
         : Duration(seconds: uptimeSeconds.clamp(0, 0x7fffffffffffffff)),

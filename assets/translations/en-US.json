@@ -529,6 +529,8 @@
   "detailKillProcessSuccess": "Sent SIGKILL to {}",
   "detailLoadAverage": "Load average",
   "detailMemory": "Memory",
+  "detailGpu": "GPU",
+  "detailGpuCount": "{} GPUs",
   "detailMetricsCollecting": "Metrics are being collected…",
   "detailNoProcessesAvailable": "No process information is available.",
   "detailOf": "of {}",

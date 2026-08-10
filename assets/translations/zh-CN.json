@@ -529,6 +529,8 @@
   "detailKillProcessSuccess": "已向 {} 发送 SIGKILL",
   "detailLoadAverage": "平均负载",
   "detailMemory": "内存",
+  "detailGpu": "GPU",
+  "detailGpuCount": "{} 个 GPU",
   "detailMetricsCollecting": "正在收集指标…",
   "detailNoProcessesAvailable": "没有可用的进程信息。",
   "detailOf": "/ {}",

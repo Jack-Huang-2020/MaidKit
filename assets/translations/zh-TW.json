@@ -529,6 +529,8 @@
   "detailKillProcessSuccess": "已向 {} 傳送 SIGKILL",
   "detailLoadAverage": "平均負載",
   "detailMemory": "記憶體",
+  "detailGpu": "GPU",
+  "detailGpuCount": "{} 個 GPU",
   "detailMetricsCollecting": "正在收集指標…",
   "detailNoProcessesAvailable": "沒有可用的程序資訊。",
   "detailOf": "/ {}",

@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 
 import 'package:maid_kit/data/local/app_database.dart';
+import 'server_metrics_collector.dart';
 import 'server_models.dart';
 import 'ssh_connection_manager.dart';
 import 'terminal_session_adapter.dart';
@@ -51,6 +52,7 @@ class LocalMachineMetricsCollector {
     final bootTime = await _run('sysctl', const ['-n', 'kern.boottime']);
     final swapUsage = await _run('sysctl', const ['-n', 'vm.swapusage']);
     final disk = await _run('df', const ['-Pk', '/']);
+    final gpus = await _collectGpuStats();
 
     final loads = _parseLoads(load);
     final totalBytes = int.tryParse((memoryBytes ?? '').trim());
@@ -68,6 +70,7 @@ class LocalMachineMetricsCollector {
       swapTotalKb: swap.$1,
       swapFreeKb: swap.$2,
       diskTotalKb: _diskField(disk, 1),
+      gpus: gpus,
       diskAvailableKb: _diskField(disk, 3),
       uptime: _uptimeFromBootTime(bootTime),
     );
@@ -78,6 +81,7 @@ class LocalMachineMetricsCollector {
     final mem = await _readFile('/proc/meminfo');
     final uptime = await _readFile('/proc/uptime');
     final cpuCount = await _run('nproc', const []);
+    final gpus = await _collectGpuStats();
     final disk = await _run('df', const ['-Pk', '/']);
 
     final loads = _parseLoads(load);
@@ -105,6 +109,7 @@ class LocalMachineMetricsCollector {
       swapFreeKb: memKb('SwapFree'),
       diskTotalKb: _diskField(disk, 1),
       diskAvailableKb: _diskField(disk, 3),
+      gpus: gpus,
       uptime: uptimeSeconds == null
           ? null
           : Duration(seconds: uptimeSeconds.round()),
@@ -210,6 +215,14 @@ class LocalMachineMetricsCollector {
     final other =>
       other.isEmpty ? other : '${other[0].toUpperCase()}${other.substring(1)}',
   };
+
+  Future<List<ServerGpuStats>> _collectGpuStats() async {
+    final output = await _run('nvidia-smi', const [
+      '--query-gpu=index,name,utilization.gpu,memory.used,memory.total,temperature.gpu',
+      '--format=csv,noheader,nounits',
+    ]);
+    return parseNvidiaGpuMetricsOutput(output ?? '');
+  }
 
   Future<String?> _run(String executable, List<String> arguments) async {
     try {
