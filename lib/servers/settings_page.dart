@@ -125,7 +125,9 @@ class SettingsPage extends ConsumerWidget {
                               ButtonSegment(
                                 value: ThemeMode.system,
                                 label: Text('settingsThemeSystem'.tr()),
-                                icon: const Icon(Symbols.brightness_auto_rounded),
+                                icon: const Icon(
+                                  Symbols.brightness_auto_rounded,
+                                ),
                               ),
                               ButtonSegment(
                                 value: ThemeMode.light,
@@ -158,15 +160,15 @@ class SettingsPage extends ConsumerWidget {
                           SwitchListTile(
                             contentPadding: EdgeInsets.zero,
                             title: const Text('settingsWallpaperColor').tr(),
-                            subtitle: Text(
-                              'settingsWallpaperColorHint'.tr(),
-                            ),
+                            subtitle: Text('settingsWallpaperColorHint'.tr()),
                             value: wallpaperColorEnabled,
-                            onChanged: defaultTargetPlatform ==
-                                    TargetPlatform.android
+                            onChanged:
+                                defaultTargetPlatform == TargetPlatform.android
                                 ? (enabled) => ref
-                                    .read(wallpaperColorEnabledProvider.notifier)
-                                    .setEnabled(enabled)
+                                      .read(
+                                        wallpaperColorEnabledProvider.notifier,
+                                      )
+                                      .setEnabled(enabled)
                                 : null,
                           ),
                           const SizedBox(height: 16),
@@ -215,7 +217,9 @@ class SettingsPage extends ConsumerWidget {
                               TextButton.icon(
                                 onPressed: () =>
                                     _clearBackgroundImage(context, ref),
-                                icon: const Icon(Symbols.delete_outline_rounded),
+                                icon: const Icon(
+                                  Symbols.delete_outline_rounded,
+                                ),
                                 label: const Text(
                                   'settingsBackgroundImageClear',
                                 ).tr(),
@@ -631,7 +635,9 @@ class SettingsPage extends ConsumerWidget {
                         _SettingsTilePosition.only,
                       ),
                     ),
-                    leading: const CircleAvatar(child: Icon(Symbols.person_rounded)),
+                    leading: const CircleAvatar(
+                      child: Icon(Symbols.person_rounded),
+                    ),
                     title: const Text('…'),
                   ),
                   error: (_, _) => _cloudLoginTile(context, ref),
@@ -697,7 +703,7 @@ class SettingsPage extends ConsumerWidget {
                                       color: Theme.of(
                                         context,
                                       ).colorScheme.errorContainer,
-                                      borderRadius: BorderRadius.circular(8),
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Row(
                                       children: [
@@ -852,7 +858,9 @@ class SettingsPage extends ConsumerWidget {
                                     FilledButton.tonalIcon(
                                       onPressed: () =>
                                           _settleBilling(context, ref),
-                                      icon: const Icon(Symbols.payments_rounded),
+                                      icon: const Icon(
+                                        Symbols.payments_rounded,
+                                      ),
                                       label: const Text(
                                         'settingsBillingSettleNow',
                                       ).tr(),
@@ -2648,7 +2656,7 @@ class _LocalMcpServerSectionState
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: scheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: SelectableText(
                     '"mcpServers": {\n'
@@ -2974,7 +2982,7 @@ class _SeedColorTile extends StatelessWidget {
           color: enabled
               ? seedColor
               : colorScheme.onSurface.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: enabled
                 ? colorScheme.outlineVariant
@@ -3040,7 +3048,7 @@ class _TerminalPalettePreview extends StatelessWidget {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: theme.background,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Column(
@@ -3283,7 +3291,7 @@ class _TerminalColorRow extends StatelessWidget {
         height: 28,
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: Theme.of(context).colorScheme.outlineVariant,
           ),
@@ -3381,7 +3389,7 @@ class _ColorEditDialogState extends State<_ColorEditDialog> {
                     height: 48,
                     decoration: BoxDecoration(
                       color: _color,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   const SizedBox(width: 12),
