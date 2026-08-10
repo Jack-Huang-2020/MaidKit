@@ -65,6 +65,9 @@ class _ServerTabsShell extends ConsumerWidget {
         return MaidKitAppScaffold(
           backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
           showBackgroundImage: false,
+          // Let the tab pages' background image extend behind the floating
+          // bottom bar instead of leaving an opaque surface strip there.
+          extendBody: true,
           // Each tab page is its own page scaffold; let it manage the top
           // safe area so its surface paints edge-to-edge behind the status bar.
           topSafeArea: false,
