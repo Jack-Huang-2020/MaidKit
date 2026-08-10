@@ -132,11 +132,12 @@ jobs:
       - run: flutter pub get
       - run: dart run build_runner build --delete-conflicting-outputs
       # macOS CI runners have no Apple signing certificate/provisioning
-      # profile for dev.solsynth.maid, so the Release build disables code
-      # signing via the xcodebuild CODE_SIGNING_ALLOWED environment variable
-      # (flutter build macos has no --no-codesign flag). The unsigned .app is
-      # still archived as an artifact; sign and notarize it locally before
-      # distributing.
+      # profile for dev.solsynth.maid, so the Runner Release build settings
+      # disable code signing entirely (CODE_SIGN_STYLE=Manual, identity "-",
+      # CODE_SIGNING_ALLOWED=NO in project.pbxproj; flutter build macos has no
+      # --no-codesign flag). CODE_SIGNING_ALLOWED is also set here as a
+      # belt-and-suspenders measure. The unsigned .app is still archived as an
+      # artifact; sign and notarize it locally before distributing.
       - name: Build macOS release (unsigned)
         env:
           CODE_SIGNING_ALLOWED: "NO"
