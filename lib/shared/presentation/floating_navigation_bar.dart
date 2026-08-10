@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 
+/// Total vertical space the floating bar occupies (bottom margin + pill
+/// height + padding). Hosts use this as bottom inset so content scrolls clear
+/// of the bar when it floats over the body (extendBody).
+const floatingNavigationBarInset = 80.0;
+
 /// A floating, pill-shaped bottom navigation bar inspired by the PiliPlus
 /// client. It floats above the bottom edge inside a rounded container with a
 /// subtle shadow, and the selected destination gets a smooth highlight
@@ -52,18 +57,22 @@ class FloatingNavigationBar extends StatelessWidget {
           ),
           child: Padding(
             padding: const EdgeInsets.all(4),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (var i = 0; i < destinations.length; i++)
-                  _FloatingDestination(
-                    index: i,
-                    selected: i == selectedIndex,
-                    destination: destinations[i],
-                    duration: animationDuration,
-                    onTap: () => onDestinationSelected(i),
-                  ),
-              ],
+            // Scale down on very narrow viewports instead of overflowing.
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (var i = 0; i < destinations.length; i++)
+                    _FloatingDestination(
+                      index: i,
+                      selected: i == selectedIndex,
+                      destination: destinations[i],
+                      duration: animationDuration,
+                      onTap: () => onDestinationSelected(i),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
@@ -110,8 +119,8 @@ class _FloatingDestinationState extends State<_FloatingDestination> {
           color: selected
               ? colorScheme.secondaryContainer
               : _hovered
-                  ? colorScheme.onSurface.withValues(alpha: 0.06)
-                  : Colors.transparent,
+              ? colorScheme.onSurface.withValues(alpha: 0.06)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(28),
         ),
         child: InkWell(
@@ -133,7 +142,7 @@ class _FloatingDestinationState extends State<_FloatingDestination> {
                     data: const IconThemeData(size: 22),
                     child: selected
                         ? widget.destination.selectedIcon ??
-                            widget.destination.icon
+                              widget.destination.icon
                         : widget.destination.icon,
                   ),
                   if (selected)

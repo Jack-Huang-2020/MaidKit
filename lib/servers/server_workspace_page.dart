@@ -61,6 +61,8 @@ class _ServerTabsShell extends ConsumerWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth > 768;
+        final hasFloatingBar =
+            !isWide && isDashboardFocused && !isAgentInputFocused;
 
         return MaidKitAppScaffold(
           backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
@@ -71,84 +73,97 @@ class _ServerTabsShell extends ConsumerWidget {
           // Each tab page is its own page scaffold; let it manage the top
           // safe area so its surface paints edge-to-edge behind the status bar.
           topSafeArea: false,
-          body: isWide
-              ? Row(
-                  children: [
-                    NavigationRail(
-                      backgroundColor: Colors.transparent,
-                      selectedIndex: tabsRouter.activeIndex < 5
-                          ? tabsRouter.activeIndex
-                          : null,
-                      onDestinationSelected: tabsRouter.setActiveIndex,
-                      trailingAtBottom: true,
-                      trailing: Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const _PortForwardRailIndicator(),
-                            const SizedBox(height: 8),
-                            const DeploySessionsRailButton(),
-                            const SizedBox(height: 8),
-                            _CloudAccountRailButton(
-                              onPressed: () => tabsRouter.setActiveIndex(5),
+          // When the floating bar is shown, extendBody lets the background
+          // image run behind it; inject the bar height as bottom padding so
+          // nested page scaffolds (whose own extendBody is false) scroll
+          // their content clear of the pill.
+          body: MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              padding: MediaQuery.of(context).padding.copyWith(
+                bottom: hasFloatingBar
+                    ? floatingNavigationBarInset
+                    : MediaQuery.of(context).padding.bottom,
+              ),
+            ),
+            child: isWide
+                ? Row(
+                    children: [
+                      NavigationRail(
+                        backgroundColor: Colors.transparent,
+                        selectedIndex: tabsRouter.activeIndex < 5
+                            ? tabsRouter.activeIndex
+                            : null,
+                        onDestinationSelected: tabsRouter.setActiveIndex,
+                        trailingAtBottom: true,
+                        trailing: Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const _PortForwardRailIndicator(),
+                              const SizedBox(height: 8),
+                              const DeploySessionsRailButton(),
+                              const SizedBox(height: 8),
+                              _CloudAccountRailButton(
+                                onPressed: () => tabsRouter.setActiveIndex(5),
+                              ),
+                              IconButton(
+                                tooltip: 'tabSettings'.tr(),
+                                onPressed: () => tabsRouter.setActiveIndex(5),
+                                icon: const Icon(Icons.settings_outlined),
+                              ),
+                            ],
+                          ),
+                        ),
+                        destinations: [
+                          NavigationRailDestination(
+                            icon: const Icon(Icons.dns_outlined),
+                            selectedIcon: const Icon(Icons.dns),
+                            label: Text('tabServers').tr(),
+                          ),
+                          NavigationRailDestination(
+                            icon: Badge(
+                              isLabelVisible: githubHasFailures,
+                              child: const Icon(Icons.inventory_2_outlined),
                             ),
-                            IconButton(
-                              tooltip: 'tabSettings'.tr(),
-                              onPressed: () => tabsRouter.setActiveIndex(5),
-                              icon: const Icon(Icons.settings_outlined),
+                            selectedIcon: Badge(
+                              isLabelVisible: githubHasFailures,
+                              child: const Icon(Icons.inventory_2),
                             ),
-                          ],
+                            label: Text('tabAssets').tr(),
+                          ),
+                          NavigationRailDestination(
+                            icon: const Icon(Icons.layers_outlined),
+                            selectedIcon: const Icon(Icons.layers),
+                            label: Text('tabProjects').tr(),
+                          ),
+                          NavigationRailDestination(
+                            icon: const Icon(Icons.code_outlined),
+                            selectedIcon: const Icon(Icons.code),
+                            label: Text('tabSnippets').tr(),
+                          ),
+                          const NavigationRailDestination(
+                            icon: Icon(Icons.smart_toy_outlined),
+                            selectedIcon: Icon(Icons.smart_toy),
+                            label: Text('Agent'),
+                          ),
+                        ],
+                      ),
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(12),
+                          ),
+                          child: ColoredBox(
+                            color: Theme.of(context).colorScheme.surface,
+                            child: child,
+                          ),
                         ),
                       ),
-                      destinations: [
-                        NavigationRailDestination(
-                          icon: const Icon(Icons.dns_outlined),
-                          selectedIcon: const Icon(Icons.dns),
-                          label: Text('tabServers').tr(),
-                        ),
-                        NavigationRailDestination(
-                          icon: Badge(
-                            isLabelVisible: githubHasFailures,
-                            child: const Icon(Icons.inventory_2_outlined),
-                          ),
-                          selectedIcon: Badge(
-                            isLabelVisible: githubHasFailures,
-                            child: const Icon(Icons.inventory_2),
-                          ),
-                          label: Text('tabAssets').tr(),
-                        ),
-                        NavigationRailDestination(
-                          icon: const Icon(Icons.layers_outlined),
-                          selectedIcon: const Icon(Icons.layers),
-                          label: Text('tabProjects').tr(),
-                        ),
-                        NavigationRailDestination(
-                          icon: const Icon(Icons.code_outlined),
-                          selectedIcon: const Icon(Icons.code),
-                          label: Text('tabSnippets').tr(),
-                        ),
-                        const NavigationRailDestination(
-                          icon: Icon(Icons.smart_toy_outlined),
-                          selectedIcon: Icon(Icons.smart_toy),
-                          label: Text('Agent'),
-                        ),
-                      ],
-                    ),
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(12),
-                        ),
-                        child: ColoredBox(
-                          color: Theme.of(context).colorScheme.surface,
-                          child: child,
-                        ),
-                      ),
-                    ),
-                  ],
-                )
-              : child,
+                    ],
+                  )
+                : child,
+          ),
           bottomNavigationBar:
               isWide || !isDashboardFocused || isAgentInputFocused
               ? null
@@ -156,44 +171,44 @@ class _ServerTabsShell extends ConsumerWidget {
                   selectedIndex: tabsRouter.activeIndex,
                   onDestinationSelected: tabsRouter.setActiveIndex,
                   destinations: [
-                      NavigationDestination(
-                        icon: const Icon(Icons.dns_outlined),
-                        selectedIcon: const Icon(Icons.dns),
-                        label: 'tabServers'.tr(),
+                    NavigationDestination(
+                      icon: const Icon(Icons.dns_outlined),
+                      selectedIcon: const Icon(Icons.dns),
+                      label: 'tabServers'.tr(),
+                    ),
+                    NavigationDestination(
+                      icon: Badge(
+                        isLabelVisible: githubHasFailures,
+                        child: const Icon(Icons.inventory_2_outlined),
                       ),
-                      NavigationDestination(
-                        icon: Badge(
-                          isLabelVisible: githubHasFailures,
-                          child: const Icon(Icons.inventory_2_outlined),
-                        ),
-                        selectedIcon: Badge(
-                          isLabelVisible: githubHasFailures,
-                          child: const Icon(Icons.inventory_2),
-                        ),
-                        label: 'tabAssets'.tr(),
+                      selectedIcon: Badge(
+                        isLabelVisible: githubHasFailures,
+                        child: const Icon(Icons.inventory_2),
                       ),
-                      NavigationDestination(
-                        icon: const Icon(Icons.layers_outlined),
-                        selectedIcon: const Icon(Icons.layers),
-                        label: 'tabProjects'.tr(),
-                      ),
-                      NavigationDestination(
-                        icon: const Icon(Icons.code_outlined),
-                        selectedIcon: const Icon(Icons.code),
-                        label: 'tabSnippets'.tr(),
-                      ),
-                      const NavigationDestination(
-                        icon: Icon(Icons.smart_toy_outlined),
-                        selectedIcon: Icon(Icons.smart_toy),
-                        label: 'Agent',
-                      ),
-                      NavigationDestination(
-                        icon: const Icon(Icons.settings_outlined),
-                        selectedIcon: const Icon(Icons.settings),
-                        label: 'tabSettings'.tr(),
-                      ),
-                    ],
-                  ),
+                      label: 'tabAssets'.tr(),
+                    ),
+                    NavigationDestination(
+                      icon: const Icon(Icons.layers_outlined),
+                      selectedIcon: const Icon(Icons.layers),
+                      label: 'tabProjects'.tr(),
+                    ),
+                    NavigationDestination(
+                      icon: const Icon(Icons.code_outlined),
+                      selectedIcon: const Icon(Icons.code),
+                      label: 'tabSnippets'.tr(),
+                    ),
+                    const NavigationDestination(
+                      icon: Icon(Icons.smart_toy_outlined),
+                      selectedIcon: Icon(Icons.smart_toy),
+                      label: 'Agent',
+                    ),
+                    NavigationDestination(
+                      icon: const Icon(Icons.settings_outlined),
+                      selectedIcon: const Icon(Icons.settings),
+                      label: 'tabSettings'.tr(),
+                    ),
+                  ],
+                ),
         );
       },
     );

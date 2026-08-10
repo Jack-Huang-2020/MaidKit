@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:maid_kit/data/local/app_database.dart';
 import 'package:maid_kit/routing/app_router.dart';
 import 'package:maid_kit/servers/server_providers.dart';
+import 'package:maid_kit/shared/presentation/floating_navigation_bar.dart';
 import 'package:maid_kit/theme.dart';
 
 void main() {
@@ -93,5 +94,35 @@ void main() {
 
     expect(find.text('assetsConnections'.tr()), findsOneWidget);
     expect(find.text('assetsCredentialsTitle'.tr()), findsOneWidget);
+  });
+
+  testWidgets('settings list clears the floating bar on narrow screens', (
+    WidgetTester tester,
+  ) async {
+    await pumpApp(tester);
+
+    // Narrow the viewport after pumping so the workspace shell switches from
+    // the NavigationRail to the floating bar.
+    tester.view.physicalSize = const Size(400, 800);
+    addTearDown(tester.view.resetPhysicalSize);
+    await tester.pumpAndSettle();
+
+    // Switch to the Settings tab via the floating bar.
+    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await tester.pumpAndSettle();
+
+    // The settings page has a pre-existing overflow on 400px-wide viewports
+    // (language switcher row); ignore layout exceptions so this regression
+    // test only asserts the floating-bar inset behaviour.
+    while (tester.takeException() != null) {}
+
+    // SafeArea consumes the injected bottom inset and turns it into physical
+    // padding, so assert on the layout: the list must end above the floating
+    // bar region instead of being covered by the pill.
+    final listRect = tester.getRect(find.byType(ListView).first);
+    expect(
+      listRect.bottom,
+      lessThanOrEqualTo(800 - floatingNavigationBarInset + 1),
+    );
   });
 }
