@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:island_ui_foundation/island_ui_foundation.dart';
+import 'package:maid_kit/shared/presentation/floating_navigation_bar.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
@@ -236,14 +237,18 @@ class MaidKitAppScaffold extends StatelessWidget {
                 : body!,
           );
 
-    final floatingActionButtonInset = MediaQuery.paddingOf(context).bottom;
+    // Lift the FAB above the floating bottom bar on narrow layouts. Use a
+    // fixed inset instead of the injected MediaQuery padding so the FAB stays
+    // at the same height even when the bar is temporarily hidden (focused
+    // terminal tabs): otherwise "add server" and "new snippet" would sit at
+    // different offsets.
+    final floatingActionButtonInset = MediaQuery.sizeOf(context).width <= 768
+        ? floatingNavigationBarInset
+        : 0.0;
     return Scaffold(
       backgroundColor: pageColor,
       appBar: appBar,
       body: bodyContent,
-      // Lift the FAB above the floating bottom bar on narrow layouts: the
-      // workspace shell injects the bar height as MediaQuery bottom padding,
-      // which would otherwise leave the FAB covered by the pill.
       floatingActionButton: floatingActionButton == null
           ? null
           : Padding(
