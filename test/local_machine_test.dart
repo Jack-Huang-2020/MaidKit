@@ -214,6 +214,12 @@ class _RecordingAdapter implements TerminalSessionAdapter {
   void sendInput(String text) => _outgoing.add(utf8.encode(text));
 
   @override
+  void showKeyboard() {}
+
+  @override
+  void hideKeyboard() {}
+
+  @override
   Widget buildView({
     bool autofocus = false,
     bool readOnly = false,

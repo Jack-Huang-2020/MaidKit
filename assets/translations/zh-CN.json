@@ -1398,6 +1398,8 @@
   "terminalColorWhite": "白色",
   "terminalColorYellow": "黄色",
   "terminalFindInTerminal": "在终端中查找",
+  "terminalKeyboardHide": "收起键盘",
+  "terminalKeyboardShow": "弹出键盘",
   "terminalKeysFewer": "收起按键",
   "terminalKeysMore": "展开更多按键",
   "terminalNextMatch": "下一个匹配",

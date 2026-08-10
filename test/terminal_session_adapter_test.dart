@@ -527,4 +527,10 @@ class _FakeTerminalSessionAdapter implements TerminalSessionAdapter {
   @override
   void sendInput(String text) =>
       _outgoing.add(Uint8List.fromList(utf8.encode(text)));
+
+  @override
+  void showKeyboard() {}
+
+  @override
+  void hideKeyboard() {}
 }

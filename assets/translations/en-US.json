@@ -1398,6 +1398,8 @@
   "terminalColorWhite": "White",
   "terminalColorYellow": "Yellow",
   "terminalFindInTerminal": "Find in terminal",
+  "terminalKeyboardHide": "Hide keyboard",
+  "terminalKeyboardShow": "Show keyboard",
   "terminalKeysFewer": "Fewer keys",
   "terminalKeysMore": "More keys",
   "terminalNextMatch": "Next match",

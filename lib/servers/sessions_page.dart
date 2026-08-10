@@ -1184,6 +1184,7 @@ class _TerminalQuickKeysState extends State<_TerminalQuickKeys> {
   @override
   Widget build(BuildContext context) {
     final terminal = widget.terminal;
+    final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
     final keys = _expanded ? _allKeys : _commonKeys;
 
     return SizedBox(
@@ -1212,6 +1213,19 @@ class _TerminalQuickKeysState extends State<_TerminalQuickKeys> {
                   );
                 },
               ),
+            ),
+          ),
+          IconButton(
+            tooltip: keyboardVisible
+                ? 'terminalKeyboardHide'.tr()
+                : 'terminalKeyboardShow'.tr(),
+            onPressed: keyboardVisible
+                ? terminal.hideKeyboard
+                : terminal.showKeyboard,
+            icon: Icon(
+              keyboardVisible
+                  ? Symbols.keyboard_arrow_down
+                  : Symbols.keyboard_arrow_up,
             ),
           ),
           IconButton(
